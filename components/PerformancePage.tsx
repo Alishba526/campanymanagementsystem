@@ -118,41 +118,41 @@ export default function PerformancePage() {
           <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             ⭐
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{performanceSummary[0]?.avgScore || 0}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Top Score This Month</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{performanceSummary[0]?.avgScore || 0}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Top Score This Month</div>
           <div style={{ fontSize: '11px', color: 'var(--green)', marginTop: '4px' }}>{performanceSummary[0]?.employee.name || '—'}</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             📊
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>
             {performanceSummary.length > 0
               ? Math.round(performanceSummary.reduce((sum, p) => sum + p.avgScore, 0) / performanceSummary.length)
               : 0}
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Team Average Score</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Team Average Score</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             ✅
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{tasks.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Total Tasks Logged</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{tasks.length}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Total Tasks Logged</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--redbg)', color: 'var(--red)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             🚨
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{lowPerformers.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Low Perf Alerts</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{lowPerformers.length}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Low Perf Alerts</div>
         </div>
       </div>
 
       {/* Performance Summary */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', marginBottom: '18px' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>📈</span>
             Monthly Performance Summary
           </div>
@@ -161,12 +161,12 @@ export default function PerformancePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Employee</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Department</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Avg Score</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Tasks Done</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Completion</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Rating</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Employee</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Avg Score</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Tasks Done</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Completion</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Rating</th>
               </tr>
             </thead>
             <tbody>

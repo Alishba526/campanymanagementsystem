@@ -45,7 +45,7 @@ export default function ProjectsPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>Client <strong>Projects</strong> & Ledgers</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#000' }}>Client Projects & Ledgers</h2>
         {isAdmin && (
           <button
             onClick={() => setShowModal(true)}
@@ -61,11 +61,11 @@ export default function ProjectsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Client & Project</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Financials (Kia Lia)</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Balance (Baaki)</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Status</th>
-                {isAdmin && <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Actions</th>}
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Client & Project</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Financials (Kia Lia)</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Balance (Baaki)</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Status</th>
+                {isAdmin && <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>

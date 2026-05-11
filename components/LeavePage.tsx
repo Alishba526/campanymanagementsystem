@@ -99,7 +99,7 @@ export default function LeavePage() {
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>📋</span>
             Leave Requests
           </div>
@@ -108,12 +108,12 @@ export default function LeavePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Employee</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Period</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Type</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Reason</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Status</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase' }}>Actions</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Employee</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Period</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Type</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Reason</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Status</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -181,7 +181,7 @@ export default function LeavePage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '400px' }}>
             <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>Request Leave</div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#000' }}>Request Leave</div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>

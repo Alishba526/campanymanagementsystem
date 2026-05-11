@@ -37,7 +37,7 @@ export default function BroadcastPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>Company <strong>Broadcasts</strong></h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#000' }}>Company Broadcasts</h2>
         {isAdmin && (
           <button
             onClick={() => setShowModal(true)}
@@ -88,7 +88,7 @@ export default function BroadcastPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '500px' }}>
             <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>Create <strong>Broadcast</strong></div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#000' }}>Create Broadcast</div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>

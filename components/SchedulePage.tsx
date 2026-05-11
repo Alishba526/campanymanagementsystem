@@ -120,29 +120,29 @@ export default function SchedulePage() {
           <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             📅
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{schedules.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Total Schedules</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{schedules.length}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Total Schedules</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             👥
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{employees.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Active Employees</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{employees.length}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Active Employees</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             ⏰
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>176</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Standard Monthly Hours</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>176</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Standard Monthly Hours</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--accentbg)', color: 'var(--accent)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             🏖️
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>8</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Weekly Offs/Month</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>8</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Weekly Offs/Month</div>
         </div>
       </div>
 
@@ -169,7 +169,7 @@ export default function SchedulePage() {
         months.map(month => (
           <div key={month} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', marginBottom: '18px' }}>
             <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+              <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
                 <span style={{ color: 'var(--accent)' }}>📅</span>
                 {new Date(month + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </div>
@@ -179,11 +179,11 @@ export default function SchedulePage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Employee</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Work Hours</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Monthly Hours</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Weekly Offs</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Actions</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Employee</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Work Hours</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Monthly Hours</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Weekly Offs</th>
+                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
