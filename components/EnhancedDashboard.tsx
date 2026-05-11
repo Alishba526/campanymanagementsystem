@@ -256,15 +256,6 @@ export default function EnhancedDashboard() {
               <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{pendingLeaves}</div>
               <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Pending Leaves</div>
             </div>
-              <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Avg Performance</div>
-            </div>
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--redbg)', color: 'var(--red)' }}>
-                ⚠️
-              </div>
-              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{lowPerformanceAlerts.length}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Low Perf Alerts</div>
-            </div>
           </>
         )}
       </div>
