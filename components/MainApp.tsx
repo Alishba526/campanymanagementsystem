@@ -18,6 +18,7 @@ import ProjectsPage from './ProjectsPage';
 import DepartmentAnalytics from './DepartmentAnalytics';
 import SchedulePage from './SchedulePage';
 import MonthlyReportSlip from './MonthlyReportSlip';
+import DepartmentAttendance from './DepartmentAttendance';
 
 export default function MainApp() {
   const { currentUser } = useApp();
@@ -30,6 +31,7 @@ export default function MainApp() {
     analytics: <DepartmentAnalytics />,
     employees: <EmployeesPage />,
     attendance: <AttendancePage />,
+    deptattendance: <DepartmentAttendance />,
     schedule: <SchedulePage />,
     performance: <PerformancePage />,
     finance: <FinancePage />,
@@ -48,6 +50,7 @@ export default function MainApp() {
     analytics: 'Department Analytics & Insights',
     employees: 'Employee Management',
     attendance: 'Attendance Tracker',
+    deptattendance: 'Department-wise Attendance Dashboard',
     schedule: 'Monthly Work Schedule',
     performance: 'Performance Analytics',
     finance: 'Finance — P&L Report',

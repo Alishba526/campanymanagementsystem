@@ -29,6 +29,7 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
       { section: 'HR Operations', items: [
         { id: 'employees', icon: '👥', label: 'Employees & Salaries' },
         { id: 'attendance', icon: '⏰', label: 'Attendance' },
+        { id: 'deptattendance', icon: '📊', label: 'Dept. Attendance' },
         { id: 'schedule', icon: '📅', label: 'Monthly Schedule' },
         { id: 'performance', icon: '🎯', label: 'Performance' },
         { id: 'leave', icon: '🏖️', label: 'Leave Requests' }
