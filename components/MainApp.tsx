@@ -85,7 +85,7 @@ export default function MainApp() {
         </div>
         {/* Main Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '22px' }}>
-          {pages[currentPage] || <Dashboard />}
+          {pages[currentPage] || pages.dashboard}
         </div>
       </div>
     </div>
