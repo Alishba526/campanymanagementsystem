@@ -69,3 +69,48 @@ export interface AuditLog {
   user: string;
   action: string;
 }
+
+export interface LeaveRequest {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  startDate: string;
+  endDate: string;
+  type: 'sick' | 'casual' | 'annual';
+  status: 'pending' | 'approved' | 'rejected';
+  reason?: string;
+  approvedBy?: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  priority: 'normal' | 'high';
+  createdAt?: Date;
+}
+
+export interface Project {
+  id: string;
+  clientName: string;
+  projectName: string;
+  totalBudget: number;
+  amountReceived: number;
+  status: 'active' | 'completed' | 'on-hold';
+  startDate: string;
+  endDate?: string;
+}
+
+export interface MonthlySchedule {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  month: string;
+  startTime: string;
+  endTime: string;
+  totalHours: number;
+  weeklyOffs?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MonthlySchedule {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employeeName String
+  month        String   // Format: YYYY-MM
+  startTime    String
+  endTime      String
+  totalHours   Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id           String   @id
+  name         String
+  department   String
+  position     String
+  email        String
+  phone        String
+  salary       Int
+  status       String
+  joinDate     String
+  monthlyHours Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AttendanceRecord {
+  id           String   @id
+  employeeId   String
+  employeeName String
+  date         String
+  checkIn      String
+  checkOut     String
+  status       String
+  hours        Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TaskLog {
+  id           String   @id
+  employeeId   String
+  employeeName String
+  date         String
+  task         String
+  category     String
+  hours        Float
+  completion   Int
+  quality      Int
+  score        Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Expense {
+  id          String   @id
+  date        String
+  category    String
+  description String
+  amount      Int
+  status      String
+  approvedBy  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Income {
+  id        String   @id
+  date      String
+  client    String
+  project   String
+  amount    Int
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LeaveRequest {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employeeName String
+  startDate    String
+  endDate      String
+  type         String   // 'sick', 'casual', 'annual'
+  status       String   // 'pending', 'approved', 'rejected'
+  reason       String?
+  approvedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  clientName     String
+  projectName    String
+  totalBudget    Int
+  amountReceived Int      @default(0)
+  status         String   // 'active', 'completed', 'on-hold'
+  startDate      String
+  endDate        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  author    String
+  priority  String   // 'normal', 'high'
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id
+  timestamp String
+  user      String
+  action    String
+  createdAt DateTime @default(now())
+}
