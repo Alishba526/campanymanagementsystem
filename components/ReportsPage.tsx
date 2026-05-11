@@ -46,7 +46,7 @@ export default function ReportsPage() {
         ['Net Profit', netProfit.toLocaleString()],
       ],
       theme: 'striped',
-      headStyles: { fillStyle: 'fill', fillColor: [124, 58, 237] }
+      headStyles: { fillColor: [124, 58, 237] }
     });
 
     // Department Breakdown
