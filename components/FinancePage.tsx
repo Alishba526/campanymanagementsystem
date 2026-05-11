@@ -70,42 +70,42 @@ export default function FinancePage() {
           <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             📈
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--green)' }}>{formatCurrency(profit)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Net Profit</div>
-          <div style={{ fontSize: '11px', color: 'var(--green)', marginTop: '4px' }}>Margin: {margin}%</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: 'var(--green)' }}>{formatCurrency(profit)}</div>
+          <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Net Profit</div>
+          <div style={{ fontSize: '12px', color: 'var(--green)', marginTop: '4px', fontWeight: 700 }}>Margin: {margin}%</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             💰
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{formatCurrency(totalIncome)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Total Income</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{formatCurrency(totalIncome)}</div>
+          <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Total Income</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--redbg)', color: 'var(--red)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             🧾
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{formatCurrency(totalExpenses)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Total Expenses</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{formatCurrency(totalExpenses)}</div>
+          <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Total Expenses</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             ⏳
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{formatCurrency(pendingIncome)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Pending Income</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{formatCurrency(pendingIncome)}</div>
+          <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Pending Income</div>
         </div>
       </div>
 
       {/* Income Table */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+        <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
           <span style={{ color: 'var(--accent)' }}>💰</span>
           Client Income — <span style={{ color: 'var(--red)' }}>🔒 ADMIN ONLY</span>
         </div>
         <button
           onClick={handleAdd}
-          style={{ background: 'var(--accent)', color: '#fff', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
+          style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
           onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
         >
@@ -118,21 +118,21 @@ export default function FinancePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Client</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Project</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Amount</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Status</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Actions</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Client</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Project</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Date</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Amount</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Status</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {income.map(inc => (
                 <tr key={inc.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{inc.client}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{inc.project}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{inc.date}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--green)', fontWeight: 600 }}>{formatCurrency(inc.amount)}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#000', fontWeight: 700 }}>{inc.client}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{inc.project}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{inc.date}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--green)', fontWeight: 800 }}>{formatCurrency(inc.amount)}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <span style={{
                       display: 'inline-flex',
@@ -140,8 +140,8 @@ export default function FinancePage() {
                       gap: '4px',
                       borderRadius: '20px',
                       padding: '3px 9px',
-                      fontSize: '11px',
-                      fontWeight: 600,
+                      fontSize: '12px',
+                      fontWeight: 800,
                       background: inc.status === 'received' ? 'var(--greenbg)' : 'var(--amberbg)',
                       color: inc.status === 'received' ? 'var(--green)' : 'var(--amber)'
                     }}>
@@ -151,11 +151,11 @@ export default function FinancePage() {
                   <td style={{ padding: '10px 16px' }}>
                     <button
                       onClick={() => handleDelete(inc.id)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
                     >
-                      🗑️
+                      🗑️ Delete
                     </button>
                   </td>
                 </tr>
@@ -168,34 +168,34 @@ export default function FinancePage() {
       {/* P&L Breakdown */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>📊</span>
             P&L Breakdown
           </div>
         </div>
         <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-              <span style={{ color: 'var(--text2)' }}>Income</span>
-              <span style={{ color: 'var(--green)', fontWeight: 600 }}>{formatCurrency(totalIncome)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
+              <span style={{ color: '#000', fontWeight: 700 }}>Income</span>
+              <span style={{ color: 'var(--green)', fontWeight: 800 }}>{formatCurrency(totalIncome)}</span>
             </div>
             <div style={{ background: 'var(--border)', borderRadius: '99px', height: '10px', overflow: 'hidden' }}>
               <div style={{ height: '100%', background: 'var(--green)', borderRadius: '99px', width: '100%' }} />
             </div>
           </div>
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-              <span style={{ color: 'var(--text2)' }}>Expenses</span>
-              <span style={{ color: 'var(--red)', fontWeight: 600 }}>{formatCurrency(totalExpenses)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
+              <span style={{ color: '#000', fontWeight: 700 }}>Expenses</span>
+              <span style={{ color: 'var(--red)', fontWeight: 800 }}>{formatCurrency(totalExpenses)}</span>
             </div>
             <div style={{ background: 'var(--border)', borderRadius: '99px', height: '10px', overflow: 'hidden' }}>
               <div style={{ height: '100%', background: 'var(--red)', borderRadius: '99px', width: `${Math.round((totalExpenses / totalIncome) * 100)}%` }} />
             </div>
           </div>
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-              <span style={{ color: 'var(--text2)' }}>Profit</span>
-              <span style={{ color: 'var(--amber)', fontWeight: 600 }}>{formatCurrency(profit)} ({margin}%)</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
+              <span style={{ color: '#000', fontWeight: 700 }}>Profit</span>
+              <span style={{ color: 'var(--amber)', fontWeight: 800 }}>{formatCurrency(profit)} ({margin}%)</span>
             </div>
             <div style={{ background: 'var(--border)', borderRadius: '99px', height: '10px', overflow: 'hidden' }}>
               <div style={{ height: '100%', background: 'var(--amber)', borderRadius: '99px', width: `${margin}%` }} />
