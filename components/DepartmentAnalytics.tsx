@@ -88,26 +88,26 @@ export default function DepartmentAnalytics() {
           <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             📈
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--green)' }}>{formatCurrency(totalProfit)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Total Company Profit</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: 'var(--green)' }}>{formatCurrency(totalProfit)}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Total Company Profit</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             {bestDept.icon}
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{bestDept.label}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Most Profitable Dept</div>
-          <div style={{ fontSize: '11px', color: 'var(--green)', marginTop: '4px' }}>{formatCurrency(bestDept.profit)}</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{bestDept.label}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Most Profitable Dept</div>
+          <div style={{ fontSize: '11px', color: 'var(--green)', marginTop: '4px', fontWeight: 600 }}>{formatCurrency(bestDept.profit)}</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             ⭐
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>
             {Math.max(...deptMetrics.map(d => d.avgPerformance))}
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Best Performance Score</div>
-          <div style={{ fontSize: '11px', color: 'var(--amber)', marginTop: '4px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Best Performance Score</div>
+          <div style={{ fontSize: '11px', color: 'var(--amber)', marginTop: '4px', fontWeight: 600 }}>
             {deptMetrics.find(d => d.avgPerformance === Math.max(...deptMetrics.map(d => d.avgPerformance)))?.label}
           </div>
         </div>
@@ -115,9 +115,9 @@ export default function DepartmentAnalytics() {
           <div style={{ width: '38px', height: '38px', background: 'var(--redbg)', color: 'var(--red)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             ⚠️
           </div>
-          <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{worstDept.label}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Needs Attention</div>
-          <div style={{ fontSize: '11px', color: worstDept.profit < 0 ? 'var(--red)' : 'var(--amber)', marginTop: '4px' }}>
+          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{worstDept.label}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Needs Attention</div>
+          <div style={{ fontSize: '11px', color: worstDept.profit < 0 ? 'var(--red)' : 'var(--amber)', marginTop: '4px', fontWeight: 600 }}>
             {worstDept.profit < 0 ? 'Loss: ' : 'Low Profit: '}{formatCurrency(Math.abs(worstDept.profit))}
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function DepartmentAnalytics() {
       {/* Department Comparison */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', marginBottom: '18px' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>📊</span>
             Department Performance Comparison
           </div>
@@ -135,13 +135,13 @@ export default function DepartmentAnalytics() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Department</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Employees</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Avg Score</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Revenue</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Expenses</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Profit/Loss</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>ROI</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Employees</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Avg Score</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Revenue</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Expenses</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Profit/Loss</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>ROI</th>
               </tr>
             </thead>
             <tbody>

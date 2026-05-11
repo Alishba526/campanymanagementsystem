@@ -21,11 +21,11 @@ export default function AuditPage() {
     <div>
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>📋</span>
             System Audit Log
           </div>
-          <span style={{ fontSize: '11px', color: 'var(--text3)' }}>{auditLogs.length} entries</span>
+          <span style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 600 }}>{auditLogs.length} entries</span>
         </div>
         <div style={{ padding: '20px' }}>
           <div>
