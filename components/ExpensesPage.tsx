@@ -68,11 +68,11 @@ export default function ExpensesPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div></div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#000', margin: 0 }}>💰 Expenses Management</h1>
         <button
           onClick={handleAdd}
-          style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
+          style={{ background: 'var(--accent)', color: '#fff', padding: '10px 18px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
           onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
         >
@@ -161,13 +161,13 @@ export default function ExpensesPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px' }}>
             <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>Add Expense</div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: '#000' }}>Add Expense</div>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '22px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Category</label>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#000', marginBottom: '6px', display: 'block' }}>Category</label>
                   <select
                     value={formData.category || ''}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -186,7 +186,7 @@ export default function ExpensesPage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Amount (Rs.)</label>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#000', marginBottom: '6px', display: 'block' }}>Amount (Rs.)</label>
                   <input
                     type="number"
                     value={formData.amount || ''}
@@ -199,7 +199,7 @@ export default function ExpensesPage() {
                 </div>
               </div>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Description</label>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#000', marginBottom: '6px', display: 'block' }}>Description</label>
                 <input
                   type="text"
                   value={formData.description || ''}
@@ -212,7 +212,7 @@ export default function ExpensesPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Date</label>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#000', marginBottom: '6px', display: 'block' }}>Date</label>
                   <input
                     type="date"
                     value={formData.date || ''}
@@ -223,7 +223,7 @@ export default function ExpensesPage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Status</label>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: '#000', marginBottom: '6px', display: 'block' }}>Status</label>
                   <select
                     value={formData.status || ''}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}

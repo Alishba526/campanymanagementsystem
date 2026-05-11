@@ -5,6 +5,7 @@ import { User, Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog, L
 import * as actions from '@/lib/actions';
 
 export type ThemeColor = 'purple' | 'blue' | 'green' | 'orange' | 'red' | 'teal' | 'light';
+export type ThemeMode = 'light' | 'dark';
 
 interface AppContextType {
   currentUser: User | null;
@@ -19,6 +20,7 @@ interface AppContextType {
   projects: Project[];
   schedules: MonthlySchedule[];
   themeColor: ThemeColor;
+  themeMode: ThemeMode;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -49,73 +51,221 @@ interface AppContextType {
   updateMonthlySchedule: (id: string, schedule: Partial<MonthlySchedule>) => Promise<void>;
   deleteMonthlySchedule: (id: string) => Promise<void>;
   setThemeColor: (color: ThemeColor) => void;
+  setThemeMode: (mode: ThemeMode) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const themeColors = {
   purple: {
-    primary: '#7c3aed',
-    secondary: '#a78bfa',
-    accentBg: '#f5f3ff',
-    bg: '#fafafa',
-    bg2: '#f5f5f5',
-    bg3: '#e5e5e5',
-    bg4: '#d4d4d4'
+    light: {
+      primary: '#7c3aed',
+      secondary: '#a78bfa',
+      accentBg: '#f5f3ff',
+      bg: '#fafafa',
+      bg2: '#f5f5f5',
+      bg3: '#e5e5e5',
+      bg4: '#d4d4d4',
+      text: '#1e293b',
+      text2: '#475569',
+      text3: '#94a3b8',
+      border: '#e2e8f0',
+      border2: '#cbd5e1'
+    },
+    dark: {
+      primary: '#a78bfa',
+      secondary: '#7c3aed',
+      accentBg: '#2e1065',
+      bg: '#0f172a',
+      bg2: '#1e293b',
+      bg3: '#334155',
+      bg4: '#475569',
+      text: '#f1f5f9',
+      text2: '#cbd5e1',
+      text3: '#64748b',
+      border: '#334155',
+      border2: '#475569'
+    }
   },
   blue: {
-    primary: '#2563eb',
-    secondary: '#60a5fa',
-    accentBg: '#eff6ff',
-    bg: '#fafafa',
-    bg2: '#f5f5f5',
-    bg3: '#e5e5e5',
-    bg4: '#d4d4d4'
+    light: {
+      primary: '#2563eb',
+      secondary: '#60a5fa',
+      accentBg: '#eff6ff',
+      bg: '#fafafa',
+      bg2: '#f5f5f5',
+      bg3: '#e5e5e5',
+      bg4: '#d4d4d4',
+      text: '#1e293b',
+      text2: '#475569',
+      text3: '#94a3b8',
+      border: '#e2e8f0',
+      border2: '#cbd5e1'
+    },
+    dark: {
+      primary: '#60a5fa',
+      secondary: '#2563eb',
+      accentBg: '#1e3a8a',
+      bg: '#0f172a',
+      bg2: '#1e293b',
+      bg3: '#334155',
+      bg4: '#475569',
+      text: '#f1f5f9',
+      text2: '#cbd5e1',
+      text3: '#64748b',
+      border: '#334155',
+      border2: '#475569'
+    }
   },
   green: {
-    primary: '#059669',
-    secondary: '#34d399',
-    accentBg: '#ecfdf5',
-    bg: '#fafafa',
-    bg2: '#f5f5f5',
-    bg3: '#e5e5e5',
-    bg4: '#d4d4d4'
+    light: {
+      primary: '#059669',
+      secondary: '#34d399',
+      accentBg: '#ecfdf5',
+      bg: '#fafafa',
+      bg2: '#f5f5f5',
+      bg3: '#e5e5e5',
+      bg4: '#d4d4d4',
+      text: '#1e293b',
+      text2: '#475569',
+      text3: '#94a3b8',
+      border: '#e2e8f0',
+      border2: '#cbd5e1'
+    },
+    dark: {
+      primary: '#34d399',
+      secondary: '#059669',
+      accentBg: '#064e3b',
+      bg: '#0f172a',
+      bg2: '#1e293b',
+      bg3: '#334155',
+      bg4: '#475569',
+      text: '#f1f5f9',
+      text2: '#cbd5e1',
+      text3: '#64748b',
+      border: '#334155',
+      border2: '#475569'
+    }
   },
   orange: {
-    primary: '#ea580c',
-    secondary: '#fb923c',
-    accentBg: '#fff7ed',
-    bg: '#fafafa',
-    bg2: '#f5f5f5',
-    bg3: '#e5e5e5',
-    bg4: '#d4d4d4'
+    light: {
+      primary: '#ea580c',
+      secondary: '#fb923c',
+      accentBg: '#fff7ed',
+      bg: '#fafafa',
+      bg2: '#f5f5f5',
+      bg3: '#e5e5e5',
+      bg4: '#d4d4d4',
+      text: '#1e293b',
+      text2: '#475569',
+      text3: '#94a3b8',
+      border: '#e2e8f0',
+      border2: '#cbd5e1'
+    },
+    dark: {
+      primary: '#fb923c',
+      secondary: '#ea580c',
+      accentBg: '#7c2d12',
+      bg: '#0f172a',
+      bg2: '#1e293b',
+      bg3: '#334155',
+      bg4: '#475569',
+      text: '#f1f5f9',
+      text2: '#cbd5e1',
+      text3: '#64748b',
+      border: '#334155',
+      border2: '#475569'
+    }
   },
   red: {
-    primary: '#dc2626',
-    secondary: '#f87171',
-    accentBg: '#fef2f2',
-    bg: '#fafafa',
-    bg2: '#f5f5f5',
-    bg3: '#e5e5e5',
-    bg4: '#d4d4d4'
+    light: {
+      primary: '#dc2626',
+      secondary: '#f87171',
+      accentBg: '#fef2f2',
+      bg: '#fafafa',
+      bg2: '#f5f5f5',
+      bg3: '#e5e5e5',
+      bg4: '#d4d4d4',
+      text: '#1e293b',
+      text2: '#475569',
+      text3: '#94a3b8',
+      border: '#e2e8f0',
+      border2: '#cbd5e1'
+    },
+    dark: {
+      primary: '#f87171',
+      secondary: '#dc2626',
+      accentBg: '#7f1d1d',
+      bg: '#0f172a',
+      bg2: '#1e293b',
+      bg3: '#334155',
+      bg4: '#475569',
+      text: '#f1f5f9',
+      text2: '#cbd5e1',
+      text3: '#64748b',
+      border: '#334155',
+      border2: '#475569'
+    }
   },
   teal: {
-    primary: '#0d9488',
-    secondary: '#2dd4bf',
-    accentBg: '#f0fdfa',
-    bg: '#fafafa',
-    bg2: '#f5f5f5',
-    bg3: '#e5e5e5',
-    bg4: '#d4d4d4'
+    light: {
+      primary: '#0d9488',
+      secondary: '#2dd4bf',
+      accentBg: '#f0fdfa',
+      bg: '#fafafa',
+      bg2: '#f5f5f5',
+      bg3: '#e5e5e5',
+      bg4: '#d4d4d4',
+      text: '#1e293b',
+      text2: '#475569',
+      text3: '#94a3b8',
+      border: '#e2e8f0',
+      border2: '#cbd5e1'
+    },
+    dark: {
+      primary: '#2dd4bf',
+      secondary: '#0d9488',
+      accentBg: '#134e4a',
+      bg: '#0f172a',
+      bg2: '#1e293b',
+      bg3: '#334155',
+      bg4: '#475569',
+      text: '#f1f5f9',
+      text2: '#cbd5e1',
+      text3: '#64748b',
+      border: '#334155',
+      border2: '#475569'
+    }
   },
   light: {
-    primary: '#6366f1',
-    secondary: '#818cf8',
-    accentBg: '#eef2ff',
-    bg: '#ffffff',
-    bg2: '#f9fafb',
-    bg3: '#f3f4f6',
-    bg4: '#e5e7eb'
+    light: {
+      primary: '#6366f1',
+      secondary: '#818cf8',
+      accentBg: '#eef2ff',
+      bg: '#ffffff',
+      bg2: '#f9fafb',
+      bg3: '#f3f4f6',
+      bg4: '#e5e7eb',
+      text: '#1e293b',
+      text2: '#475569',
+      text3: '#94a3b8',
+      border: '#e2e8f0',
+      border2: '#cbd5e1'
+    },
+    dark: {
+      primary: '#818cf8',
+      secondary: '#6366f1',
+      accentBg: '#312e81',
+      bg: '#0f172a',
+      bg2: '#1e293b',
+      bg3: '#334155',
+      bg4: '#475569',
+      text: '#f1f5f9',
+      text2: '#cbd5e1',
+      text3: '#64748b',
+      border: '#334155',
+      border2: '#475569'
+    }
   }
 };
 
@@ -132,6 +282,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [schedules, setSchedules] = useState<MonthlySchedule[]>([]);
   const [themeColor, setThemeColorState] = useState<ThemeColor>('light');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
   const [isLoading, setIsLoading] = useState(true);
 
   // Initial data fetch
@@ -177,14 +328,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchData();
 
     const savedTheme = localStorage.getItem('nexaerp-theme') as ThemeColor;
+    const savedMode = localStorage.getItem('nexaerp-theme-mode') as ThemeMode;
+
     if (savedTheme && themeColors[savedTheme]) {
       setThemeColorState(savedTheme);
-      applyTheme(savedTheme);
     }
+
+    if (savedMode && (savedMode === 'light' || savedMode === 'dark')) {
+      setThemeModeState(savedMode);
+    }
+
+    applyTheme(savedTheme || 'light', savedMode || 'light');
   }, []);
 
-  const applyTheme = (color: ThemeColor) => {
-    const theme = themeColors[color];
+  const applyTheme = (color: ThemeColor, mode: ThemeMode) => {
+    const theme = themeColors[color][mode];
     document.documentElement.style.setProperty('--accent', theme.primary);
     document.documentElement.style.setProperty('--accent2', theme.secondary);
     document.documentElement.style.setProperty('--accentbg', theme.accentBg);
@@ -192,19 +350,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.style.setProperty('--bg2', theme.bg2);
     document.documentElement.style.setProperty('--bg3', theme.bg3);
     document.documentElement.style.setProperty('--bg4', theme.bg4);
+    document.documentElement.style.setProperty('--text', theme.text);
+    document.documentElement.style.setProperty('--text2', theme.text2);
+    document.documentElement.style.setProperty('--text3', theme.text3);
+    document.documentElement.style.setProperty('--border', theme.border);
+    document.documentElement.style.setProperty('--border2', theme.border2);
 
-    document.documentElement.style.setProperty('--text', '#1e293b');
-    document.documentElement.style.setProperty('--text2', '#475569');
-    document.documentElement.style.setProperty('--text3', '#94a3b8');
-    document.documentElement.style.setProperty('--border', '#e2e8f0');
-    document.documentElement.style.setProperty('--border2', '#cbd5e1');
+    // Fixed colors for status badges
+    document.documentElement.style.setProperty('--green', '#10b981');
+    document.documentElement.style.setProperty('--greenbg', mode === 'dark' ? '#064e3b' : '#d1fae5');
+    document.documentElement.style.setProperty('--red', '#ef4444');
+    document.documentElement.style.setProperty('--redbg', mode === 'dark' ? '#7f1d1d' : '#fee2e2');
+    document.documentElement.style.setProperty('--blue', '#3b82f6');
+    document.documentElement.style.setProperty('--bluebg', mode === 'dark' ? '#1e3a8a' : '#dbeafe');
+    document.documentElement.style.setProperty('--amber', '#f59e0b');
+    document.documentElement.style.setProperty('--amberbg', mode === 'dark' ? '#78350f' : '#fef3c7');
+    document.documentElement.style.setProperty('--teal', '#14b8a6');
+    document.documentElement.style.setProperty('--tealbg', mode === 'dark' ? '#134e4a' : '#ccfbf1');
   };
 
   const setThemeColor = (color: ThemeColor) => {
     setThemeColorState(color);
-    applyTheme(color);
+    applyTheme(color, themeMode);
     localStorage.setItem('nexaerp-theme', color);
-    addAuditLog(`Theme changed to ${color}`);
+    addAuditLog(`Theme color changed to ${color}`);
+  };
+
+  const setThemeMode = (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    applyTheme(themeColor, mode);
+    localStorage.setItem('nexaerp-theme-mode', mode);
+    addAuditLog(`Theme mode changed to ${mode}`);
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -424,6 +600,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       projects,
       schedules,
       themeColor,
+      themeMode,
       isLoading,
       login,
       logout,
@@ -453,7 +630,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addMonthlySchedule,
       updateMonthlySchedule,
       deleteMonthlySchedule,
-      setThemeColor
+      setThemeColor,
+      setThemeMode
     }}>
       {children}
     </AppContext.Provider>

@@ -10,7 +10,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
-  const { currentUser, logout, themeColor, setThemeColor } = useApp();
+  const { currentUser, logout, themeColor, themeMode, setThemeColor, setThemeMode } = useApp();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   if (!currentUser) return null;
@@ -224,6 +224,21 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
               </div>
             </>
           )}
+        </div>
+
+        {/* Dark/Light Mode Toggle */}
+        <div style={{ marginBottom: '12px' }}>
+          <button
+            onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', transition: '.15s', color: 'var(--text2)', fontSize: '12px' }}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border2)'}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {themeMode === 'light' ? '☀️' : '🌙'} <span>{themeMode === 'light' ? 'Light Mode' : 'Dark Mode'}</span>
+            </span>
+            <span style={{ fontSize: '10px', fontWeight: 600 }}>Toggle</span>
+          </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
