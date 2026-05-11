@@ -68,11 +68,11 @@ export default function EmployeesPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '13px', color: 'var(--text2)' }}>{departmentEmployees.length} employees</div>
+        <div style={{ fontSize: '14px', color: '#000', fontWeight: 700 }}>{departmentEmployees.length} employees</div>
         {canManage && (
           <button
             onClick={handleAdd}
-            style={{ background: 'var(--accent)', color: '#fff', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
+            style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
           >
@@ -83,7 +83,7 @@ export default function EmployeesPage() {
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>👥</span>
             All Employees
           </div>
@@ -92,17 +92,17 @@ export default function EmployeesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>ID</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Name</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Department</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Position</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>ID</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Name</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Position</th>
                 {currentUser.role === 'admin' && (
-                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Salary</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Salary</th>
                 )}
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Join Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Status</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Perf</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Actions</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Join Date</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Status</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Performance</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -111,19 +111,19 @@ export default function EmployeesPage() {
                 return (
                   <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                     <td style={{ padding: '10px 16px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--accentbg)', color: 'var(--accent2)', borderRadius: '20px', padding: '3px 9px', fontSize: '11px', fontWeight: 600 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--accentbg)', color: 'var(--accent2)', borderRadius: '20px', padding: '3px 9px', fontSize: '12px', fontWeight: 700 }}>
                         {emp.id}
                       </span>
                     </td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{emp.name}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)', textTransform: 'capitalize' }}>{emp.department}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.position}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#000', fontWeight: 700 }}>{emp.name}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', textTransform: 'capitalize', fontWeight: 600 }}>{emp.department}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{emp.position}</td>
                     {currentUser.role === 'admin' && (
-                      <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--green)', fontWeight: 600 }}>{formatCurrency(emp.salary)}</td>
+                      <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--green)', fontWeight: 800 }}>{formatCurrency(emp.salary)}</td>
                     )}
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.joinDate}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{emp.joinDate}</td>
                     <td style={{ padding: '10px 16px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '20px', padding: '3px 9px', fontSize: '11px', fontWeight: 600 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '20px', padding: '3px 9px', fontSize: '12px', fontWeight: 700 }}>
                         {emp.status}
                       </span>
                     </td>
@@ -134,8 +134,8 @@ export default function EmployeesPage() {
                         gap: '4px',
                         borderRadius: '20px',
                         padding: '3px 9px',
-                        fontSize: '11px',
-                        fontWeight: 600,
+                        fontSize: '12px',
+                        fontWeight: 800,
                         background: avgScore >= 80 ? 'var(--greenbg)' : avgScore >= 60 ? 'var(--amberbg)' : 'var(--redbg)',
                         color: avgScore >= 80 ? 'var(--green)' : avgScore >= 60 ? 'var(--amber)' : 'var(--red)'
                       }}>

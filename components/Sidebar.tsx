@@ -19,23 +19,23 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
     admin: [
       { section: 'Overview', items: [
         { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-        { id: 'analytics', icon: '📈', label: 'Department Analytics' },
+        { id: 'analytics', icon: '📈', label: 'Department Reports' },
         { id: 'broadcast', icon: '📢', label: 'Announcements' },
-        { id: 'reports', icon: '📋', label: 'Monthly Reports' },
-        { id: 'monthlyslips', icon: '📄', label: 'Employee Report Slips' },
-        { id: 'audit', icon: '🔍', label: 'Audit Log' },
-        { id: 'projects', icon: '📁', label: 'Client Ledgers' }
+        { id: 'reports', icon: '📋', label: 'Business Reports' },
+        { id: 'monthlyslips', icon: '📄', label: 'Employee Reports' },
+        { id: 'audit', icon: '🔍', label: 'Activity Log' },
+        { id: 'projects', icon: '📁', label: 'Client Projects' }
       ]},
-      { section: 'HR Operations', items: [
-        { id: 'employees', icon: '👥', label: 'Employees & Salaries' },
-        { id: 'attendance', icon: '⏰', label: 'Attendance' },
+      { section: 'HR Management', items: [
+        { id: 'employees', icon: '👥', label: 'Employees' },
+        { id: 'attendance', icon: '⏰', label: 'Daily Attendance' },
         { id: 'deptattendance', icon: '📊', label: 'Dept. Attendance' },
-        { id: 'schedule', icon: '📅', label: 'Monthly Schedule' },
+        { id: 'schedule', icon: '📅', label: 'Work Schedule' },
         { id: 'performance', icon: '🎯', label: 'Performance' },
         { id: 'leave', icon: '🏖️', label: 'Leave Requests' }
       ]},
-      { section: 'Financial Operations', items: [
-        { id: 'finance', icon: '💰', label: 'Income & P&L' },
+      { section: 'Finance', items: [
+        { id: 'finance', icon: '💰', label: 'Income & Profit' },
         { id: 'expenses', icon: '🧾', label: 'Expenses' },
         { id: 'payroll', icon: '💳', label: 'Payroll' }
       ]}

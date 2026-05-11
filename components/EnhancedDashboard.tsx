@@ -166,7 +166,7 @@ export default function EnhancedDashboard() {
       {/* Smart Alerts Section */}
       {alerts.length > 0 && (
         <div style={{ marginBottom: '22px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '12px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '12px', color: '#000', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>🔔</span> Smart Alerts & Insights
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
@@ -177,9 +177,9 @@ export default function EnhancedDashboard() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <span style={{ fontSize: '24px' }}>{alert.icon}</span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: style.color, marginBottom: '4px' }}>{alert.title}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text2)', marginBottom: '6px' }}>{alert.message}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text3)', fontStyle: 'italic' }}>→ {alert.action}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: style.color, marginBottom: '4px' }}>{alert.title}</div>
+                      <div style={{ fontSize: '13px', color: '#000', marginBottom: '6px', fontWeight: 600 }}>{alert.message}</div>
+                      <div style={{ fontSize: '12px', color: '#333', fontStyle: 'italic', fontWeight: 600 }}>→ {alert.action}</div>
                     </div>
                   </div>
                 </div>
@@ -197,33 +197,33 @@ export default function EnhancedDashboard() {
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: netProfit >= 0 ? 'var(--greenbg)' : 'var(--redbg)', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>
                 {netProfit >= 0 ? '📈' : '📉'}
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(netProfit)}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Net Profit</div>
-              <div style={{ fontSize: '11px', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)', marginTop: '4px' }}>Margin: {profitMargin}%</div>
+              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(netProfit)}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Net Profit</div>
+              <div style={{ fontSize: '12px', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)', marginTop: '4px', fontWeight: 700 }}>Margin: {profitMargin}%</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--bluebg)', color: 'var(--blue)' }}>
                 💰
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{formatCurrency(totalIncome)}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Total Income</div>
-              <div style={{ fontSize: '11px', color: 'var(--amber)', marginTop: '4px' }}>Pending: {formatCurrency(pendingIncome)}</div>
+              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{formatCurrency(totalIncome)}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Total Income</div>
+              <div style={{ fontSize: '12px', color: 'var(--amber)', marginTop: '4px', fontWeight: 700 }}>Pending: {formatCurrency(pendingIncome)}</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--redbg)', color: 'var(--red)' }}>
                 💸
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{formatCurrency(totalCashOut)}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Total Cash Out</div>
-              <div style={{ fontSize: '11px', color: 'var(--red)', marginTop: '4px' }}>Exp + Salaries</div>
+              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{formatCurrency(totalCashOut)}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Total Cash Out</div>
+              <div style={{ fontSize: '12px', color: 'var(--red)', marginTop: '4px', fontWeight: 700 }}>Exp + Salaries</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: attendanceRate >= 80 ? 'var(--greenbg)' : 'var(--amberbg)', color: attendanceRate >= 80 ? 'var(--green)' : 'var(--amber)' }}>
                 👥
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{attendanceRate}%</div>
-              <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Attendance Rate</div>
-              <div style={{ fontSize: '11px', color: 'var(--text3)', marginTop: '4px' }}>{presentToday}/{employees.length} present</div>
+              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{attendanceRate}%</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Attendance Rate</div>
+              <div style={{ fontSize: '12px', color: '#333', marginTop: '4px', fontWeight: 700 }}>{presentToday}/{employees.length} present</div>
             </div>
           </>
         ) : (
@@ -232,21 +232,30 @@ export default function EnhancedDashboard() {
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--greenbg)', color: 'var(--green)' }}>
                 👥
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{departmentEmployees.length}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Team Members</div>
+              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{departmentEmployees.length}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Team Members</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--bluebg)', color: 'var(--blue)' }}>
                 ⏰
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{presentToday}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Present Today</div>
+              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{presentToday}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Present Today</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--amberbg)', color: 'var(--amber)' }}>
                 📈
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '2px', color: 'var(--text)' }}>{avgPerformance}</div>
+              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{avgPerformance}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Avg Performance</div>
+            </div>
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--tealbg)', color: 'var(--teal)' }}>
+                📅
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{pendingLeaves}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Pending Leaves</div>
+            </div>
               <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Avg Performance</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
