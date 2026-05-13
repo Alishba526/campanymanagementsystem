@@ -66,6 +66,35 @@ export default function HistoricalReportsPage() {
   const lateCount = filteredAttendance.filter(a => a.status === 'late').length;
   const attendanceRate = filteredAttendance.length > 0 ? Math.round((presentCount / filteredAttendance.length) * 100) : 0;
 
+  // Department-wise breakdown
+  const departments = ['ecommerce', 'marketing', 'architecture'];
+  const deptStats = departments.map(dept => {
+    const deptEmployees = employees.filter(e => e.department === dept);
+    const deptAttendance = filteredAttendance.filter(a => {
+      const emp = employees.find(e => e.id === a.employeeId);
+      return emp?.department === dept;
+    });
+    const deptPresent = deptAttendance.filter(a => a.status === 'present').length;
+    const deptAbsent = deptAttendance.filter(a => a.status === 'absent').length;
+    const deptLate = deptAttendance.filter(a => a.status === 'late').length;
+    const deptExpenses = filteredExpenses.filter(e => e.department === dept).reduce((sum, e) => sum + e.amount, 0);
+    const deptIncome = filteredIncome.filter(i => i.department === dept).reduce((sum, i) => sum + i.amount, 0);
+
+    return {
+      name: dept,
+      label: dept === 'ecommerce' ? 'E-Commerce' : dept === 'marketing' ? 'Marketing' : 'Architecture',
+      icon: dept === 'ecommerce' ? '🛒' : dept === 'marketing' ? '📢' : '🏗️',
+      employees: deptEmployees.length,
+      present: deptPresent,
+      absent: deptAbsent,
+      late: deptLate,
+      total: deptAttendance.length,
+      rate: deptAttendance.length > 0 ? Math.round((deptPresent / deptAttendance.length) * 100) : 0,
+      expenses: deptExpenses,
+      income: deptIncome
+    };
+  });
+
   // Get period label
   const getPeriodLabel = () => {
     if (viewMode === 'daily') {
@@ -297,11 +326,11 @@ export default function HistoricalReportsPage() {
       </div>
 
       {/* Attendance Summary */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', marginBottom: '22px' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--blue)' }}>⏰</span>
-            Attendance Summary
+            Overall Attendance Summary
           </div>
         </div>
         <div style={{ padding: '20px' }}>
@@ -324,6 +353,63 @@ export default function HistoricalReportsPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Department-wise Breakdown */}
+      <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 'normal', color: '#000', marginBottom: '16px' }}>📊 Department-wise Breakdown</h2>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '18px' }}>
+        {deptStats.map(dept => (
+          <div key={dept.name} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
+            <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', background: 'var(--accentbg)' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent)' }}>
+                <span style={{ fontSize: '20px' }}>{dept.icon}</span>
+                {dept.label}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text2)', marginTop: '4px' }}>{dept.employees} Employees</div>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              {/* Attendance Rate */}
+              <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                <div style={{ fontSize: '36px', fontWeight: 'normal', color: dept.rate >= 80 ? 'var(--green)' : dept.rate >= 60 ? 'var(--amber)' : 'var(--red)', marginBottom: '4px' }}>
+                  {dept.rate}%
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Attendance Rate</div>
+              </div>
+
+              {/* Attendance Breakdown */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--greenbg)', borderRadius: '6px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--green)', fontWeight: 'normal' }}>✓ Present</span>
+                  <span style={{ fontSize: '16px', color: 'var(--green)', fontWeight: 'bold' }}>{dept.present}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--redbg)', borderRadius: '6px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--red)', fontWeight: 'normal' }}>✗ Absent</span>
+                  <span style={{ fontSize: '16px', color: 'var(--red)', fontWeight: 'bold' }}>{dept.absent}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'var(--amberbg)', borderRadius: '6px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--amber)', fontWeight: 'normal' }}>⏰ Late</span>
+                  <span style={{ fontSize: '16px', color: 'var(--amber)', fontWeight: 'bold' }}>{dept.late}</span>
+                </div>
+              </div>
+
+              {/* Financial Summary */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text2)' }}>Income</span>
+                  <span style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 'normal' }}>{formatCurrency(dept.income)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text2)' }}>Expenses</span>
+                  <span style={{ fontSize: '12px', color: 'var(--red)', fontWeight: 'normal' }}>{formatCurrency(dept.expenses)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
