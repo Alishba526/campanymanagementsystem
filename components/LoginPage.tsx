@@ -17,25 +17,25 @@ export default function LoginPage() {
       icon: '👑',
       label: 'Admin',
       defaultEmail: 'admin@growzix.com',
-      defaultPassword: 'admin123'
+      defaultPassword: 'Admin@2024#Secure'
     },
     ecommerce: {
       icon: '🛒',
       label: 'Manager Ecommerce',
       defaultEmail: 'ecommerce@growzix.com',
-      defaultPassword: 'eCommerce123'
+      defaultPassword: 'Ecom$Manager789'
     },
     marketing: {
       icon: '📢',
       label: 'Manager Marketing',
       defaultEmail: 'marketing@growzix.com',
-      defaultPassword: 'marketing123'
+      defaultPassword: 'Market!ng456Pro'
     },
     architecture: {
       icon: '🏗️',
       label: 'Manager Architecture',
       defaultEmail: 'architecture@growzix.com',
-      defaultPassword: 'architecture123'
+      defaultPassword: 'Arch#Tech321Mgr'
     }
   };
 

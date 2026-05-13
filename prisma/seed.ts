@@ -17,10 +17,10 @@ async function main() {
 
   // ONLY keep the core system users/roles so you can login
   const users = [
-    { email: 'admin@growzix.com', password: 'admin123', role: 'admin', name: 'Usman Haider' },
-    { email: 'ecommerce@growzix.com', password: 'eCommerce123', role: 'ecommerce', name: 'Manager Ecommerce' },
-    { email: 'marketing@growzix.com', password: 'marketing123', role: 'marketing', name: 'Manager Marketing' },
-    { email: 'architecture@growzix.com', password: 'architecture123', role: 'architecture', name: 'Manager Architecture' }
+    { email: 'admin@growzix.com', password: 'Admin@2024#Secure', role: 'admin', name: 'Usman Haider' },
+    { email: 'ecommerce@growzix.com', password: 'Ecom$Manager789', role: 'ecommerce', name: 'Manager Ecommerce' },
+    { email: 'marketing@growzix.com', password: 'Market!ng456Pro', role: 'marketing', name: 'Manager Marketing' },
+    { email: 'architecture@growzix.com', password: 'Arch#Tech321Mgr', role: 'architecture', name: 'Manager Architecture' }
   ];
 
   for (const user of users) {
