@@ -23,6 +23,7 @@ import DepartmentAttendance from './DepartmentAttendance';
 import BillsPage from './BillsPage';
 import FinancialOverviewPage from './FinancialOverviewPage';
 import ExpensesDepartmentPage from './ExpensesDepartmentPage';
+import HistoricalReportsPage from './HistoricalReportsPage';
 
 export default function MainApp() {
   const { currentUser } = useApp();
@@ -47,6 +48,7 @@ export default function MainApp() {
     audit: <AuditPage />,
     leave: <LeavePage />,
     reports: <ReportsPage />,
+    historical: <HistoricalReportsPage />,
     monthlyslips: <MonthlyReportSlip />,
     broadcast: <BroadcastPage />,
     projects: <ProjectsPage />
@@ -69,6 +71,7 @@ export default function MainApp() {
     audit: 'Audit Log',
     leave: 'Leave Requests',
     reports: 'Monthly Analytics Report',
+    historical: 'Historical Reports & Profit/Loss',
     monthlyslips: 'Employee Monthly Report Slips',
     broadcast: 'Company Announcements',
     projects: 'Client Ledgers & Projects'

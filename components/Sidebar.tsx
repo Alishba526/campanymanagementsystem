@@ -22,6 +22,7 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
         { id: 'analytics', icon: '📈', label: 'Department Reports' },
         { id: 'broadcast', icon: '📢', label: 'Announcements' },
         { id: 'reports', icon: '📋', label: 'Business Reports' },
+        { id: 'historical', icon: '📅', label: 'Historical Data' },
         { id: 'monthlyslips', icon: '📄', label: 'Employee Reports' },
         { id: 'audit', icon: '🔍', label: 'Activity Log' },
         { id: 'projects', icon: '📁', label: 'Client Projects' }
