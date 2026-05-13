@@ -45,11 +45,11 @@ export default function ProjectsPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#000' }}>Client Projects & Ledgers</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 'normal', color: '#000' }}>Client Projects & Ledgers</h2>
         {isAdmin && (
           <button
             onClick={() => setShowModal(true)}
-            style={{ background: 'var(--accent)', color: '#fff', padding: '10px 18px', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ background: 'var(--accent)', color: '#fff', padding: '10px 18px', borderRadius: '8px', border: 'none', fontWeight: 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <span>➕</span> New Project
           </button>
@@ -61,11 +61,11 @@ export default function ProjectsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Client & Project</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Financials (Kia Lia)</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Balance (Baaki)</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Status</th>
-                {isAdmin && <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Actions</th>}
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Client & Project</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Financials (Kia Lia)</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Balance (Baaki)</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Status</th>
+                {isAdmin && <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -76,15 +76,15 @@ export default function ProjectsPage() {
                 return (
                   <tr key={p.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '14px 16px' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>{p.projectName}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text3)' }}>Client: <strong>{p.clientName}</strong></div>
+                      <div style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text)' }}>{p.projectName}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Client: <strong>{p.clientName}</strong></div>
                     </td>
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ fontSize: '13px', color: 'var(--text2)' }}>Budget: {formatCurrency(p.totalBudget)}</div>
-                      <div style={{ fontSize: '13px', color: 'var(--green)', fontWeight: 600 }}>Received: {formatCurrency(p.amountReceived)}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--green)', fontWeight: 'normal' }}>Received: {formatCurrency(p.amountReceived)}</div>
                     </td>
                     <td style={{ padding: '14px 16px' }}>
-                      <div style={{ fontSize: '13px', color: balance > 0 ? 'var(--red)' : 'var(--green)', fontWeight: 700 }}>
+                      <div style={{ fontSize: '13px', color: balance > 0 ? 'var(--red)' : 'var(--green)', fontWeight: 'normal' }}>
                         {balance > 0 ? formatCurrency(balance) : 'Paid Full'}
                       </div>
                       <div style={{ width: '100px', height: '6px', background: 'var(--bg3)', borderRadius: '10px', marginTop: '6px', overflow: 'hidden' }}>
@@ -94,8 +94,8 @@ export default function ProjectsPage() {
                     <td style={{ padding: '14px 16px' }}>
                       <span style={{ 
                         background: p.status === 'completed' ? 'var(--greenbg)' : p.status === 'active' ? 'var(--bluebg)' : 'var(--bg3)',
-                        color: p.status === 'completed' ? 'var(--green)' : p.status === 'active' ? 'var(--blue)' : 'var(--text3)',
-                        fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', textTransform: 'uppercase'
+                        color: p.status === 'completed' ? 'var(--green)' : p.status === 'active' ? 'var(--blue)' : 'var(--text2)',
+                        fontSize: '11px', fontWeight: 'normal', padding: '4px 10px', borderRadius: '20px', textTransform: 'uppercase'
                       }}>
                         {p.status}
                       </span>
@@ -123,7 +123,7 @@ export default function ProjectsPage() {
               })}
               {projects.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No projects found.</td>
+                  <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text2)' }}>No projects found.</td>
                 </tr>
               )}
             </tbody>
@@ -135,13 +135,13 @@ export default function ProjectsPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '500px' }}>
             <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>Project <strong>Ledger</strong> Entry</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+              <div style={{ fontSize: '15px', fontWeight: 'normal', color: 'var(--text)' }}>Project <strong>Ledger</strong> Entry</div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Client Name</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Client Name</label>
                   <input
                     type="text"
                     value={formData.clientName || ''}
@@ -150,7 +150,7 @@ export default function ProjectsPage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Project Title</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Project Title</label>
                   <input
                     type="text"
                     value={formData.projectName || ''}
@@ -161,7 +161,7 @@ export default function ProjectsPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Total Budget (Lia)</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Total Budget (Lia)</label>
                   <input
                     type="number"
                     value={formData.totalBudget || ''}
@@ -170,7 +170,7 @@ export default function ProjectsPage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Amount Received (Dia)</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Amount Received (Dia)</label>
                   <input
                     type="number"
                     value={formData.amountReceived || ''}
@@ -180,7 +180,7 @@ export default function ProjectsPage() {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Status</label>
+                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Status</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
@@ -193,7 +193,7 @@ export default function ProjectsPage() {
               </div>
               <button
                 onClick={handleSave}
-                style={{ background: 'var(--accent)', color: '#fff', padding: '12px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', marginTop: '10px' }}
+                style={{ background: 'var(--accent)', color: '#fff', padding: '12px', borderRadius: '8px', fontSize: '14px', fontWeight: 'normal', cursor: 'pointer', border: 'none', marginTop: '10px' }}
               >
                 💾 Save Project Ledger
               </button>

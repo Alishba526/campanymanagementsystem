@@ -2,7 +2,7 @@
 
 // Force re-compilation - Correct DB URL sync
 import { prisma } from '@/lib/prisma';
-import { Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog, User, LeaveRequest, Announcement, Project, MonthlySchedule } from '@/types';
+import { Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog, User, LeaveRequest, Announcement, Project, MonthlySchedule, Bill } from '@/types';
 import { revalidatePath } from 'next/cache';
 
 // ... (existing code)
@@ -15,8 +15,26 @@ export async function getMonthlySchedules() {
 }
 
 export async function addMonthlyScheduleAction(schedule: MonthlySchedule) {
+  // Explicitly map fields to data object, handling optional fields like weeklyOffs
+  const { id, employeeId, employeeName, month, startTime, endTime, totalHours, weeklyOffs } = schedule;
+  
+  const data: any = { // Use 'any' temporarily if schema mapping is complex, but ideally type it
+    id,
+    employeeId,
+    employeeName,
+    month,
+    startTime,
+    endTime,
+    totalHours,
+  };
+
+  // Conditionally add weeklyOffs if it exists
+  if (weeklyOffs) {
+    data.weeklyOffs = weeklyOffs;
+  }
+
   return await prisma.monthlySchedule.create({
-    data: schedule as any
+    data: data
   });
 }
 
@@ -53,7 +71,7 @@ export async function addEmployeeAction(employee: Employee) {
     status: employee.status || 'active',
     joinDate: employee.joinDate || new Date().toISOString().split('T')[0],
     phone: employee.phone || '0300-0000000',
-    email: employee.email || 'employee@nexaerp.com',
+    email: employee.email || 'employee@growzix.com',
     position: employee.position || 'Employee',
   };
 
@@ -138,7 +156,17 @@ export async function getExpenses() {
 
 export async function addExpenseAction(expense: Expense) {
   return await prisma.expense.create({
-    data: expense
+    data: {
+      id: expense.id,
+      date: expense.date,
+      category: expense.category,
+      description: expense.description,
+      amount: expense.amount,
+      status: expense.status,
+      approvedBy: expense.approvedBy,
+      submittedBy: expense.submittedBy,
+      department: expense.department
+    }
   });
 }
 
@@ -163,6 +191,7 @@ export async function getIncome() {
 }
 
 export async function addIncomeAction(income: Income) {
+  // Assuming Income type now includes a 'department' field
   return await prisma.income.create({
     data: income
   });
@@ -254,6 +283,32 @@ export async function updateProjectAction(id: string, updates: Partial<Project>)
 
 export async function deleteProjectAction(id: string) {
   await prisma.project.delete({
+    where: { id }
+  });
+}
+
+// Bill Actions
+export async function getBills() {
+  return await prisma.bill.findMany({
+    orderBy: { createdAt: 'desc' }
+  });
+}
+
+export async function addBillAction(bill: Bill) {
+  return await prisma.bill.create({
+    data: bill as any
+  });
+}
+
+export async function updateBillAction(id: string, updates: Partial<Bill>) {
+  return await prisma.bill.update({
+    where: { id },
+    data: updates as any
+  });
+}
+
+export async function deleteBillAction(id: string) {
+  await prisma.bill.delete({
     where: { id }
   });
 }

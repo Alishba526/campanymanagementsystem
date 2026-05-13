@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NexaERP - AI-Powered Enterprise System",
-  description: "Complete ERP management system with role-based access control",
+  title: "GROWZIX - Professional Enterprise Management System",
+  description: "Advanced ERP management system with a focus on professional performance and efficiency",
 };
 
 export default function RootLayout({

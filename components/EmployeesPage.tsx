@@ -3,6 +3,7 @@
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { Employee } from '@/types';
+import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
 
 export default function EmployeesPage() {
   const { currentUser, employees, addEmployee, updateEmployee, deleteEmployee, tasks } = useApp();
@@ -31,7 +32,7 @@ export default function EmployeesPage() {
     setFormData({
       department: currentUser.role === 'admin' ? 'ecommerce' : currentUser.role,
       status: 'active',
-      joinDate: new Date().toISOString().split('T')[0],
+      joinDate: getCurrentDate(),
       monthlyHours: 176
     });
     setShowModal(true);
@@ -63,16 +64,19 @@ export default function EmployeesPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString()}`;
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (typeof amount !== 'number') return 'Rs. 0';
+    return `Rs. ${amount.toLocaleString()}`;
+  };
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', color: '#000', fontWeight: 700 }}>{departmentEmployees.length} employees</div>
+        <div style={{ fontSize: '14px', color: '#000', fontWeight: 'normal' }}>{departmentEmployees.length} employees</div>
         {canManage && (
           <button
             onClick={handleAdd}
-            style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
+            style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 'normal', cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
           >
@@ -83,7 +87,7 @@ export default function EmployeesPage() {
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>👥</span>
             All Employees
           </div>
@@ -92,17 +96,17 @@ export default function EmployeesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>ID</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Name</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Position</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>ID</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Name</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Position</th>
                 {currentUser.role === 'admin' && (
-                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Salary</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Salary</th>
                 )}
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Join Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Status</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Performance</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Join Date</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Status</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Performance</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -111,19 +115,19 @@ export default function EmployeesPage() {
                 return (
                   <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                     <td style={{ padding: '10px 16px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--accentbg)', color: 'var(--accent2)', borderRadius: '20px', padding: '3px 9px', fontSize: '12px', fontWeight: 700 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--accentbg)', color: 'var(--accent2)', borderRadius: '20px', padding: '3px 9px', fontSize: '12px', fontWeight: 'normal' }}>
                         {emp.id}
                       </span>
                     </td>
-                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#000', fontWeight: 700 }}>{emp.name}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', textTransform: 'capitalize', fontWeight: 600 }}>{emp.department}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{emp.position}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#000', fontWeight: 'normal' }}>{emp.name}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', textTransform: 'capitalize', fontWeight: 'normal' }}>{emp.department}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{emp.position}</td>
                     {currentUser.role === 'admin' && (
-                      <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--green)', fontWeight: 800 }}>{formatCurrency(emp.salary)}</td>
+                      <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--green)', fontWeight: 'normal' }}>{formatCurrency(emp.salary)}</td>
                     )}
-                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{emp.joinDate}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{formatDateShort(emp.joinDate)}</td>
                     <td style={{ padding: '10px 16px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '20px', padding: '3px 9px', fontSize: '12px', fontWeight: 700 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '20px', padding: '3px 9px', fontSize: '12px', fontWeight: 'normal' }}>
                         {emp.status}
                       </span>
                     </td>
@@ -135,7 +139,7 @@ export default function EmployeesPage() {
                         borderRadius: '20px',
                         padding: '3px 9px',
                         fontSize: '12px',
-                        fontWeight: 800,
+                        fontWeight: 'normal',
                         background: avgScore >= 80 ? 'var(--greenbg)' : avgScore >= 60 ? 'var(--amberbg)' : 'var(--redbg)',
                         color: avgScore >= 80 ? 'var(--green)' : avgScore >= 60 ? 'var(--amber)' : 'var(--red)'
                       }}>
@@ -147,7 +151,7 @@ export default function EmployeesPage() {
                         {canManage && (
                           <button
                             onClick={() => handleEdit(emp)}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
                           >
@@ -157,7 +161,7 @@ export default function EmployeesPage() {
                         {currentUser.role === 'admin' && (
                           <button
                             onClick={() => handleDelete(emp.id)}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
                           >
@@ -179,15 +183,15 @@ export default function EmployeesPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>
+              <div style={{ fontSize: '15px', fontWeight: 'normal', color: 'var(--text)' }}>
                 {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '22px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Full Name</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Full Name</label>
                   <input
                     type="text"
                     value={formData.name || ''}
@@ -199,7 +203,7 @@ export default function EmployeesPage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Employee ID</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Employee ID</label>
                   <input
                     type="text"
                     value={formData.id || ''}
@@ -214,7 +218,7 @@ export default function EmployeesPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Department</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Department</label>
                   <select
                     value={formData.department || ''}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
@@ -229,7 +233,7 @@ export default function EmployeesPage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Position</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Position</label>
                   <input
                     type="text"
                     value={formData.position || ''}
@@ -243,19 +247,19 @@ export default function EmployeesPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Email</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Email</label>
                   <input
                     type="email"
                     value={formData.email || ''}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    placeholder="name@nexaerp.com"
+                    placeholder="name@growzix.com"
                     onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
                     onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Phone</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Phone</label>
                   <input
                     type="text"
                     value={formData.phone || ''}
@@ -270,7 +274,7 @@ export default function EmployeesPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {currentUser.role === 'admin' && (
                   <div>
-                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Monthly Salary (Rs.)</label>
+                    <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Monthly Salary (Rs.)</label>
                     <input
                       type="number"
                       value={formData.salary || ''}
@@ -283,7 +287,7 @@ export default function EmployeesPage() {
                   </div>
                 )}
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Join Date</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Join Date</label>
                   <input
                     type="date"
                     value={formData.joinDate || ''}
@@ -298,7 +302,7 @@ export default function EmployeesPage() {
             <div style={{ padding: '16px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
               >
@@ -306,7 +310,7 @@ export default function EmployeesPage() {
               </button>
               <button
                 onClick={handleSave}
-                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
+                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
               >

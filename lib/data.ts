@@ -3,25 +3,25 @@ import { User, Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog } 
 // User credentials
 export const users: User[] = [
   {
-    email: 'admin@nexaerp.com',
+    email: 'admin@growzix.com',
     password: 'admin123',
     role: 'admin',
     name: 'Admin User'
   },
   {
-    email: 'ecommerce@nexaerp.com',
+    email: 'ecommerce@growzix.com',
     password: 'eCommerce123',
     role: 'ecommerce',
     name: 'E-Commerce Manager'
   },
   {
-    email: 'marketing@nexaerp.com',
+    email: 'marketing@growzix.com',
     password: 'marketing123',
     role: 'marketing',
     name: 'Marketing Manager'
   },
   {
-    email: 'architecture@nexaerp.com',
+    email: 'architecture@growzix.com',
     password: 'architecture123',
     role: 'architecture',
     name: 'Architecture Manager'
@@ -36,7 +36,7 @@ export const initialEmployees: Employee[] = [
     name: 'Ahmed Hassan',
     department: 'ecommerce',
     position: 'Senior Developer',
-    email: 'ahmed.hassan@nexaerp.com',
+    email: 'ahmed.hassan@growzix.com',
     phone: '0300-1234567',
     salary: 85000,
     status: 'active',
@@ -48,7 +48,7 @@ export const initialEmployees: Employee[] = [
     name: 'Fatima Ali',
     department: 'ecommerce',
     position: 'Product Manager',
-    email: 'fatima.ali@nexaerp.com',
+    email: 'fatima.ali@growzix.com',
     phone: '0301-2345678',
     salary: 95000,
     status: 'active',
@@ -60,7 +60,7 @@ export const initialEmployees: Employee[] = [
     name: 'Usman Khan',
     department: 'ecommerce',
     position: 'UI/UX Designer',
-    email: 'usman.khan@nexaerp.com',
+    email: 'usman.khan@growzix.com',
     phone: '0302-3456789',
     salary: 70000,
     status: 'active',
@@ -73,7 +73,7 @@ export const initialEmployees: Employee[] = [
     name: 'Sara Ahmed',
     department: 'marketing',
     position: 'SEO Specialist',
-    email: 'sara.ahmed@nexaerp.com',
+    email: 'sara.ahmed@growzix.com',
     phone: '0303-4567890',
     salary: 65000,
     status: 'active',
@@ -85,7 +85,7 @@ export const initialEmployees: Employee[] = [
     name: 'Bilal Mahmood',
     department: 'marketing',
     position: 'Content Writer',
-    email: 'bilal.mahmood@nexaerp.com',
+    email: 'bilal.mahmood@growzix.com',
     phone: '0304-5678901',
     salary: 55000,
     status: 'active',
@@ -97,7 +97,7 @@ export const initialEmployees: Employee[] = [
     name: 'Ayesha Malik',
     department: 'marketing',
     position: 'Social Media Manager',
-    email: 'ayesha.malik@nexaerp.com',
+    email: 'ayesha.malik@growzix.com',
     phone: '0305-6789012',
     salary: 60000,
     status: 'active',
@@ -110,7 +110,7 @@ export const initialEmployees: Employee[] = [
     name: 'Hassan Raza',
     department: 'architecture',
     position: 'Lead Architect',
-    email: 'hassan.raza@nexaerp.com',
+    email: 'hassan.raza@growzix.com',
     phone: '0306-7890123',
     salary: 120000,
     status: 'active',
@@ -122,7 +122,7 @@ export const initialEmployees: Employee[] = [
     name: 'Zainab Sheikh',
     department: 'architecture',
     position: 'System Architect',
-    email: 'zainab.sheikh@nexaerp.com',
+    email: 'zainab.sheikh@growzix.com',
     phone: '0307-8901234',
     salary: 100000,
     status: 'active',
@@ -134,7 +134,7 @@ export const initialEmployees: Employee[] = [
     name: 'Ali Akbar',
     department: 'architecture',
     position: 'DevOps Engineer',
-    email: 'ali.akbar@nexaerp.com',
+    email: 'ali.akbar@growzix.com',
     phone: '0308-9012345',
     salary: 90000,
     status: 'active',
@@ -170,10 +170,10 @@ export const initialTasks: TaskLog[] = [
 
 // Initial expenses
 export const initialExpenses: Expense[] = [
-  { id: 'EX001', date: '2026-05-09', category: 'Marketing', description: 'Google Ads Campaign', amount: 45000, status: 'approved', approvedBy: 'Admin' },
-  { id: 'EX002', date: '2026-05-08', category: 'Operations', description: 'Office Rent - May', amount: 120000, status: 'approved', approvedBy: 'Admin' },
-  { id: 'EX003', date: '2026-05-07', category: 'Software', description: 'Adobe CC Licenses', amount: 25000, status: 'approved', approvedBy: 'Admin' },
-  { id: 'EX004', date: '2026-05-06', category: 'Infrastructure', description: 'AWS Cloud Services', amount: 35000, status: 'approved', approvedBy: 'Admin' },
+  { id: 'EX001', date: '2026-05-09', category: 'Marketing', description: 'Google Ads Campaign', amount: 45000, status: 'approved', approvedBy: 'Admin', submittedBy: 'Admin', department: 'marketing' },
+  { id: 'EX002', date: '2026-05-08', category: 'Operations', description: 'Office Rent - May', amount: 120000, status: 'approved', approvedBy: 'Admin', submittedBy: 'Admin', department: 'General' },
+  { id: 'EX003', date: '2026-05-07', category: 'Software', description: 'Adobe CC Licenses', amount: 25000, status: 'approved', approvedBy: 'Admin', submittedBy: 'Admin', department: 'ecommerce' },
+  { id: 'EX004', date: '2026-05-06', category: 'Infrastructure', description: 'AWS Cloud Services', amount: 35000, status: 'approved', approvedBy: 'Admin', submittedBy: 'Admin', department: 'architecture' },
 ];
 
 // Initial income

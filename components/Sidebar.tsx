@@ -35,8 +35,11 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
         { id: 'leave', icon: '🏖️', label: 'Leave Requests' }
       ]},
       { section: 'Finance', items: [
+        { id: 'financialoverview', icon: '📊', label: 'Financial Overview' },
         { id: 'finance', icon: '💰', label: 'Income & Profit' },
         { id: 'expenses', icon: '🧾', label: 'Expenses' },
+        { id: 'expensesdept', icon: '🏢', label: 'Dept. Expenses' },
+        { id: 'bills', icon: '📋', label: 'Company Bills' },
         { id: 'payroll', icon: '💳', label: 'Payroll' }
       ]}
     ],
@@ -104,12 +107,12 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
       {/* Logo */}
       <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{ width: '34px', height: '34px', background: 'var(--accent)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
-          🧠
+          🚀
         </div>
         <div>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>NexaERP</div>
-          <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.5px' }}>
-            v2.0 AI
+          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text)', letterSpacing: '1px' }}>GROWZIX</div>
+          <div style={{ fontSize: '10px', color: 'var(--text2)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.5px' }}>
+            v2.0 PRO
           </div>
         </div>
       </div>
@@ -118,7 +121,7 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
       <div style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
         {nav.map((section, idx) => (
           <div key={idx}>
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '.8px', textTransform: 'uppercase', color: 'var(--text3)', padding: '8px 10px 4px' }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '.8px', textTransform: 'uppercase', color: 'var(--text2)', padding: '8px 10px 4px' }}>
               {section.section}
             </div>
             {section.items.map((item) => (
@@ -130,15 +133,16 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '9px 10px',
+                  padding: '10px 14px',
                   borderRadius: 'var(--radius)',
                   cursor: 'pointer',
-                  color: currentPage === item.id ? 'var(--accent2)' : 'var(--text2)',
-                  transition: '.15s',
-                  marginBottom: '2px',
-                  fontSize: '13px',
+                  color: currentPage === item.id ? 'var(--accent)' : 'var(--text2)',
+                  transition: '.2s',
+                  marginBottom: '4px',
+                  fontSize: '14px',
+                  fontWeight: currentPage === item.id ? '700' : 'normal',
                   background: currentPage === item.id ? 'var(--accentbg)' : 'transparent',
-                  border: 'none'
+                  border: currentPage === item.id ? '1px solid var(--accent)' : '1px solid transparent'
                 }}
                 onMouseEnter={(e) => {
                   if (currentPage !== item.id) {
@@ -201,7 +205,7 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
                       transition: '.15s',
                       color: themeColor === option.color ? 'var(--accent2)' : 'var(--text2)',
                       fontSize: '12px',
-                      fontWeight: themeColor === option.color ? 600 : 400
+                      fontWeight: 'normal'
                     }}
                     onMouseEnter={(e) => {
                       if (themeColor !== option.color) {
@@ -237,28 +241,28 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               {themeMode === 'light' ? '☀️' : '🌙'} <span>{themeMode === 'light' ? 'Light Mode' : 'Dark Mode'}</span>
             </span>
-            <span style={{ fontSize: '10px', fontWeight: 600 }}>Toggle</span>
+            <span style={{ fontSize: '10px', fontWeight: 'normal' }}>Toggle</span>
           </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, background: 'var(--accentbg)', color: 'var(--accent2)' }}>
+          <div style={{ width: '34px', height: '34px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'normal', background: 'var(--accentbg)', color: 'var(--accent2)' }}>
             {currentUser.name.split(' ').map(n => n[0]).join('')}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {currentUser.name}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.5px' }}>
               {currentUser.role}
             </div>
           </div>
           <button
             onClick={logout}
-            style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '16px', transition: '.15s' }}
+            style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '16px', transition: '.15s' }}
             title="Logout"
             onMouseEnter={(e) => e.currentTarget.style.color = 'var(--red)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text3)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text2)'}
           >
             🚪
           </button>

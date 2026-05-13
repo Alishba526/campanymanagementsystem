@@ -90,7 +90,7 @@ export default function LeavePage() {
         {!isAdmin && (
           <button
             onClick={handleAddRequest}
-            style={{ background: 'var(--accent)', color: '#fff', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            style={{ background: 'var(--accent)', color: '#fff', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
             <span>📅</span> Request Leave
           </button>
@@ -99,7 +99,7 @@ export default function LeavePage() {
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>📋</span>
             Leave Requests
           </div>
@@ -108,20 +108,20 @@ export default function LeavePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Employee</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Period</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Type</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Reason</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Status</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Actions</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Employee</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Period</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Type</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Reason</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Status</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', color: '#000', textTransform: 'uppercase', letterSpacing: '.5px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredRequests.map(req => (
                 <tr key={req.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td style={{ padding: '12px 16px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{req.employeeName}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text3)' }}>ID: {req.employeeId}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 'normal', color: 'var(--text)' }}>{req.employeeName}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text2)' }}>ID: {req.employeeId}</div>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text2)' }}>
                     {req.startDate} to {req.endDate}
@@ -133,7 +133,7 @@ export default function LeavePage() {
                     {req.reason || '—'}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{ background: getStatusBg(req.status), color: getStatusColor(req.status), padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>
+                    <span style={{ background: getStatusBg(req.status), color: getStatusColor(req.status), padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 'normal', textTransform: 'uppercase' }}>
                       {req.status}
                     </span>
                   </td>
@@ -143,13 +143,13 @@ export default function LeavePage() {
                         <>
                           <button
                             onClick={() => handleStatusChange(req.id, 'approved')}
-                            style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', background: 'var(--green)', color: '#fff' }}
+                            style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'normal', cursor: 'pointer', border: 'none', background: 'var(--green)', color: '#fff' }}
                           >
                             Approve
                           </button>
                           <button
                             onClick={() => handleStatusChange(req.id, 'rejected')}
-                            style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', background: 'var(--red)', color: '#fff' }}
+                            style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'normal', cursor: 'pointer', border: 'none', background: 'var(--red)', color: '#fff' }}
                           >
                             Reject
                           </button>
@@ -157,7 +157,7 @@ export default function LeavePage() {
                       )}
                       <button
                         onClick={() => deleteLeaveRequest(req.id)}
-                        style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text2)' }}
+                        style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text2)' }}
                       >
                         🗑️
                       </button>
@@ -167,7 +167,7 @@ export default function LeavePage() {
               ))}
               {filteredRequests.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>
+                  <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: 'var(--text2)', fontSize: '13px' }}>
                     No leave requests found.
                   </td>
                 </tr>
@@ -181,12 +181,12 @@ export default function LeavePage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '400px' }}>
             <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#000' }}>Request Leave</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+              <div style={{ fontSize: '16px', fontWeight: 'normal', color: '#000' }}>Request Leave</div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Select Employee</label>
+                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Select Employee</label>
                 <select
                   value={formData.employeeId || ''}
                   onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
@@ -200,7 +200,7 @@ export default function LeavePage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Start Date</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Start Date</label>
                   <input
                     type="date"
                     value={formData.startDate || ''}
@@ -209,7 +209,7 @@ export default function LeavePage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>End Date</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>End Date</label>
                   <input
                     type="date"
                     value={formData.endDate || ''}
@@ -219,7 +219,7 @@ export default function LeavePage() {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Leave Type</label>
+                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Leave Type</label>
                 <select
                   value={formData.type || 'sick'}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
@@ -231,7 +231,7 @@ export default function LeavePage() {
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Reason (Optional)</label>
+                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Reason (Optional)</label>
                 <textarea
                   value={formData.reason || ''}
                   onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
@@ -241,7 +241,7 @@ export default function LeavePage() {
               </div>
               <button
                 onClick={handleSave}
-                style={{ background: 'var(--accent)', color: '#fff', padding: '12px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', marginTop: '10px' }}
+                style={{ background: 'var(--accent)', color: '#fff', padding: '12px', borderRadius: '8px', fontSize: '14px', fontWeight: 'normal', cursor: 'pointer', border: 'none', marginTop: '10px' }}
               >
                 Submit Request
               </button>

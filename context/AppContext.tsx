@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog, LeaveRequest, Announcement, Project, MonthlySchedule } from '@/types';
+import { User, Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog, LeaveRequest, Announcement, Project, MonthlySchedule, Bill } from '@/types';
 import * as actions from '@/lib/actions';
 
 export type ThemeColor = 'purple' | 'blue' | 'green' | 'orange' | 'red' | 'teal' | 'light';
@@ -19,6 +19,7 @@ interface AppContextType {
   announcements: Announcement[];
   projects: Project[];
   schedules: MonthlySchedule[];
+  bills: Bill[];
   themeColor: ThemeColor;
   themeMode: ThemeMode;
   isLoading: boolean;
@@ -50,6 +51,9 @@ interface AppContextType {
   addMonthlySchedule: (schedule: MonthlySchedule) => Promise<void>;
   updateMonthlySchedule: (id: string, schedule: Partial<MonthlySchedule>) => Promise<void>;
   deleteMonthlySchedule: (id: string) => Promise<void>;
+  addBill: (bill: Bill) => Promise<void>;
+  updateBill: (id: string, updates: Partial<Bill>) => Promise<void>;
+  deleteBill: (id: string) => Promise<void>;
   setThemeColor: (color: ThemeColor) => void;
   setThemeMode: (mode: ThemeMode) => void;
 }
@@ -68,14 +72,14 @@ const themeColors = {
       bg4: '#d4d4d4',
       text: '#1e293b',
       text2: '#475569',
-      text3: '#94a3b8',
+      text3: '#538ddf',
       border: '#e2e8f0',
       border2: '#cbd5e1'
     },
     dark: {
       primary: '#a78bfa',
       secondary: '#7c3aed',
-      accentBg: '#2e1065',
+      accentBg: '#010002',
       bg: '#0f172a',
       bg2: '#1e293b',
       bg3: '#334155',
@@ -281,6 +285,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [schedules, setSchedules] = useState<MonthlySchedule[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
   const [themeColor, setThemeColorState] = useState<ThemeColor>('light');
   const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
   const [isLoading, setIsLoading] = useState(true);
@@ -290,7 +295,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [empData, attData, taskData, expData, incData, logData, leaveData, announceData, projectData, scheduleData] = await Promise.all([
+        const [empData, attData, taskData, expData, incData, logData, leaveData, announceData, projectData, scheduleData, billData] = await Promise.all([
           actions.getEmployees(),
           actions.getAttendance(),
           actions.getTasks(),
@@ -300,21 +305,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           actions.getLeaveRequests(),
           actions.getAnnouncements(),
           actions.getProjects(),
-          actions.getMonthlySchedules()
+          actions.getMonthlySchedules(),
+          actions.getBills()
         ]);
 
         setEmployees(empData as Employee[]);
         setAttendance(attData as AttendanceRecord[]);
         setTasks(taskData as TaskLog[]);
-        setExpenses(expData as Expense[]);
+        setExpenses((expData as any[]).map(e => ({
+          ...e,
+          department: e.department || 'General',
+          submittedBy: e.submittedBy || 'Unknown'
+        })) as Expense[]);
         setIncome(incData as Income[]);
         setAuditLogs(logData as AuditLog[]);
         setLeaveRequests(leaveData as LeaveRequest[]);
         setAnnouncements(announceData as Announcement[]);
         setProjects(projectData as Project[]);
         setSchedules(scheduleData as MonthlySchedule[]);
+        setBills(billData as Bill[]);
 
-        const savedUser = localStorage.getItem('nexaerp-user');
+        const savedUser = localStorage.getItem('growzix-user');
         if (savedUser) {
           setCurrentUser(JSON.parse(savedUser));
         }
@@ -327,8 +338,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     fetchData();
 
-    const savedTheme = localStorage.getItem('nexaerp-theme') as ThemeColor;
-    const savedMode = localStorage.getItem('nexaerp-theme-mode') as ThemeMode;
+    const savedTheme = localStorage.getItem('growzix-theme') as ThemeColor;
+    const savedMode = localStorage.getItem('growzix-theme-mode') as ThemeMode;
 
     if (savedTheme && themeColors[savedTheme]) {
       setThemeColorState(savedTheme);
@@ -372,14 +383,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setThemeColor = (color: ThemeColor) => {
     setThemeColorState(color);
     applyTheme(color, themeMode);
-    localStorage.setItem('nexaerp-theme', color);
+    localStorage.setItem('growzix-theme', color);
     addAuditLog(`Theme color changed to ${color}`);
   };
 
   const setThemeMode = (mode: ThemeMode) => {
     setThemeModeState(mode);
     applyTheme(themeColor, mode);
-    localStorage.setItem('nexaerp-theme-mode', mode);
+    localStorage.setItem('growzix-theme-mode', mode);
     addAuditLog(`Theme mode changed to ${mode}`);
   };
 
@@ -394,7 +405,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         name: user.name
       };
       setCurrentUser(userData);
-      localStorage.setItem('nexaerp-user', JSON.stringify(userData));
+      localStorage.setItem('growzix-user', JSON.stringify(userData));
       await addAuditLog(`${user.name} logged into system`);
       return true;
     }
@@ -406,7 +417,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addAuditLog(`${currentUser.name} logged out`);
     }
     setCurrentUser(null);
-    localStorage.removeItem('nexaerp-user');
+    localStorage.removeItem('growzix-user');
   };
 
   const addEmployee = async (employee: Employee) => {
@@ -567,6 +578,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await addAuditLog(`Deleted monthly schedule: ${id}`);
   };
 
+  const addBill = async (bill: Bill) => {
+    await actions.addBillAction(bill);
+    setBills(prev => [bill, ...prev]);
+    await addAuditLog(`Added bill: ${bill.description} - Rs.${bill.amount}`);
+  };
+
+  const updateBill = async (id: string, updates: Partial<Bill>) => {
+    await actions.updateBillAction(id, updates);
+    setBills(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+    await addAuditLog(`Updated bill: ${id}`);
+  };
+
+  const deleteBill = async (id: string) => {
+    await actions.deleteBillAction(id);
+    setBills(prev => prev.filter(b => b.id !== id));
+    await addAuditLog(`Deleted bill: ${id}`);
+  };
+
   const addAuditLog = async (action: string) => {
     const log: AuditLog = {
       id: `AL${Date.now()}`,
@@ -599,6 +628,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       announcements,
       projects,
       schedules,
+      bills,
       themeColor,
       themeMode,
       isLoading,
@@ -630,6 +660,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addMonthlySchedule,
       updateMonthlySchedule,
       deleteMonthlySchedule,
+      addBill,
+      updateBill,
+      deleteBill,
       setThemeColor,
       setThemeMode
     }}>

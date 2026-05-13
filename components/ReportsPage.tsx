@@ -10,7 +10,7 @@ export default function ReportsPage() {
   const [reportMonth, setReportMonth] = useState('May 2026');
 
   if (!currentUser || currentUser.role !== 'admin') {
-    return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>Access Restricted to Admin</div>;
+    return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text2)' }}>Access Restricted to Admin</div>;
   }
 
   const totalIncome = income.filter((i: any) => i.status === 'received').reduce((sum: number, i: any) => sum + i.amount, 0);
@@ -24,7 +24,7 @@ export default function ReportsPage() {
     // Header
     doc.setFontSize(22);
     doc.setTextColor(124, 58, 237); // Purple accent
-    doc.text('NexaERP - Monthly Business Report', 14, 22);
+    doc.text('GROWZIX - Monthly Business Report', 14, 22);
     
     doc.setFontSize(12);
     doc.setTextColor(100);
@@ -83,7 +83,7 @@ export default function ReportsPage() {
       headStyles: { fillColor: [5, 150, 105] }
     });
 
-    doc.save(`NexaERP_Report_${reportMonth.replace(' ', '_')}.pdf`);
+    doc.save(`GROWZIX_Report_${reportMonth.replace(' ', '_')}.pdf`);
   };
 
   const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString()}`;
@@ -91,10 +91,10 @@ export default function ReportsPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>Monthly Analytics & Reports</h2>
+        <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text)' }}>Monthly Analytics & Reports</h2>
         <button 
           onClick={generatePDF}
-          style={{ background: 'var(--accent)', color: '#fff', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+          style={{ background: 'var(--accent)', color: '#fff', padding: '10px 20px', borderRadius: '8px', border: 'none', fontWeight: 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
           📥 Download Full PDF Report
         </button>
@@ -103,45 +103,45 @@ export default function ReportsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
         {/* Financial Overview Card */}
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '20px', color: 'var(--text)' }}>Financial Overview</h3>
+          <h3 style={{ fontSize: '15px', fontWeight: 'normal', marginBottom: '20px', color: 'var(--text)' }}>Financial Overview</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
               <span style={{ color: 'var(--text2)' }}>Total Income</span>
-              <span style={{ color: 'var(--green)', fontWeight: 700 }}>{formatCurrency(totalIncome)}</span>
+              <span style={{ color: 'var(--green)', fontWeight: 'normal' }}>{formatCurrency(totalIncome)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
               <span style={{ color: 'var(--text2)' }}>Expenses + Salaries</span>
-              <span style={{ color: 'var(--red)', fontWeight: 700 }}>{formatCurrency(totalExpenses + totalSalaries)}</span>
+              <span style={{ color: 'var(--red)', fontWeight: 'normal' }}>{formatCurrency(totalExpenses + totalSalaries)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '5px' }}>
-              <span style={{ color: 'var(--text)', fontWeight: 700 }}>Net Profit</span>
-              <span style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: 800 }}>{formatCurrency(netProfit)}</span>
+              <span style={{ color: 'var(--text)', fontWeight: 'normal' }}>Net Profit</span>
+              <span style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: 'normal' }}>{formatCurrency(netProfit)}</span>
             </div>
           </div>
         </div>
 
         {/* HR Metrics Card */}
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '20px', color: 'var(--text)' }}>HR & Operations</h3>
+          <h3 style={{ fontSize: '15px', fontWeight: 'normal', marginBottom: '20px', color: 'var(--text)' }}>HR & Operations</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
               <span style={{ color: 'var(--text2)' }}>Active Employees</span>
-              <span style={{ color: 'var(--text)', fontWeight: 700 }}>{employees.length}</span>
+              <span style={{ color: 'var(--text)', fontWeight: 'normal' }}>{employees.length}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
               <span style={{ color: 'var(--text2)' }}>Average Performance</span>
-              <span style={{ color: 'var(--blue)', fontWeight: 700 }}>88%</span>
+              <span style={{ color: 'var(--blue)', fontWeight: 'normal' }}>88%</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '5px' }}>
               <span style={{ color: 'var(--text2)' }}>Pending Leaves</span>
-              <span style={{ color: 'var(--amber)', fontWeight: 700 }}>2</span>
+              <span style={{ color: 'var(--amber)', fontWeight: 'normal' }}>2</span>
             </div>
           </div>
         </div>
       </div>
 
       <div style={{ marginTop: '20px', background: 'var(--bg3)', padding: '20px', borderRadius: '12px', border: '1px dashed var(--border2)', textAlign: 'center' }}>
-        <p style={{ fontSize: '13px', color: 'var(--text3)' }}>
+        <p style={{ fontSize: '13px', color: 'var(--text2)' }}>
           Tip: Monthly reports are automatically calculated based on your database records for income, expenses, and payroll.
         </p>
       </div>

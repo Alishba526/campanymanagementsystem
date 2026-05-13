@@ -1,8 +1,8 @@
-# 📘 NexaERP - Complete System Guide
+# 📘 GROWZIX - Complete System Guide
 
 ## 🎯 System Ka Maqsad (Purpose)
 
-**NexaERP** ek professional company management system hai jo **daily business operations** ko track karta hai. Ye system **REAL DATA** use karta hai - koi fake ya dummy data nahi.
+**GROWZIX** ek professional company management system hai jo **daily business operations** ko track karta hai. Ye system **REAL DATA** use karta hai - koi fake ya dummy data nahi.
 
 ---
 
@@ -401,7 +401,7 @@ Performance Score =
 - Multiple people ko access dena risky hai"
 
 ### **Solution:**
-"NexaERP ek complete system hai jo:
+"GROWZIX ek complete system hai jo:
 - ✅ Sab data ek jagah hai (cloud database)
 - ✅ Real-time profit/loss dikhata hai
 - ✅ Automatic calculations (no errors)
@@ -417,7 +417,7 @@ Performance Score =
 - Accounting software: Rs. 15,000/month
 - **Total: Rs. 105,000/month**
 
-**With NexaERP:**
+**With GROWZIX:**
 - System cost: Rs. 0 (one-time development)
 - Hosting: Rs. 5,000/month (Vercel + Neon DB)
 - **Total: Rs. 5,000/month**
@@ -661,7 +661,7 @@ Performance Score =
 
 ## ✅ CONCLUSION
 
-**NexaERP Kyon Best Hai:**
+**GROWZIX Kyon Best Hai:**
 
 1. ✅ **Real Data** - No fake, no dummy
 2. ✅ **Real-time** - Instant updates

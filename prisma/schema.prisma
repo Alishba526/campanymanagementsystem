@@ -15,6 +15,7 @@ model MonthlySchedule {
   startTime    String
   endTime      String
   totalHours   Float
+  weeklyOffs   String?  // Optional field for weekly offs
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -77,9 +78,26 @@ model Expense {
   date        String
   category    String
   description String
+  department  String   @default("General")
   amount      Int
   status      String
   approvedBy  String
+  submittedBy String   @default("Admin")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Bill {
+  id          String   @id
+  date        String
+  billType    String
+  description String
+  amount      Int
+  dueDate     String
+  status      String
+  paidDate    String?
+  paidAmount  Int?
+  notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -89,6 +107,7 @@ model Income {
   date      String
   client    String
   project   String
+  department String? // Made optional to resolve schema mismatch
   amount    Int
   status    String
   createdAt DateTime @default(now())

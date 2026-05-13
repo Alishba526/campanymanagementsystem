@@ -1,4 +1,4 @@
-# NexaERP - AI-Powered Enterprise Management System
+# GROWZIX - AI-Powered Enterprise Management System
 
 A complete, full-featured ERP system built with Next.js, TypeScript, and Tailwind CSS. Features role-based access control, real-time performance tracking, financial management, and comprehensive employee management.
 
@@ -16,22 +16,22 @@ A complete, full-featured ERP system built with Next.js, TypeScript, and Tailwin
 ## 🔐 Login Credentials
 
 ### Admin Account
-- **Email**: `admin@nexaerp.com`
+- **Email**: `admin@growzix.com`
 - **Password**: `admin123`
 - **Access**: Full system access including finance, payroll, and all management features
 
 ### E-Commerce Manager
-- **Email**: `ecommerce@nexaerp.com`
+- **Email**: `ecommerce@growzix.com`
 - **Password**: `eCommerce123`
 - **Access**: E-Commerce team management, attendance, performance tracking
 
 ### Marketing Manager
-- **Email**: `marketing@nexaerp.com`
+- **Email**: `marketing@growzix.com`
 - **Password**: `marketing123`
 - **Access**: Marketing team management, attendance, performance tracking
 
 ### Architecture Manager
-- **Email**: `architecture@nexaerp.com`
+- **Email**: `architecture@growzix.com`
 - **Password**: `architecture123`
 - **Access**: Architecture team management, attendance, performance tracking
 

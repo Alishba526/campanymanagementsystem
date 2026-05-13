@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { UserRole } from '@/types';
+import Swal from 'sweetalert2';
 
 export default function LoginPage() {
   const { login } = useApp();
@@ -15,25 +16,25 @@ export default function LoginPage() {
     admin: {
       icon: '👑',
       label: 'Admin',
-      defaultEmail: 'admin@nexaerp.com',
+      defaultEmail: 'admin@growzix.com',
       defaultPassword: 'admin123'
     },
     ecommerce: {
       icon: '🛒',
-      label: 'E-Commerce',
-      defaultEmail: 'ecommerce@nexaerp.com',
+      label: 'Manager Ecommerce',
+      defaultEmail: 'ecommerce@growzix.com',
       defaultPassword: 'eCommerce123'
     },
     marketing: {
       icon: '📢',
-      label: 'Marketing',
-      defaultEmail: 'marketing@nexaerp.com',
+      label: 'Manager Marketing',
+      defaultEmail: 'marketing@growzix.com',
       defaultPassword: 'marketing123'
     },
     architecture: {
       icon: '🏗️',
-      label: 'Architecture',
-      defaultEmail: 'architecture@nexaerp.com',
+      label: 'Manager Architecture',
+      defaultEmail: 'architecture@growzix.com',
       defaultPassword: 'architecture123'
     }
   };
@@ -54,11 +55,29 @@ export default function LoginPage() {
     
     try {
       const success = await login(email, password);
-      if (!success) {
+      if (success) {
+        Swal.fire({
+          title: 'Success!',
+          text: 'Login successful',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      } else {
         setError('Invalid email or password');
+        Swal.fire({
+          title: 'Error!',
+          text: 'Invalid credentials',
+          icon: 'error'
+        });
       }
     } catch (err) {
       setError('Connection error. Please try again.');
+      Swal.fire({
+        title: 'Error!',
+        text: 'Connection error. Please try again.',
+        icon: 'error'
+      });
     } finally {
       setIsLoggingIn(false);
     }
@@ -69,15 +88,15 @@ export default function LoginPage() {
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '40px', width: '100%', maxWidth: '420px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '32px', justifyContent: 'center' }}>
           <div style={{ width: '44px', height: '44px', background: 'var(--accent)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
-            🧠
+            🚀
           </div>
           <div>
-            <div style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text)' }}>NexaERP</div>
-            <div style={{ fontSize: '11px', color: 'var(--text3)' }}>AI-Powered Enterprise System</div>
+            <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text)' }}>GROWZIX</div>
+            <div style={{ fontSize: '11px', color: 'var(--text2)' }}>AI-Powered Enterprise System</div>
           </div>
         </div>
 
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, marginBottom: '20px', width: '100%', justifyContent: 'center' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: '600', marginBottom: '20px', width: '100%', justifyContent: 'center' }}>
           <span>🔒</span> Role-Based Secure Access
         </div>
 
@@ -100,7 +119,7 @@ export default function LoginPage() {
               }}
             >
               <div style={{ fontSize: '24px', marginBottom: '6px' }}>{roleConfig[role].icon}</div>
-              <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '.5px', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase' }}>
                 {roleConfig[role].label}
               </div>
             </button>
@@ -109,7 +128,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
+            <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
               Email Address
             </label>
             <input
@@ -125,7 +144,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
+            <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
               Password
             </label>
             <input
@@ -141,7 +160,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div style={{ background: 'var(--redbg)', border: '1px solid var(--red)', color: 'var(--red)', borderRadius: 'var(--radius)', padding: '12px 14px', fontSize: '13px' }}>
+            <div style={{ background: 'var(--redbg)', border: '1px solid var(--red)', color: 'var(--red)', borderRadius: 'var(--radius)', padding: '12px 14px', fontSize: '13px', fontWeight: '600' }}>
               {error}
             </div>
           )}
@@ -149,7 +168,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoggingIn}
-            style={{ width: '100%', background: isLoggingIn ? 'var(--accent2)' : 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '13px', fontSize: '15px', fontWeight: 600, cursor: isLoggingIn ? 'not-allowed' : 'pointer', transition: '.2s', opacity: isLoggingIn ? 0.7 : 1 }}
+            style={{ width: '100%', background: isLoggingIn ? 'var(--accent2)' : 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '13px', fontSize: '15px', fontWeight: '700', cursor: isLoggingIn ? 'not-allowed' : 'pointer', transition: '.2s', opacity: isLoggingIn ? 0.7 : 1 }}
             onMouseEnter={(e) => !isLoggingIn && (e.currentTarget.style.background = 'var(--accent2)')}
             onMouseLeave={(e) => !isLoggingIn && (e.currentTarget.style.background = 'var(--accent)')}
           >
@@ -158,12 +177,12 @@ export default function LoginPage() {
         </form>
 
         <div style={{ marginTop: '24px', padding: '16px', background: 'var(--bg3)', borderRadius: 'var(--radius2)', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 600, marginBottom: '8px' }}>Demo Credentials:</div>
+          <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: '700', marginBottom: '8px' }}>Demo Credentials:</div>
           <div style={{ fontSize: '11px', color: 'var(--text2)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div>👑 Admin: admin@nexaerp.com / admin123</div>
-            <div>🛒 E-Commerce: ecommerce@nexaerp.com / eCommerce123</div>
-            <div>📢 Marketing: marketing@nexaerp.com / marketing123</div>
-            <div>🏗️ Architecture: architecture@nexaerp.com / architecture123</div>
+            <div><strong style={{ fontWeight: '700' }}>👑 Admin:</strong> admin@growzix.com / admin123</div>
+            <div><strong style={{ fontWeight: '700' }}>🛒 E-Commerce:</strong> ecommerce@growzix.com / eCommerce123</div>
+            <div><strong style={{ fontWeight: '700' }}>📢 Marketing:</strong> marketing@growzix.com / marketing123</div>
+            <div><strong style={{ fontWeight: '700' }}>🏗️ Architecture:</strong> architecture@growzix.com / architecture123</div>
           </div>
         </div>
       </div>

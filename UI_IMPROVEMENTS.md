@@ -1,4 +1,4 @@
-# NexaERP - UI Design Improvements
+# GROWZIX - UI Design Improvements
 
 ## 🎨 Enhanced Visual Design
 

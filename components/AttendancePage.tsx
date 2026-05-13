@@ -3,6 +3,7 @@
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { AttendanceRecord } from '@/types';
+import Swal from 'sweetalert2';
 
 export default function AttendancePage() {
   const { currentUser, employees, attendance, addAttendance, updateAttendance, deleteAttendance } = useApp();
@@ -62,7 +63,11 @@ export default function AttendancePage() {
 
   const handleSave = () => {
     if (!formData.employeeId) {
-      alert('Please select an employee');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Attention',
+        text: 'Please select an employee'
+      });
       return;
     }
 
@@ -82,16 +87,47 @@ export default function AttendancePage() {
 
     if (editingRecord) {
       updateAttendance(editingRecord.id, record);
+      Swal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Attendance record updated successfully',
+        timer: 1500,
+        showConfirmButton: false
+      });
     } else {
       addAttendance(record);
+      Swal.fire({
+        icon: 'success',
+        title: 'Added!',
+        text: 'Attendance record added successfully',
+        timer: 1500,
+        showConfirmButton: false
+      });
     }
     setShowModal(false);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this attendance record?')) {
-      deleteAttendance(id);
-    }
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--accent)',
+      cancelButtonColor: 'var(--red)',
+      confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteAttendance(id);
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'The attendance record has been deleted.',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    });
   };
 
   return (
@@ -106,7 +142,7 @@ export default function AttendancePage() {
                 borderRadius: '7px',
                 cursor: 'pointer',
                 fontSize: '14px',
-                fontWeight: 700,
+                fontWeight: 'normal',
                 transition: '.15s',
                 background: viewMode === 'today' ? 'var(--accentbg)' : 'transparent',
                 color: viewMode === 'today' ? 'var(--accent2)' : '#333',
@@ -122,7 +158,7 @@ export default function AttendancePage() {
                 borderRadius: '7px',
                 cursor: 'pointer',
                 fontSize: '14px',
-                fontWeight: 700,
+                fontWeight: 'normal',
                 transition: '.15s',
                 background: viewMode === 'all' ? 'var(--accentbg)' : 'transparent',
                 color: viewMode === 'all' ? 'var(--accent2)' : '#333',
@@ -136,7 +172,7 @@ export default function AttendancePage() {
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px 18px', fontSize: '14px', fontWeight: 700, color: '#000', outline: 'none', cursor: 'pointer' }}
+              style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '8px 18px', fontSize: '14px', fontWeight: 'normal', color: '#000', outline: 'none', cursor: 'pointer' }}
             >
               <option value="all">All Departments</option>
               <option value="ecommerce">E-Commerce</option>
@@ -148,7 +184,7 @@ export default function AttendancePage() {
         {canManage && (
           <button
             onClick={handleAdd}
-            style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
+            style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
           >
@@ -159,35 +195,35 @@ export default function AttendancePage() {
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
+          <div style={{ fontSize: '16px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>⏰</span>
             Attendance Records
           </div>
-          <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>{filteredAttendance.length} records</div>
+          <div style={{ fontSize: '13px', color: '#000', fontWeight: '500' }}>{filteredAttendance.length} records</div>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Employee</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Check In</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Check Out</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Hours</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Status</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Date</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Employee</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Check In</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Check Out</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Hours</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Status</th>
                 {canManage && (
-                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
                 )}
               </tr>
             </thead>
             <tbody>
               {filteredAttendance.map(record => (
                 <tr key={record.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{record.date}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#000', fontWeight: 700 }}>{record.employeeName}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{record.checkIn}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 600 }}>{record.checkOut}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 700 }}>{record.hours ? `${record.hours}h` : '—'}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{record.date}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#000', fontWeight: '500' }}>{record.employeeName}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{record.checkIn}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{record.checkOut}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{record.hours ? `${record.hours}h` : '—'}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <span style={{
                       display: 'inline-flex',
@@ -196,7 +232,7 @@ export default function AttendancePage() {
                       borderRadius: '20px',
                       padding: '3px 9px',
                       fontSize: '12px',
-                      fontWeight: 800,
+                      fontWeight: '600',
                       background: record.status === 'present' ? 'var(--greenbg)' :
                                  record.status === 'late' ? 'var(--amberbg)' :
                                  record.status === 'leave' ? 'var(--bluebg)' : 'var(--redbg)',
@@ -212,7 +248,7 @@ export default function AttendancePage() {
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
                           onClick={() => handleEdit(record)}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: '#000', transition: '.15s' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: '#000', transition: '.15s' }}
                           onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                           onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
                         >
@@ -221,7 +257,7 @@ export default function AttendancePage() {
                         {currentUser.role === 'admin' && (
                           <button
                             onClick={() => handleDelete(record.id)}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
                           >
@@ -243,15 +279,15 @@ export default function AttendancePage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px' }}>
             <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text)' }}>
                 {editingRecord ? 'Edit Attendance' : 'Mark Attendance'}
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '22px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Employee</label>
+                  <label style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Employee</label>
                   <select
                     value={formData.employeeId || ''}
                     onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
@@ -267,7 +303,7 @@ export default function AttendancePage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Date</label>
+                  <label style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Date</label>
                   <input
                     type="date"
                     value={formData.date || ''}
@@ -280,7 +316,7 @@ export default function AttendancePage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Check In</label>
+                  <label style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Check In</label>
                   <input
                     type="time"
                     value={formData.checkIn || ''}
@@ -291,7 +327,7 @@ export default function AttendancePage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Check Out</label>
+                  <label style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Check Out</label>
                   <input
                     type="time"
                     value={formData.checkOut || ''}
@@ -303,7 +339,7 @@ export default function AttendancePage() {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Status</label>
+                <label style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Status</label>
                 <select
                   value={formData.status || ''}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
@@ -321,7 +357,7 @@ export default function AttendancePage() {
             <div style={{ padding: '16px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
               >
@@ -329,7 +365,7 @@ export default function AttendancePage() {
               </button>
               <button
                 onClick={handleSave}
-                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
+                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
               >

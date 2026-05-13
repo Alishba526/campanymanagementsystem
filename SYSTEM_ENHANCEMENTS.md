@@ -1,4 +1,4 @@
-# 🚀 NexaERP System Enhancements - Complete
+# 🚀 GROWZIX System Enhancements - Complete
 
 ## ✅ Successfully Implemented Features
 
@@ -279,19 +279,19 @@ Financial Operations:
 ## 📝 Login Credentials
 
 **Admin (Full Access):**
-- Email: admin@nexaerp.com
+- Email: admin@growzix.com
 - Password: admin123
 
 **E-Commerce Manager:**
-- Email: ecommerce@nexaerp.com
+- Email: ecommerce@growzix.com
 - Password: eCommerce123
 
 **Marketing Manager:**
-- Email: marketing@nexaerp.com
+- Email: marketing@growzix.com
 - Password: marketing123
 
 **Architecture Manager:**
-- Email: architecture@nexaerp.com
+- Email: architecture@growzix.com
 - Password: architecture123
 
 ---

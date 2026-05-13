@@ -37,11 +37,11 @@ export default function BroadcastPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#000' }}>Company Broadcasts</h2>
+        <h2 style={{ fontSize: '24px', fontWeight: 'normal', color: '#000' }}>Company Broadcasts</h2>
         {isAdmin && (
           <button
             onClick={() => setShowModal(true)}
-            style={{ background: 'var(--accent)', color: '#fff', padding: '10px 18px', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            style={{ background: 'var(--accent)', color: '#fff', padding: '10px 18px', borderRadius: '8px', border: 'none', fontWeight: 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <span>📢</span> Post Announcement
           </button>
@@ -63,15 +63,15 @@ export default function BroadcastPage() {
               <span style={{ 
                 background: ann.priority === 'high' ? 'var(--redbg)' : 'var(--bluebg)', 
                 color: ann.priority === 'high' ? 'var(--red)' : 'var(--blue)',
-                fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px' 
+                fontSize: '10px', fontWeight: 'normal', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px' 
               }}>
                 {ann.priority}
               </span>
-              <span style={{ fontSize: '12px', color: 'var(--text3)' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text2)' }}>
                 Posted by <strong>{ann.author}</strong>
               </span>
             </div>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>{ann.title}</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 'normal', color: 'var(--text)', marginBottom: '8px' }}>{ann.title}</h3>
             <p style={{ fontSize: '14px', color: 'var(--text2)', lineHeight: '1.6' }}>{ann.content}</p>
           </div>
         ))}
@@ -79,7 +79,7 @@ export default function BroadcastPage() {
         {announcements.length === 0 && (
           <div style={{ padding: '60px', textAlign: 'center', background: 'var(--bg2)', borderRadius: '20px', border: '1px dashed var(--border)' }}>
             <div style={{ fontSize: '40px', marginBottom: '15px' }}>📭</div>
-            <p style={{ color: 'var(--text3)' }}>No announcements posted yet.</p>
+            <p style={{ color: 'var(--text2)' }}>No announcements posted yet.</p>
           </div>
         )}
       </div>
@@ -88,12 +88,12 @@ export default function BroadcastPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '500px' }}>
             <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#000' }}>Create Broadcast</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+              <div style={{ fontSize: '16px', fontWeight: 'normal', color: '#000' }}>Create Broadcast</div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Subject / Title</label>
+                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Subject / Title</label>
                 <input
                   type="text"
                   value={formData.title || ''}
@@ -103,7 +103,7 @@ export default function BroadcastPage() {
                 />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Message Content</label>
+                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Message Content</label>
                 <textarea
                   value={formData.content || ''}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
@@ -112,7 +112,7 @@ export default function BroadcastPage() {
                 />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Priority</label>
+                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Priority</label>
                 <select
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
@@ -124,7 +124,7 @@ export default function BroadcastPage() {
               </div>
               <button
                 onClick={handleSave}
-                style={{ background: 'var(--accent)', color: '#fff', padding: '12px', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: 'pointer', border: 'none', marginTop: '10px' }}
+                style={{ background: 'var(--accent)', color: '#fff', padding: '12px', borderRadius: '8px', fontSize: '14px', fontWeight: 'normal', cursor: 'pointer', border: 'none', marginTop: '10px' }}
               >
                 📢 Broadcast to All
               </button>

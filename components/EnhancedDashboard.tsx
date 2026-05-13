@@ -166,7 +166,7 @@ export default function EnhancedDashboard() {
       {/* Smart Alerts Section */}
       {alerts.length > 0 && (
         <div style={{ marginBottom: '22px' }}>
-          <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '12px', color: '#000', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'normal', marginBottom: '12px', color: '#000', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>🔔</span> Smart Alerts & Insights
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
@@ -177,9 +177,9 @@ export default function EnhancedDashboard() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <span style={{ fontSize: '24px' }}>{alert.icon}</span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 800, color: style.color, marginBottom: '4px' }}>{alert.title}</div>
-                      <div style={{ fontSize: '13px', color: '#000', marginBottom: '6px', fontWeight: 600 }}>{alert.message}</div>
-                      <div style={{ fontSize: '12px', color: '#333', fontStyle: 'italic', fontWeight: 600 }}>→ {alert.action}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 'normal', color: style.color, marginBottom: '4px' }}>{alert.title}</div>
+                      <div style={{ fontSize: '13px', color: '#000', marginBottom: '6px', fontWeight: 'normal' }}>{alert.message}</div>
+                      <div style={{ fontSize: '12px', color: '#333', fontStyle: 'italic', fontWeight: 'normal' }}>→ {alert.action}</div>
                     </div>
                   </div>
                 </div>
@@ -197,33 +197,33 @@ export default function EnhancedDashboard() {
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: netProfit >= 0 ? 'var(--greenbg)' : 'var(--redbg)', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>
                 {netProfit >= 0 ? '📈' : '📉'}
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(netProfit)}</div>
-              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Net Profit</div>
-              <div style={{ fontSize: '12px', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)', marginTop: '4px', fontWeight: 700 }}>Margin: {profitMargin}%</div>
+              <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(netProfit)}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Net Profit</div>
+              <div style={{ fontSize: '12px', color: netProfit >= 0 ? 'var(--green)' : 'var(--red)', marginTop: '4px', fontWeight: 'normal' }}>Margin: {profitMargin}%</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--bluebg)', color: 'var(--blue)' }}>
                 💰
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{formatCurrency(totalIncome)}</div>
-              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Total Income</div>
-              <div style={{ fontSize: '12px', color: 'var(--amber)', marginTop: '4px', fontWeight: 700 }}>Pending: {formatCurrency(pendingIncome)}</div>
+              <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(totalIncome)}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Total Income</div>
+              <div style={{ fontSize: '12px', color: 'var(--amber)', marginTop: '4px', fontWeight: 'normal' }}>Pending: {formatCurrency(pendingIncome)}</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--redbg)', color: 'var(--red)' }}>
                 💸
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{formatCurrency(totalCashOut)}</div>
-              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Total Cash Out</div>
-              <div style={{ fontSize: '12px', color: 'var(--red)', marginTop: '4px', fontWeight: 700 }}>Exp + Salaries</div>
+              <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(totalCashOut)}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Total Cash Out</div>
+              <div style={{ fontSize: '12px', color: 'var(--red)', marginTop: '4px', fontWeight: 'normal' }}>Exp + Salaries</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: attendanceRate >= 80 ? 'var(--greenbg)' : 'var(--amberbg)', color: attendanceRate >= 80 ? 'var(--green)' : 'var(--amber)' }}>
                 👥
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{attendanceRate}%</div>
-              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Attendance Rate</div>
-              <div style={{ fontSize: '12px', color: '#333', marginTop: '4px', fontWeight: 700 }}>{presentToday}/{employees.length} present</div>
+              <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{attendanceRate}%</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Attendance Rate</div>
+              <div style={{ fontSize: '12px', color: '#333', marginTop: '4px', fontWeight: 'normal' }}>{presentToday}/{employees.length} present</div>
             </div>
           </>
         ) : (
@@ -232,29 +232,29 @@ export default function EnhancedDashboard() {
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--greenbg)', color: 'var(--green)' }}>
                 👥
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{departmentEmployees.length}</div>
-              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Team Members</div>
+              <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{departmentEmployees.length}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Team Members</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--bluebg)', color: 'var(--blue)' }}>
                 ⏰
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{presentToday}</div>
-              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Present Today</div>
+              <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{presentToday}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Present Today</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--amberbg)', color: 'var(--amber)' }}>
                 📈
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{avgPerformance}</div>
-              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Avg Performance</div>
+              <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{avgPerformance}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Avg Performance</div>
             </div>
             <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
               <div style={{ width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px', background: 'var(--tealbg)', color: 'var(--teal)' }}>
                 📅
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{pendingLeaves}</div>
-              <div style={{ fontSize: '13px', color: '#000', fontWeight: 700 }}>Pending Leaves</div>
+              <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{pendingLeaves}</div>
+              <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Pending Leaves</div>
             </div>
           </>
         )}
@@ -263,35 +263,35 @@ export default function EnhancedDashboard() {
       {/* Quick Actions for Admin */}
       {currentUser.role === 'admin' && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px', marginBottom: '22px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '14px', color: 'var(--text)' }}>⚡ Quick Actions</div>
+          <div style={{ fontSize: '14px', fontWeight: 'normal', marginBottom: '14px', color: 'var(--text)' }}>⚡ Quick Actions</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
             <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', textAlign: 'center', cursor: 'pointer', transition: '.15s' }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg4)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg3)'}>
               <div style={{ fontSize: '24px', marginBottom: '6px' }}>📋</div>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)' }}>Pending Leaves</div>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--amber)', marginTop: '4px' }}>{pendingLeaves}</div>
+              <div style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)' }}>Pending Leaves</div>
+              <div style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--amber)', marginTop: '4px' }}>{pendingLeaves}</div>
             </div>
             <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', textAlign: 'center', cursor: 'pointer', transition: '.15s' }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg4)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg3)'}>
               <div style={{ fontSize: '24px', marginBottom: '6px' }}>🧾</div>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)' }}>Pending Expenses</div>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--amber)', marginTop: '4px' }}>{pendingExpenses}</div>
+              <div style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)' }}>Pending Expenses</div>
+              <div style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--amber)', marginTop: '4px' }}>{pendingExpenses}</div>
             </div>
             <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', textAlign: 'center', cursor: 'pointer', transition: '.15s' }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg4)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg3)'}>
               <div style={{ fontSize: '24px', marginBottom: '6px' }}>📁</div>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)' }}>Active Projects</div>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--blue)', marginTop: '4px' }}>{activeProjects.length}</div>
+              <div style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)' }}>Active Projects</div>
+              <div style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--blue)', marginTop: '4px' }}>{activeProjects.length}</div>
             </div>
             <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '12px', textAlign: 'center', cursor: 'pointer', transition: '.15s' }}
               onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg4)'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg3)'}>
               <div style={{ fontSize: '24px', marginBottom: '6px' }}>📉</div>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)' }}>Low Performers</div>
-              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--red)', marginTop: '4px' }}>{lowPerformanceAlerts.length}</div>
+              <div style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)' }}>Low Performers</div>
+              <div style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--red)', marginTop: '4px' }}>{lowPerformanceAlerts.length}</div>
             </div>
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function EnhancedDashboard() {
       {/* Today's Attendance */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', marginBottom: '18px' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '14px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
             <span style={{ color: 'var(--accent)' }}>⏰</span>
             Today's Attendance
           </div>
@@ -309,17 +309,17 @@ export default function EnhancedDashboard() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Name</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Check In</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Check Out</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Hours</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Status</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Name</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Check In</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Check Out</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Hours</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Status</th>
               </tr>
             </thead>
             <tbody>
               {todayAttendance.slice(0, 8).map(record => (
                 <tr key={record.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{record.employeeName}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'normal' }}>{record.employeeName}</td>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{record.checkIn}</td>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{record.checkOut}</td>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{record.hours}h</td>
@@ -331,7 +331,7 @@ export default function EnhancedDashboard() {
                       borderRadius: '20px',
                       padding: '3px 9px',
                       fontSize: '11px',
-                      fontWeight: 600,
+                      fontWeight: 'normal',
                       background: record.status === 'present' ? 'var(--greenbg)' :
                                  record.status === 'late' ? 'var(--amberbg)' :
                                  record.status === 'leave' ? 'var(--bluebg)' : 'var(--redbg)',
@@ -354,7 +354,7 @@ export default function EnhancedDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px', marginTop: '22px' }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
             <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text)' }}>
                 <span>📜</span> Recent <strong>System Activity</strong>
               </div>
             </div>
@@ -362,10 +362,10 @@ export default function EnhancedDashboard() {
               {(useApp().auditLogs || []).slice(0, 6).map((log: any) => (
                 <div key={log.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 8px', borderBottom: '1px solid var(--bg3)', fontSize: '12px' }}>
                   <div>
-                    <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{log.user}:</span>
+                    <span style={{ color: 'var(--accent)', fontWeight: 'normal' }}>{log.user}:</span>
                     <span style={{ color: 'var(--text2)', marginLeft: '6px' }}>{log.action}</span>
                   </div>
-                  <div style={{ color: 'var(--text3)', fontSize: '11px' }}>{log.timestamp.split(' ')[1]}</div>
+                  <div style={{ color: 'var(--text2)', fontSize: '11px' }}>{log.timestamp.split(' ')[1]}</div>
                 </div>
               ))}
             </div>
@@ -373,7 +373,7 @@ export default function EnhancedDashboard() {
 
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
             <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+              <div style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text)' }}>
                 <span>🏢</span> <strong>Department</strong> Performance
               </div>
             </div>
@@ -390,8 +390,8 @@ export default function EnhancedDashboard() {
                 return (
                   <div key={dept}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px' }}>
-                      <span style={{ textTransform: 'capitalize', color: 'var(--text2)', fontWeight: 600 }}>{dept}</span>
-                      <span style={{ color: 'var(--text)', fontWeight: 700 }}>{deptScore}%</span>
+                      <span style={{ textTransform: 'capitalize', color: 'var(--text2)', fontWeight: 'normal' }}>{dept}</span>
+                      <span style={{ color: 'var(--text)', fontWeight: 'normal' }}>{deptScore}%</span>
                     </div>
                     <div style={{ height: '8px', background: 'var(--bg3)', borderRadius: '10px', overflow: 'hidden' }}>
                       <div style={{ width: `${deptScore}%`, height: '100%', background: deptScore > 80 ? 'var(--green)' : 'var(--accent)' }} />

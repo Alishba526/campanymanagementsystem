@@ -50,8 +50,23 @@ export interface Expense {
   category: string;
   description: string;
   amount: number;
-  status: 'approved' | 'pending';
+  status: 'approved' | 'pending' | 'rejected';
   approvedBy: string;
+  submittedBy: string;
+  department?: string;
+}
+
+export interface Bill {
+  id: string;
+  date: string;
+  billType: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status: 'paid' | 'pending' | 'overdue';
+  paidDate?: string;
+  paidAmount?: number;
+  notes?: string;
 }
 
 export interface Income {
@@ -61,6 +76,7 @@ export interface Income {
   project: string;
   amount: number;
   status: 'received' | 'pending';
+  department?: string;
 }
 
 export interface AuditLog {

@@ -72,7 +72,7 @@ export default function MonthlyReportSlip() {
     // Header
     doc.setFontSize(24);
     doc.setTextColor(124, 58, 237);
-    doc.text('NexaERP', 105, 20, { align: 'center' });
+    doc.text('GROWZIX', 105, 20, { align: 'center' });
 
     doc.setFontSize(16);
     doc.setTextColor(0);
@@ -209,7 +209,7 @@ export default function MonthlyReportSlip() {
     doc.setTextColor(150);
     doc.text('This is a computer-generated report. No signature required.', 105, footerY, { align: 'center' });
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, footerY + 5, { align: 'center' });
-    doc.text('NexaERP - AI-Powered Enterprise Management System', 105, footerY + 10, { align: 'center' });
+    doc.text('GROWZIX - AI-Powered Enterprise Management System', 105, footerY + 10, { align: 'center' });
 
     // Save PDF
     doc.save(`${employee.name}_Monthly_Report_${monthName.replace(' ', '_')}.pdf`);
@@ -231,7 +231,7 @@ export default function MonthlyReportSlip() {
     <div>
       {/* Header */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '20px', marginBottom: '22px' }}>
-        <div style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px', color: 'var(--text)' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'normal', marginBottom: '12px', color: 'var(--text)' }}>
           📄 Monthly Performance Report Generator
         </div>
         <div style={{ fontSize: '13px', color: 'var(--text2)', marginBottom: '16px' }}>
@@ -240,7 +240,7 @@ export default function MonthlyReportSlip() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '12px', alignItems: 'end' }}>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
+            <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
               Select Month
             </label>
             <input
@@ -251,7 +251,7 @@ export default function MonthlyReportSlip() {
             />
           </div>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
+            <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
               Select Employee
             </label>
             <select
@@ -268,7 +268,7 @@ export default function MonthlyReportSlip() {
           <button
             onClick={() => selectedEmployee && generateMonthlyReport(selectedEmployee)}
             disabled={!selectedEmployee}
-            style={{ background: selectedEmployee ? 'var(--accent)' : 'var(--bg3)', color: selectedEmployee ? '#fff' : 'var(--text3)', padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: selectedEmployee ? 'pointer' : 'not-allowed', border: 'none', transition: '.15s' }}
+            style={{ background: selectedEmployee ? 'var(--accent)' : 'var(--bg3)', color: selectedEmployee ? '#fff' : 'var(--text2)', padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: selectedEmployee ? 'pointer' : 'not-allowed', border: 'none', transition: '.15s' }}
           >
             📥 Generate Report
           </button>
@@ -278,11 +278,11 @@ export default function MonthlyReportSlip() {
           <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
             <button
               onClick={generateAllReports}
-              style={{ background: 'var(--green)', color: '#fff', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              style={{ background: 'var(--green)', color: '#fff', padding: '10px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
             >
               📦 Generate Reports for All Employees
             </button>
-            <span style={{ marginLeft: '12px', fontSize: '12px', color: 'var(--text3)' }}>
+            <span style={{ marginLeft: '12px', fontSize: '12px', color: 'var(--text2)' }}>
               ({availableEmployees.length} employees)
             </span>
           </div>
@@ -292,7 +292,7 @@ export default function MonthlyReportSlip() {
       {/* Employee List */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '14px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
             <span style={{ color: 'var(--accent)' }}>👥</span>
             Available Employees
           </div>
@@ -301,24 +301,24 @@ export default function MonthlyReportSlip() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>ID</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Name</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Department</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Position</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Action</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>ID</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Name</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Department</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Position</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {availableEmployees.map(emp => (
                 <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.id}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{emp.name}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'normal' }}>{emp.name}</td>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)', textTransform: 'capitalize' }}>{emp.department}</td>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.position}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <button
                       onClick={() => generateMonthlyReport(emp.id)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.background = 'var(--accentbg)'; e.currentTarget.style.color = 'var(--accent)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; e.currentTarget.style.color = 'var(--text)'; }}
                     >

@@ -118,41 +118,41 @@ export default function PerformancePage() {
           <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             ⭐
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{performanceSummary[0]?.avgScore || 0}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Top Score This Month</div>
+          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{performanceSummary[0]?.avgScore || 0}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Top Score This Month</div>
           <div style={{ fontSize: '11px', color: 'var(--green)', marginTop: '4px' }}>{performanceSummary[0]?.employee.name || '—'}</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             📊
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>
+          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>
             {performanceSummary.length > 0
               ? Math.round(performanceSummary.reduce((sum, p) => sum + p.avgScore, 0) / performanceSummary.length)
               : 0}
           </div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Team Average Score</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Team Average Score</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             ✅
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{tasks.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Total Tasks Logged</div>
+          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{tasks.length}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Total Tasks Logged</div>
         </div>
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
           <div style={{ width: '38px', height: '38px', background: 'var(--redbg)', color: 'var(--red)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
             🚨
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, marginBottom: '2px', color: '#000' }}>{lowPerformers.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600 }}>Low Perf Alerts</div>
+          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{lowPerformers.length}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Low Perf Alerts</div>
         </div>
       </div>
 
       {/* Performance Summary */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', marginBottom: '18px' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '16px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
             <span style={{ color: 'var(--accent)' }}>📈</span>
             Monthly Performance Summary
           </div>
@@ -161,12 +161,12 @@ export default function PerformancePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Employee</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Avg Score</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Tasks Done</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Completion</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Rating</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Employee</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Avg Score</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Tasks Done</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Completion</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Rating</th>
               </tr>
             </thead>
             <tbody>
@@ -174,7 +174,7 @@ export default function PerformancePage() {
                 const completionRate = perf.totalTasks > 0 ? Math.round((perf.completedTasks / perf.totalTasks) * 100) : 0;
                 return (
                   <tr key={perf.employee.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{perf.employee.name}</td>
+                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'normal' }}>{perf.employee.name}</td>
                     <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)', textTransform: 'capitalize' }}>{perf.employee.department}</td>
                     <td style={{ padding: '10px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -186,7 +186,7 @@ export default function PerformancePage() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '14px',
-                          fontWeight: 800,
+                          fontWeight: 'normal',
                           border: '2.5px solid',
                           color: perf.avgScore >= 80 ? 'var(--green)' : perf.avgScore >= 60 ? 'var(--amber)' : 'var(--red)',
                           borderColor: perf.avgScore >= 80 ? 'var(--green)' : perf.avgScore >= 60 ? 'var(--amber)' : 'var(--red)'
@@ -209,7 +209,7 @@ export default function PerformancePage() {
                             }}
                           />
                         </div>
-                        <span style={{ fontSize: '11px', color: 'var(--text3)' }}>{completionRate}%</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text2)' }}>{completionRate}%</span>
                       </div>
                     </td>
                     <td style={{ padding: '10px 16px' }}>
@@ -220,7 +220,7 @@ export default function PerformancePage() {
                         borderRadius: '20px',
                         padding: '3px 9px',
                         fontSize: '11px',
-                        fontWeight: 600,
+                        fontWeight: 'normal',
                         background: perf.avgScore >= 90 ? 'var(--greenbg)' :
                                    perf.avgScore >= 75 ? 'var(--bluebg)' :
                                    perf.avgScore >= 60 ? 'var(--amberbg)' : 'var(--redbg)',
@@ -245,7 +245,7 @@ export default function PerformancePage() {
         {canManage && (
           <button
             onClick={handleAdd}
-            style={{ background: 'var(--accent)', color: '#fff', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
+            style={{ background: 'var(--accent)', color: '#fff', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
             onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
           >
@@ -256,7 +256,7 @@ export default function PerformancePage() {
 
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
         <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+          <div style={{ fontSize: '14px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
             <span style={{ color: 'var(--accent)' }}>✅</span>
             Daily Task Logs
           </div>
@@ -265,15 +265,15 @@ export default function PerformancePage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Employee</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Task</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Category</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Hours</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Completion</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>AI Score</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Date</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Employee</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Task</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Category</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Hours</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Completion</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>AI Score</th>
                 {canManage && (
-                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text3)' }}>Actions</th>
+                  <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Actions</th>
                 )}
               </tr>
             </thead>
@@ -281,7 +281,7 @@ export default function PerformancePage() {
               {tasks.map(task => (
                 <tr key={task.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{task.date}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 600 }}>{task.employeeName}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'normal' }}>{task.employeeName}</td>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={task.task}>{task.task}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <span style={{
@@ -291,7 +291,7 @@ export default function PerformancePage() {
                       borderRadius: '20px',
                       padding: '3px 9px',
                       fontSize: '11px',
-                      fontWeight: 600,
+                      fontWeight: 'normal',
                       background: task.category === 'development' ? 'var(--bluebg)' :
                                  task.category === 'marketing' ? 'var(--accentbg)' :
                                  task.category === 'design' ? '#230d1a' : 'var(--greenbg)',
@@ -326,7 +326,7 @@ export default function PerformancePage() {
                       borderRadius: '20px',
                       padding: '3px 9px',
                       fontSize: '11px',
-                      fontWeight: 600,
+                      fontWeight: 'normal',
                       background: task.score >= 80 ? 'var(--greenbg)' : task.score >= 60 ? 'var(--amberbg)' : 'var(--redbg)',
                       color: task.score >= 80 ? 'var(--green)' : task.score >= 60 ? 'var(--amber)' : 'var(--red)'
                     }}>
@@ -338,7 +338,7 @@ export default function PerformancePage() {
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
                           onClick={() => handleEdit(task)}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
                           onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                           onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
                         >
@@ -347,7 +347,7 @@ export default function PerformancePage() {
                         {currentUser.role === 'admin' && (
                           <button
                             onClick={() => handleDelete(task.id)}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
                             onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
                           >
@@ -369,15 +369,15 @@ export default function PerformancePage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px' }}>
             <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>
+              <div style={{ fontSize: '15px', fontWeight: 'normal', color: 'var(--text)' }}>
                 {editingTask ? 'Edit Task Log' : 'Add Task Log'}
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
             <div style={{ padding: '22px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Employee</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Employee</label>
                   <select
                     value={formData.employeeId || ''}
                     onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
@@ -393,7 +393,7 @@ export default function PerformancePage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Date</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Date</label>
                   <input
                     type="date"
                     value={formData.date || ''}
@@ -405,7 +405,7 @@ export default function PerformancePage() {
                 </div>
               </div>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Task Description</label>
+                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Task Description</label>
                 <input
                   type="text"
                   value={formData.task || ''}
@@ -418,7 +418,7 @@ export default function PerformancePage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Category</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Category</label>
                   <select
                     value={formData.category || ''}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -434,7 +434,7 @@ export default function PerformancePage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Hours Worked</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Hours Worked</label>
                   <input
                     type="number"
                     value={formData.hours || ''}
@@ -451,7 +451,7 @@ export default function PerformancePage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Completion %</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Completion %</label>
                   <input
                     type="number"
                     value={formData.completion || ''}
@@ -465,7 +465,7 @@ export default function PerformancePage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Quality Score (0-100)</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Quality Score (0-100)</label>
                   <input
                     type="number"
                     value={formData.quality || ''}
@@ -483,7 +483,7 @@ export default function PerformancePage() {
             <div style={{ padding: '16px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
               >
@@ -491,7 +491,7 @@ export default function PerformancePage() {
               </button>
               <button
                 onClick={handleSave}
-                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
+                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
               >
