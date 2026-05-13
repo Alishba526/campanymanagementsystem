@@ -3,6 +3,8 @@
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { formatDateShort } from '@/lib/dateUtils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function HistoricalReportsPage() {
   const { currentUser, expenses, income, bills, employees, attendance } = useApp();
@@ -106,12 +108,105 @@ export default function HistoricalReportsPage() {
     }
   };
 
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+
+    // Header
+    doc.setFontSize(22);
+    doc.setTextColor(124, 58, 237);
+    doc.text('GROWZIX - Historical Report', 14, 22);
+
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Period: ${getPeriodLabel()}`, 14, 30);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 36);
+
+    // Financial Summary
+    doc.setFontSize(16);
+    doc.setTextColor(0);
+    doc.text('Financial Summary', 14, 50);
+
+    autoTable(doc, {
+      startY: 55,
+      head: [['Metric', 'Amount (Rs.)']],
+      body: [
+        ['Total Income', totalIncome.toLocaleString()],
+        ['Total Expenses', totalExpenses.toLocaleString()],
+        ['Bills Paid', totalBills.toLocaleString()],
+        ['Salaries', proportionalSalaries.toLocaleString()],
+        ['Total Cash Out', totalCashOut.toLocaleString()],
+        ['Net Profit/Loss', `${netProfit >= 0 ? '+' : ''}${netProfit.toLocaleString()}`],
+        ['Profit Margin', `${profitMargin}%`]
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [124, 58, 237] }
+    });
+
+    // Department Breakdown
+    doc.text('Department Performance', 14, (doc as any).lastAutoTable.finalY + 15);
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['Department', 'Employees', 'Attendance Rate', 'Present', 'Absent', 'Late', 'Income', 'Expenses']],
+      body: deptStats.map(d => [
+        d.label,
+        d.employees.toString(),
+        `${d.rate}%`,
+        d.present.toString(),
+        d.absent.toString(),
+        d.late.toString(),
+        d.income.toLocaleString(),
+        d.expenses.toLocaleString()
+      ]),
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+
+    // Overall Attendance
+    doc.text('Overall Attendance Summary', 14, (doc as any).lastAutoTable.finalY + 15);
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['Status', 'Count', 'Percentage']],
+      body: [
+        ['Present', presentCount.toString(), `${attendanceRate}%`],
+        ['Absent', absentCount.toString(), `${Math.round((absentCount/filteredAttendance.length)*100 || 0)}%`],
+        ['Late', lateCount.toString(), `${Math.round((lateCount/filteredAttendance.length)*100 || 0)}%`],
+        ['Total Records', filteredAttendance.length.toString(), '100%']
+      ],
+      headStyles: { fillColor: [5, 150, 105] }
+    });
+
+    doc.save(`GROWZIX_Historical_Report_${getPeriodLabel().replace(/\s+/g, '_')}.pdf`);
+  };
+
   return (
     <div>
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'normal', color: '#000', margin: 0, marginBottom: '8px' }}>📊 Historical Reports</h1>
-        <p style={{ fontSize: '14px', color: 'var(--text2)', margin: 0 }}>View past financial data and performance metrics</p>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: 'normal', color: '#000', margin: 0, marginBottom: '8px' }}>📊 Historical Reports</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text2)', margin: 0 }}>View past financial data and performance metrics</p>
+        </div>
+        <button
+          onClick={exportToPDF}
+          style={{
+            background: 'var(--accent)',
+            color: '#fff',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 'normal',
+            cursor: 'pointer',
+            border: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: '.15s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
+        >
+          📥 Export PDF Report
+        </button>
       </div>
 
       {/* Period Selector */}
