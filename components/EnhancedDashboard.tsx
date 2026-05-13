@@ -3,7 +3,20 @@
 import { useApp } from '@/context/AppContext';
 import { useState, useEffect } from 'react';
 
-export default function EnhancedDashboard() {
+interface QuickAction {
+  id: string;
+  icon: string;
+  label: string;
+  description: string;
+  color: string;
+  bgColor: string;
+}
+
+interface DashboardProps {
+  onNavigate?: (page: string) => void;
+}
+
+export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
   const { currentUser, employees, attendance, tasks, expenses, income, leaveRequests, projects } = useApp();
   const [alerts, setAlerts] = useState<any[]>([]);
 
@@ -161,8 +174,93 @@ export default function EnhancedDashboard() {
     }
   };
 
+  // Quick Actions based on role
+  const getQuickActions = (): QuickAction[] => {
+    if (currentUser.role === 'admin') {
+      return [
+        { id: 'employees', icon: '👥', label: 'Add Employee', description: 'Register new team member', color: 'var(--blue)', bgColor: 'var(--bluebg)' },
+        { id: 'attendance', icon: '⏰', label: 'Mark Attendance', description: 'Record daily attendance', color: 'var(--green)', bgColor: 'var(--greenbg)' },
+        { id: 'expenses', icon: '💸', label: 'Add Expense', description: 'Log new expense', color: 'var(--red)', bgColor: 'var(--redbg)' },
+        { id: 'finance', icon: '💰', label: 'Add Income', description: 'Record client payment', color: 'var(--green)', bgColor: 'var(--greenbg)' },
+        { id: 'bills', icon: '📋', label: 'Manage Bills', description: 'Company bills & utilities', color: 'var(--amber)', bgColor: 'var(--amberbg)' },
+        { id: 'historical', icon: '📊', label: 'View Reports', description: 'Historical data & analytics', color: 'var(--accent)', bgColor: 'var(--accentbg)' },
+        { id: 'leave', icon: '📅', label: 'Leave Requests', description: `${pendingLeaves} pending approvals`, color: 'var(--amber)', bgColor: 'var(--amberbg)' },
+        { id: 'projects', icon: '📁', label: 'Client Projects', description: `${activeProjects.length} active projects`, color: 'var(--blue)', bgColor: 'var(--bluebg)' }
+      ];
+    } else {
+      return [
+        { id: 'employees', icon: '👥', label: 'My Team', description: 'View team members', color: 'var(--blue)', bgColor: 'var(--bluebg)' },
+        { id: 'attendance', icon: '⏰', label: 'Mark Attendance', description: 'Record team attendance', color: 'var(--green)', bgColor: 'var(--greenbg)' },
+        { id: 'performance', icon: '📈', label: 'Performance', description: 'Track team performance', color: 'var(--accent)', bgColor: 'var(--accentbg)' },
+        { id: 'leave', icon: '📅', label: 'Leave Requests', description: 'Manage team leaves', color: 'var(--amber)', bgColor: 'var(--amberbg)' },
+        { id: 'projects', icon: '📁', label: 'Projects', description: 'Active projects', color: 'var(--blue)', bgColor: 'var(--bluebg)' },
+        { id: 'broadcast', icon: '📢', label: 'Announcements', description: 'Company updates', color: 'var(--green)', bgColor: 'var(--greenbg)' }
+      ];
+    }
+  };
+
+  const quickActions = getQuickActions();
+
   return (
     <div>
+      {/* Quick Actions Section */}
+      <div style={{ marginBottom: '22px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'normal', marginBottom: '12px', color: '#000', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>⚡</span> Quick Actions
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+          {quickActions.map((action) => (
+            <button
+              key={action.id}
+              onClick={() => onNavigate && onNavigate(action.id)}
+              style={{
+                background: 'var(--bg2)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius2)',
+                padding: '16px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: '.15s',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '12px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = action.color;
+                e.currentTarget.style.background = 'var(--bg3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.background = 'var(--bg2)';
+              }}
+            >
+              <div style={{
+                width: '40px',
+                height: '40px',
+                background: action.bgColor,
+                color: action.color,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                flexShrink: 0
+              }}>
+                {action.icon}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: 'normal', color: '#000', marginBottom: '4px' }}>
+                  {action.label}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>
+                  {action.description}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Smart Alerts Section */}
       {alerts.length > 0 && (
         <div style={{ marginBottom: '22px' }}>

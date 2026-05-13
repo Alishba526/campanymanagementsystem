@@ -32,7 +32,7 @@ export default function MainApp() {
   if (!currentUser) return null;
 
   const pages: { [key: string]: ReactElement } = {
-    dashboard: <EnhancedDashboard />,
+    dashboard: <EnhancedDashboard onNavigate={setCurrentPage} />,
     analytics: <DepartmentAnalytics />,
     employees: <EmployeesPage />,
     attendance: <AttendancePage />,
