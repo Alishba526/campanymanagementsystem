@@ -42,7 +42,7 @@ export default function LoginPage() {
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
     setEmail(roleConfig[role].defaultEmail);
-    setPassword(roleConfig[role].defaultPassword);
+    setPassword(''); // Don't auto-fill password for security
     setError('');
   };
 
@@ -176,13 +176,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ marginTop: '24px', padding: '16px', background: 'var(--bg3)', borderRadius: 'var(--radius2)', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: '700', marginBottom: '8px' }}>Demo Credentials:</div>
-          <div style={{ fontSize: '11px', color: 'var(--text2)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div><strong style={{ fontWeight: '700' }}>👑 Admin:</strong> admin@growzix.com / admin123</div>
-            <div><strong style={{ fontWeight: '700' }}>🛒 E-Commerce:</strong> ecommerce@growzix.com / eCommerce123</div>
-            <div><strong style={{ fontWeight: '700' }}>📢 Marketing:</strong> marketing@growzix.com / marketing123</div>
-            <div><strong style={{ fontWeight: '700' }}>🏗️ Architecture:</strong> architecture@growzix.com / architecture123</div>
+        <div style={{ marginTop: '24px', padding: '12px', background: 'var(--bg3)', borderRadius: 'var(--radius2)', border: '1px solid var(--border)', textAlign: 'center' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text2)' }}>
+            🔐 Secure Login - Contact admin for credentials
           </div>
         </div>
       </div>
