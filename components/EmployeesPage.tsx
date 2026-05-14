@@ -10,14 +10,37 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState<Partial<Employee>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   if (!currentUser) return null;
 
   // Filter employees by department for managers
   // Managers cannot see admin users or salaries
-  const departmentEmployees = currentUser.role === 'admin'
+  let departmentEmployees = currentUser.role === 'admin'
     ? employees
     : employees.filter(e => e.department === currentUser.role && e.id !== 'ADMIN001');
+
+  // Apply search filter
+  if (searchQuery) {
+    departmentEmployees = departmentEmployees.filter(e =>
+      e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.position.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+
+  // Apply department filter
+  if (filterDepartment !== 'all') {
+    departmentEmployees = departmentEmployees.filter(e => e.department === filterDepartment);
+  }
+
+  // Apply status filter
+  if (filterStatus !== 'all') {
+    departmentEmployees = departmentEmployees.filter(e => e.status === filterStatus);
+  }
 
   const canManage = currentUser.role === 'admin' || ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
 
@@ -71,6 +94,92 @@ export default function EmployeesPage() {
 
   return (
     <div>
+      {/* Search and Filter Bar */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '16px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '250px' }}>
+            <input
+              type="text"
+              placeholder="🔍 Search by name, ID, email, or position..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'var(--bg3)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '9px 12px',
+                color: 'var(--text)',
+                fontSize: '13px',
+                outline: 'none'
+              }}
+              onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+            />
+          </div>
+          {currentUser.role === 'admin' && (
+            <select
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+              style={{
+                background: 'var(--bg3)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '9px 12px',
+                color: 'var(--text)',
+                fontSize: '13px',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">All Departments</option>
+              <option value="ecommerce">E-Commerce</option>
+              <option value="marketing">Marketing</option>
+              <option value="architecture">Architecture</option>
+            </select>
+          )}
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            style={{
+              background: 'var(--bg3)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              padding: '9px 12px',
+              color: 'var(--text)',
+              fontSize: '13px',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          {(searchQuery || filterDepartment !== 'all' || filterStatus !== 'all') && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setFilterDepartment('all');
+                setFilterStatus('all');
+              }}
+              style={{
+                background: 'var(--redbg)',
+                color: 'var(--red)',
+                border: '1px solid var(--red)',
+                borderRadius: '8px',
+                padding: '9px 16px',
+                fontSize: '13px',
+                cursor: 'pointer',
+                fontWeight: 'normal'
+              }}
+            >
+              ✕ Clear Filters
+            </button>
+          )}
+        </div>
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div style={{ fontSize: '14px', color: '#000', fontWeight: 'normal' }}>{departmentEmployees.length} employees</div>
         {canManage && (
