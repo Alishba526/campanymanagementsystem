@@ -1,17 +1,76 @@
 'use client';
 
 import { useApp } from '@/context/AppContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AttendanceRecord } from '@/types';
 import Swal from 'sweetalert2';
 
 export default function AttendancePage() {
-  const { currentUser, employees, attendance, addAttendance, updateAttendance, deleteAttendance } = useApp();
+  const { currentUser, employees, attendance, announcements, breakRequests, addAttendance, updateAttendance, deleteAttendance } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [formData, setFormData] = useState<Partial<AttendanceRecord>>({});
   const [viewMode, setViewMode] = useState<'today' | 'all'>('today');
   const [selectedDept, setSelectedDept] = useState<string>('all');
+
+  const [priorityItems, setPriorityItems] = useState<any[]>([]);
+
+  if (!currentUser) return null;
+
+  const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const canManage = isAdmin || ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
+  const today = new Date().toISOString().split('T')[0];
+
+  // --- Dynamic Priority Feed Logic (ADMIN ONLY) ---
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    // 1. Get recent attendance from today
+    const recentAtt = attendance
+      .filter(a => a.date === today)
+      .map(a => ({ 
+        id: `att-${a.id}`, 
+        type: 'attendance', 
+        title: 'Attendance Marked', 
+        content: `${a.employeeName} (${a.status.toUpperCase()}) at ${a.checkIn}`,
+        time: a.checkIn,
+        icon: '⏰',
+        color: 'var(--green)'
+      }));
+
+    // 2. Get recent break requests
+    const recentBreaks = (breakRequests || [])
+      .filter(b => b.date === today)
+      .map(b => ({
+        id: `break-${b.id}`,
+        type: 'break',
+        title: 'Break Update',
+        content: `${b.employeeName} requested break at ${b.startTime}`,
+        time: b.startTime,
+        icon: '☕',
+        color: 'var(--blue)'
+      }));
+
+    // 3. Get recent announcements
+    const recentAnnouncements = announcements
+      .slice(0, 3)
+      .map(a => ({
+        id: `ann-${a.id}`,
+        type: 'announcement',
+        title: 'Announcement',
+        content: a.title,
+        time: a.createdAt ? new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
+        icon: '📢',
+        color: 'var(--accent)'
+      }));
+
+    // Combine and sort by "time"
+    const combined = [...recentAtt, ...recentBreaks, ...recentAnnouncements]
+      .sort((a, b) => b.time.localeCompare(a.time))
+      .slice(0, 6);
+
+    setPriorityItems(combined);
+  }, [isAdmin, attendance, breakRequests, announcements, today]);
 
   // Helper to ensure time is always displayed as AM/PM in the UI
   const formatTime = (timeStr: string) => {
@@ -136,6 +195,48 @@ export default function AttendancePage() {
 
   return (
     <div>
+      {/* 0. Priority Activity Feed (ONLY ADMIN) - WhatsApp/TikTok Style Reordering */}
+      {isAdmin && priorityItems.length > 0 && (
+        <div style={{ marginBottom: '22px' }}>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>🔥</span> Priority Activity Feed
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {priorityItems.map((item) => (
+              <div 
+                key={item.id} 
+                style={{ 
+                  background: 'var(--bg2)', 
+                  border: `1px solid var(--border)`, 
+                  borderLeft: `4px solid ${item.color}`,
+                  borderRadius: '12px', 
+                  padding: '12px 16px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  animation: 'slideIn 0.3s ease-out'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ fontSize: '20px' }}>{item.icon}</div>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text)' }}>{item.title}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text2)' }}>{item.content}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '600' }}>{item.time}</div>
+              </div>
+            ))}
+          </div>
+          <style jsx>{`
+            @keyframes slideIn {
+              from { transform: translateY(-10px); opacity: 0; }
+              to { transform: translateY(0); opacity: 1; }
+            }
+          `}</style>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
           <div style={{ display: 'flex', gap: '4px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '4px' }}>
