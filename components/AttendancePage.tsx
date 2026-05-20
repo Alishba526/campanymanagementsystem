@@ -89,10 +89,6 @@ export default function AttendancePage() {
 
   if (!currentUser) return null;
 
-  const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
-  const canManage = isAdmin || ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
-  const today = new Date().toISOString().split('T')[0];
-
   const departmentEmployees = isAdmin
     ? employees
     : employees.filter(e => e.department === currentUser.role);
