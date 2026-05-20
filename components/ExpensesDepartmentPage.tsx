@@ -11,9 +11,11 @@ export default function ExpensesDepartmentPage() {
   const [formData, setFormData] = useState<Partial<Expense>>({});
   const [selectedDept, setSelectedDept] = useState<string>('all');
 
+  if (!currentUser) return null;
+
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
 
-  if (!currentUser || !isAdmin) {
+  if (!isAdmin) {
     return (
       <div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>

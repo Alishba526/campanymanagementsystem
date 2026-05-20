@@ -9,9 +9,11 @@ export default function FinancePage() {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<Partial<Income>>({});
 
+  if (!currentUser) return null;
+
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
 
-  if (!currentUser || !isAdmin) {
+  if (!isAdmin) {
     return (
       <div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>

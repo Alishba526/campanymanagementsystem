@@ -241,7 +241,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     const users = await actions.getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
+    const user = users.find((u: any) => u.email === email && u.password === password);
     if (user) {
       const userData: User = { email: user.email, password: user.password, role: user.role as any, name: user.name };
       setCurrentUser(userData);

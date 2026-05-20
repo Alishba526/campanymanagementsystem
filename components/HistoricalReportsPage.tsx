@@ -13,9 +13,11 @@ export default function HistoricalReportsPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
+  if (!currentUser) return null;
+
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
 
-  if (!currentUser || !isAdmin) {
+  if (!isAdmin) {
     return (
       <div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>

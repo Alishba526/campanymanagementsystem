@@ -2,7 +2,7 @@
 
 // Force re-compilation - Correct DB URL sync
 import { prisma } from '@/lib/prisma';
-import { Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog, User, LeaveRequest, Announcement, Project, MonthlySchedule, Bill } from '@/types';
+import { Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog, User, LeaveRequest, Announcement, Project, MonthlySchedule, Bill, Notification } from '@/types';
 import { revalidatePath } from 'next/cache';
 
 // ... (existing code)

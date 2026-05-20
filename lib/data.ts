@@ -34,6 +34,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'EC001',
     name: 'Ahmed Hassan',
+    fatherName: 'Hassan Raza',
+    address: 'Gulshan-e-Iqbal, Karachi',
     department: 'ecommerce',
     position: 'Senior Developer',
     email: 'ahmed.hassan@growzix.com',
@@ -46,6 +48,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'EC002',
     name: 'Fatima Ali',
+    fatherName: 'Ali Akbar',
+    address: 'DHA Phase 6, Karachi',
     department: 'ecommerce',
     position: 'Product Manager',
     email: 'fatima.ali@growzix.com',
@@ -58,6 +62,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'EC003',
     name: 'Usman Khan',
+    fatherName: 'Khan Muhammad',
+    address: 'North Nazimabad, Karachi',
     department: 'ecommerce',
     position: 'UI/UX Designer',
     email: 'usman.khan@growzix.com',
@@ -71,6 +77,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'MK001',
     name: 'Sara Ahmed',
+    fatherName: 'Ahmed Malik',
+    address: 'PECHS Block 2, Karachi',
     department: 'marketing',
     position: 'SEO Specialist',
     email: 'sara.ahmed@growzix.com',
@@ -83,6 +91,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'MK002',
     name: 'Bilal Mahmood',
+    fatherName: 'Mahmood Khan',
+    address: 'Nazimabad No. 3, Karachi',
     department: 'marketing',
     position: 'Content Writer',
     email: 'bilal.mahmood@growzix.com',
@@ -95,6 +105,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'MK003',
     name: 'Ayesha Malik',
+    fatherName: 'Malik Akbar',
+    address: 'Gulberg, Karachi',
     department: 'marketing',
     position: 'Social Media Manager',
     email: 'ayesha.malik@growzix.com',
@@ -108,6 +120,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'AR001',
     name: 'Hassan Raza',
+    fatherName: 'Raza Ali',
+    address: 'Clifton Block 5, Karachi',
     department: 'architecture',
     position: 'Lead Architect',
     email: 'hassan.raza@growzix.com',
@@ -120,6 +134,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'AR002',
     name: 'Zainab Sheikh',
+    fatherName: 'Sheikh Muhammad',
+    address: 'Garden East, Karachi',
     department: 'architecture',
     position: 'System Architect',
     email: 'zainab.sheikh@growzix.com',
@@ -132,6 +148,8 @@ export const initialEmployees: Employee[] = [
   {
     id: 'AR003',
     name: 'Ali Akbar',
+    fatherName: 'Akbar Hussain',
+    address: 'Malir Cantt, Karachi',
     department: 'architecture',
     position: 'DevOps Engineer',
     email: 'ali.akbar@growzix.com',
@@ -146,26 +164,26 @@ export const initialEmployees: Employee[] = [
 // Initial attendance records
 export const initialAttendance: AttendanceRecord[] = [
   // Today's attendance
-  { id: 'AT001', employeeId: 'EC001', employeeName: 'Ahmed Hassan', date: '2026-05-09', checkIn: '09:00', checkOut: '18:00', status: 'present', hours: 9 },
-  { id: 'AT002', employeeId: 'EC002', employeeName: 'Fatima Ali', date: '2026-05-09', checkIn: '09:15', checkOut: '18:10', status: 'present', hours: 8.9 },
-  { id: 'AT003', employeeId: 'EC003', employeeName: 'Usman Khan', date: '2026-05-09', checkIn: '10:30', checkOut: '18:00', status: 'late', hours: 7.5 },
-  { id: 'AT004', employeeId: 'MK001', employeeName: 'Sara Ahmed', date: '2026-05-09', checkIn: '09:05', checkOut: '18:00', status: 'present', hours: 8.9 },
-  { id: 'AT005', employeeId: 'MK002', employeeName: 'Bilal Mahmood', date: '2026-05-09', checkIn: '--', checkOut: '--', status: 'absent', hours: 0 },
-  { id: 'AT006', employeeId: 'MK003', employeeName: 'Ayesha Malik', date: '2026-05-09', checkIn: '09:00', checkOut: '18:00', status: 'present', hours: 9 },
-  { id: 'AT007', employeeId: 'AR001', employeeName: 'Hassan Raza', date: '2026-05-09', checkIn: '08:45', checkOut: '18:15', status: 'present', hours: 9.5 },
-  { id: 'AT008', employeeId: 'AR002', employeeName: 'Zainab Sheikh', date: '2026-05-09', checkIn: '09:00', checkOut: '18:00', status: 'present', hours: 9 },
-  { id: 'AT009', employeeId: 'AR003', employeeName: 'Ali Akbar', date: '2026-05-09', checkIn: '--', checkOut: '--', status: 'leave', hours: 0 },
+  { id: 'AT001', employeeId: 'EC001', employeeName: 'Ahmed Hassan', date: '2026-05-09', checkIn: '09:00', checkOut: '18:00', breakIn: '13:00', breakOut: '14:00', lateEntry: '00:00', earlyExit: '00:00', overtime: 0, status: 'present', hours: 9 },
+  { id: 'AT002', employeeId: 'EC002', employeeName: 'Fatima Ali', date: '2026-05-09', checkIn: '09:15', checkOut: '18:10', breakIn: '13:00', breakOut: '14:00', lateEntry: '00:15', earlyExit: '00:00', overtime: 0, status: 'present', hours: 8.9 },
+  { id: 'AT003', employeeId: 'EC003', employeeName: 'Usman Khan', date: '2026-05-09', checkIn: '10:30', checkOut: '18:00', breakIn: '13:00', breakOut: '14:00', lateEntry: '01:30', earlyExit: '00:00', overtime: 0, status: 'late', hours: 7.5 },
+  { id: 'AT004', employeeId: 'MK001', employeeName: 'Sara Ahmed', date: '2026-05-09', checkIn: '09:05', checkOut: '18:00', breakIn: '13:00', breakOut: '14:00', lateEntry: '00:05', earlyExit: '00:00', overtime: 0, status: 'present', hours: 8.9 },
+  { id: 'AT005', employeeId: 'MK002', employeeName: 'Bilal Mahmood', date: '2026-05-09', checkIn: '--', checkOut: '--', breakIn: '--', breakOut: '--', lateEntry: '--', earlyExit: '--', overtime: 0, status: 'absent', hours: 0 },
+  { id: 'AT006', employeeId: 'MK003', employeeName: 'Ayesha Malik', date: '2026-05-09', checkIn: '09:00', checkOut: '18:00', breakIn: '13:00', breakOut: '14:00', lateEntry: '00:00', earlyExit: '00:00', overtime: 0, status: 'present', hours: 9 },
+  { id: 'AT007', employeeId: 'AR001', employeeName: 'Hassan Raza', date: '2026-05-09', checkIn: '08:45', checkOut: '18:15', breakIn: '13:00', breakOut: '14:00', lateEntry: '00:00', earlyExit: '00:00', overtime: 0.5, status: 'present', hours: 9.5 },
+  { id: 'AT008', employeeId: 'AR002', employeeName: 'Zainab Sheikh', date: '2026-05-09', checkIn: '09:00', checkOut: '18:00', breakIn: '13:00', breakOut: '14:00', lateEntry: '00:00', earlyExit: '00:00', overtime: 0, status: 'present', hours: 9 },
+  { id: 'AT009', employeeId: 'AR003', employeeName: 'Ali Akbar', date: '2026-05-09', checkIn: '--', checkOut: '--', breakIn: '--', breakOut: '--', lateEntry: '--', earlyExit: '--', overtime: 0, status: 'leave', hours: 0 },
 ];
 
 // Initial task logs
 export const initialTasks: TaskLog[] = [
-  { id: 'TK001', employeeId: 'EC001', employeeName: 'Ahmed Hassan', date: '2026-05-09', task: 'Payment Gateway Integration', category: 'development', hours: 6, completion: 95, quality: 92, score: 94 },
-  { id: 'TK002', employeeId: 'EC002', employeeName: 'Fatima Ali', date: '2026-05-09', task: 'Product Roadmap Planning', category: 'management', hours: 5, completion: 100, quality: 95, score: 98 },
-  { id: 'TK003', employeeId: 'EC003', employeeName: 'Usman Khan', date: '2026-05-09', task: 'Checkout Page Redesign', category: 'design', hours: 7, completion: 80, quality: 85, score: 82 },
-  { id: 'TK004', employeeId: 'MK001', employeeName: 'Sara Ahmed', date: '2026-05-09', task: 'SEO Audit - Client Website', category: 'marketing', hours: 4, completion: 100, quality: 90, score: 93 },
-  { id: 'TK005', employeeId: 'MK003', employeeName: 'Ayesha Malik', date: '2026-05-09', task: 'Social Media Campaign', category: 'marketing', hours: 5, completion: 85, quality: 88, score: 86 },
-  { id: 'TK006', employeeId: 'AR001', employeeName: 'Hassan Raza', date: '2026-05-09', task: 'System Architecture Review', category: 'architecture', hours: 6, completion: 100, quality: 98, score: 99 },
-  { id: 'TK007', employeeId: 'AR002', employeeName: 'Zainab Sheikh', date: '2026-05-09', task: 'Microservices Design', category: 'architecture', hours: 7, completion: 90, quality: 92, score: 91 },
+  { id: 'TK001', employeeId: 'EC001', employeeName: 'Ahmed Hassan', date: '2026-05-09', task: 'Payment Gateway Integration', category: 'development', hours: 6, completion: 95, quality: 92, score: 94, projectsAssigned: 2, projectsCompleted: 1, pendingProjects: 1, approvedProjects: 1, rejectedProjects: 0, clientResponses: 5, leadsGenerated: 0, emailsSent: 10, conversionRatio: 0 },
+  { id: 'TK002', employeeId: 'EC002', employeeName: 'Fatima Ali', date: '2026-05-09', task: 'Product Roadmap Planning', category: 'management', hours: 5, completion: 100, quality: 95, score: 98, projectsAssigned: 3, projectsCompleted: 3, pendingProjects: 0, approvedProjects: 3, rejectedProjects: 0, clientResponses: 12, leadsGenerated: 2, emailsSent: 20, conversionRatio: 10 },
+  { id: 'TK003', employeeId: 'EC003', employeeName: 'Usman Khan', date: '2026-05-09', task: 'Checkout Page Redesign', category: 'design', hours: 7, completion: 80, quality: 85, score: 82, projectsAssigned: 1, projectsCompleted: 0, pendingProjects: 1, approvedProjects: 0, rejectedProjects: 0, clientResponses: 4, leadsGenerated: 0, emailsSent: 5, conversionRatio: 0 },
+  { id: 'TK004', employeeId: 'MK001', employeeName: 'Sara Ahmed', date: '2026-05-09', task: 'SEO Audit - Client Website', category: 'marketing', hours: 4, completion: 100, quality: 90, score: 93, projectsAssigned: 2, projectsCompleted: 2, pendingProjects: 0, approvedProjects: 2, rejectedProjects: 0, clientResponses: 8, leadsGenerated: 5, emailsSent: 15, conversionRatio: 33 },
+  { id: 'TK005', employeeId: 'MK003', employeeName: 'Ayesha Malik', date: '2026-05-09', task: 'Social Media Campaign', category: 'marketing', hours: 5, completion: 85, quality: 88, score: 86, projectsAssigned: 4, projectsCompleted: 3, pendingProjects: 1, approvedProjects: 3, rejectedProjects: 0, clientResponses: 25, leadsGenerated: 10, emailsSent: 40, conversionRatio: 25 },
+  { id: 'TK006', employeeId: 'AR001', employeeName: 'Hassan Raza', date: '2026-05-09', task: 'System Architecture Review', category: 'architecture', hours: 6, completion: 100, quality: 98, score: 99, projectsAssigned: 1, projectsCompleted: 1, pendingProjects: 0, approvedProjects: 1, rejectedProjects: 0, clientResponses: 3, leadsGenerated: 0, emailsSent: 5, conversionRatio: 0 },
+  { id: 'TK007', employeeId: 'AR002', employeeName: 'Zainab Sheikh', date: '2026-05-09', task: 'Microservices Design', category: 'architecture', hours: 7, completion: 90, quality: 92, score: 91, projectsAssigned: 2, projectsCompleted: 1, pendingProjects: 1, approvedProjects: 1, rejectedProjects: 0, clientResponses: 6, leadsGenerated: 0, emailsSent: 8, conversionRatio: 0 },
 ];
 
 // Initial expenses

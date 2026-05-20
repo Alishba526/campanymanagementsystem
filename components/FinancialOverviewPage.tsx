@@ -6,9 +6,11 @@ import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
 export default function FinancialOverviewPage() {
   const { currentUser, employees, expenses, income, bills } = useApp();
 
+  if (!currentUser) return null;
+
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
 
-  if (!currentUser || !isAdmin) {
+  if (!isAdmin) {
     return (
       <div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>

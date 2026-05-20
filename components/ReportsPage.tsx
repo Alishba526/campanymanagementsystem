@@ -9,9 +9,11 @@ export default function ReportsPage() {
   const { currentUser, employees, attendance, tasks, expenses, income, payroll } = useApp() as any;
   const [reportMonth, setReportMonth] = useState('May 2026');
 
+  if (!currentUser) return null;
+
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
 
-  if (!currentUser || !isAdmin) {
+  if (!isAdmin) {
     return <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text2)' }}>Access Restricted to Admin</div>;
   }
 
