@@ -392,39 +392,55 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
           <div style={{ fontSize: '16px', fontWeight: 'normal', marginBottom: '12px', color: '#000', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>🏢</span> Department-wise Today Attendance
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '12px' }}>
             {Array.from(new Set(employees.map(e => e.department))).map(dept => {
               const deptEmps = employees.filter(e => e.department === dept);
               const deptAtt = attendance.filter(a => a.date === today && deptEmps.find(e => e.id === a.employeeId));
-              const present = deptAtt.filter(a => a.status === 'present' || a.status === 'late' || a.status === 'half-day').length;
-              const late = deptAtt.filter(a => a.status === 'late').length;
-              const absent = deptEmps.length - present;
+              const present = deptAtt.filter(a => a.status === 'present' || a.status === 'late' || a.status === 'half-day');
+              const late = present.filter(a => a.status === 'late');
+              const absentCount = deptEmps.length - present.length;
               
               return (
-                <div key={dept} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '16px' }}>
+                <div key={dept} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '16px', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text)', textTransform: 'capitalize' }}>{dept}</div>
                     <div style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '10px', background: 'var(--bg3)', color: 'var(--text2)', fontWeight: '600' }}>
-                      {present}/{deptEmps.length} Present
+                      {present.length}/{deptEmps.length} Present
                     </div>
                   </div>
                   
                   {/* Progress Bar */}
                   <div style={{ height: '6px', background: 'var(--bg3)', borderRadius: '10px', overflow: 'hidden', marginBottom: '12px' }}>
-                    <div style={{ width: `${(present / deptEmps.length) * 100}%`, height: '100%', background: 'var(--accent)', borderRadius: '10px' }} />
+                    <div style={{ width: `${(present.length / deptEmps.length) * 100}%`, height: '100%', background: 'var(--accent)', borderRadius: '10px' }} />
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  {/* Employee Names List */}
+                  <div style={{ flex: 1, marginBottom: '12px' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.5px' }}>Present Today:</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {present.length > 0 ? (
+                        present.map(a => (
+                          <span key={a.id} style={{ fontSize: '11px', padding: '2px 8px', background: 'var(--bg3)', borderRadius: '6px', color: 'var(--text)', border: '1px solid var(--border)' }}>
+                            {a.employeeName} <span style={{ fontSize: '9px', color: a.status === 'late' ? 'var(--amber)' : 'var(--green)' }}>●</span>
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: '11px', color: 'var(--text3)', fontStyle: 'italic' }}>No attendance marked yet</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--bg3)' }}>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--green)' }}>{present - late}</div>
+                      <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--green)' }}>{present.length - late.length}</div>
                       <div style={{ fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase' }}>On Time</div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--amber)' }}>{late}</div>
+                      <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--amber)' }}>{late.length}</div>
                       <div style={{ fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase' }}>Late</div>
                     </div>
                     <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--red)' }}>{absent}</div>
+                      <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--red)' }}>{absentCount}</div>
                       <div style={{ fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase' }}>Absent</div>
                     </div>
                   </div>
