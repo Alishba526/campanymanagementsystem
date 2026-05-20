@@ -1,0 +1,217 @@
+:root {
+  --bg: #ffffff;
+  --bg2: #f9fafb;
+  --bg3: #f3f4f6;
+  --bg4: #e5e7eb;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --text: #000000;
+  --text2: #374151;
+  --text3: #6b7280;
+  --accent: #6366f1;
+  --accent2: #4f46e5;
+  --accentbg: #eef2ff;
+  --radius: 10px;
+  --radius2: 14px;
+}
+
+[data-theme='dark'] {
+  --bg: #0f172a;
+  --bg2: #1e293b;
+  --bg3: #334155;
+  --bg4: #475569;
+  --border: #334155;
+  --border2: #475569;
+  --text: #ffffff;
+  --text2: #f1f5f9;
+  --text3: #cbd5e1;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-geist-sans), 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  padding: 20px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--accent2);
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: normal;
+  text-transform: uppercase;
+}
+
+.badge-green {
+  background: var(--greenbg);
+  color: var(--green);
+  border: 1px solid var(--green);
+}
+
+.badge-amber {
+  background: var(--amberbg);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+}
+
+.badge-red {
+  background: var(--redbg);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.badge-blue {
+  background: var(--bluebg);
+  color: var(--blue);
+  border: 1px solid var(--blue);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 12px;
+  font-size: 11px;
+  font-weight: normal;
+  text-transform: uppercase;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 14px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:hover {
+  background: var(--bg3);
+}
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius2);
+  padding: 20px;
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-2px);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: var(--bg3);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+@keyframes notification-glow {
+  0% { box-shadow: inset 0 0 5px rgba(var(--accent-rgb), 0.2); }
+  50% { box-shadow: inset 0 0 15px rgba(var(--accent-rgb), 0.4); }
+  100% { box-shadow: inset 0 0 5px rgba(var(--accent-rgb), 0.2); }
+}
+
+.glow-unread {
+  animation: notification-glow 2s infinite ease-in-out;
+}
+
+/* TikTok Style Notification Animations */
+@keyframes tiktok-slide-in {
+  0% { transform: translateY(-100%) translateX(-50%); opacity: 0; }
+  100% { transform: translateY(0) translateX(-50%); opacity: 1; }
+}
+
+.tiktok-toast {
+  border-radius: 50px !important;
+  padding: 10px 20px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+  border: 1px solid var(--border) !important;
+  animation: tiktok-slide-in 0.5s ease-out forwards;
+}
+
+.tiktok-title {
+  font-weight: 800 !important;
+  font-size: 14px !important;
+}
+
+.tiktok-content {
+  font-size: 13px !important;
+}

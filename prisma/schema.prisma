@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MonthlySchedule {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employeeName String
+  month        String   // Format: YYYY-MM
+  startTime    String
+  endTime      String
+  totalHours   Float
+  weeklyOffs   String?  // Optional field for weekly offs
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String   // 'superadmin', 'admin', 'hrmanager', 'teamleader', 'employee', 'viewer'
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id           String   @id
+  name         String
+  fatherName   String   @default("")
+  phone        String
+  address      String   @default("")
+  email        String
+  department   String
+  position     String
+  salary       Int
+  status       String   // 'active', 'inactive'
+  joinDate     String
+  monthlyHours Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AttendanceRecord {
+  id           String   @id
+  employeeId   String
+  employeeName String
+  date         String
+  checkIn      String
+  checkOut     String
+  breakIn      String   @default("")
+  breakOut     String   @default("")
+  lateEntry    String   @default("")
+  earlyExit    String   @default("")
+  overtime     Float    @default(0)
+  status       String   // 'present', 'absent', 'leave', 'late', 'half-day'
+  hours        Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TaskLog {
+  id                String   @id
+  employeeId        String
+  employeeName      String
+  date              String
+  task              String
+  category          String
+  hours             Float
+  completion        Int
+  quality           Int
+  score             Int
+  projectsAssigned  Int      @default(0)
+  projectsCompleted Int      @default(0)
+  pendingProjects   Int      @default(0)
+  approvedProjects  Int      @default(0)
+  rejectedProjects  Int      @default(0)
+  clientResponses   Int      @default(0)
+  leadsGenerated    Int      @default(0)
+  emailsSent        Int      @default(0)
+  conversionRatio   Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Expense {
+  id          String   @id
+  date        String
+  category    String
+  description String
+  department  String   @default("General")
+  amount      Int
+  status      String
+  approvedBy  String
+  submittedBy String   @default("Admin")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Bill {
+  id          String   @id
+  date        String
+  billType    String
+  description String
+  amount      Int
+  dueDate     String
+  status      String
+  paidDate    String?
+  paidAmount  Int?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Income {
+  id        String   @id
+  date      String
+  client    String
+  project   String
+  department String? // Made optional to resolve schema mismatch
+  amount    Int
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payroll {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employeeName String
+  month        String   // YYYY-MM
+  baseSalary   Int
+  bonus        Int      @default(0)
+  deductions   Int      @default(0)
+  latePenalty  Int      @default(0)
+  overtimePay  Int      @default(0)
+  totalNet     Int
+  status       String   // 'paid', 'pending'
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BreakRequest {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employeeName String
+  date         String
+  startTime    String
+  endTime      String?
+  status       String   // 'pending', 'approved', 'rejected'
+  approvedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model LeaveRequest {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employeeName String
+  startDate    String
+  endDate      String
+  type         String   // 'sick', 'casual', 'annual', 'paid'
+  status       String   // 'pending', 'approved', 'rejected'
+  reason       String?
+  approvedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  clientName     String
+  projectName    String
+  scope          String   @default("")
+  totalBudget    Int
+  amountReceived Int      @default(0)
+  status         String   // 'active', 'completed', 'on-hold', 'approved', 'pending', 'rejected'
+  startDate      String
+  endDate        String?
+  deadline       String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  author    String
+  priority  String   // 'normal', 'high'
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id
+  timestamp String
+  user      String
+  action    String
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   // 'announcement', 'leave', 'attendance', 'employee', 'finance'
+  sender    String
+  recipient String   // 'all', 'admin', 'superadmin', or specific department 'ecommerce', 'marketing', 'architecture'
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
