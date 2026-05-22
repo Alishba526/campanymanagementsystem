@@ -1,18 +1,20 @@
 export function formatDate(dateString: string): string {
+  if (!dateString || dateString === '--') return '--';
   const date = new Date(dateString);
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const dayName = days[date.getDay()];
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
   return `${dayName}, ${day}/${month}/${year}`;
 }
 
 export function formatDateShort(dateString: string): string {
+  if (!dateString || dateString === '--') return '--';
   const date = new Date(dateString);
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
 
   return `${day}/${month}/${year}`;

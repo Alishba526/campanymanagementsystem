@@ -7,62 +7,45 @@ import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
 import Swal from 'sweetalert2';
 
 export default function EmployeesPage() {
-  const { currentUser, employees, addEmployee, updateEmployee, deleteEmployee, tasks, departments } = useApp();
+  const { currentUser, employees, addEmployee, updateEmployee, deleteEmployee, tasks } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState<Partial<Employee>>({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterDepartment, setFilterDepartment] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
 
   if (!currentUser) return null;
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
-
-  // Filter employees by department for managers
-  let departmentEmployees = isAdmin
-    ? employees
-    : employees.filter(e => e.department === currentUser.role);
-
-  // Apply search filter
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    departmentEmployees = departmentEmployees.filter(e => {
-      if (!e) return false;
-      const name = (e.name || '').toLowerCase();
-      const id = (e.id || '').toLowerCase();
-      const email = (e.email || '').toLowerCase();
-      const position = (e.position || '').toLowerCase();
-      return name.includes(q) || id.includes(q) || email.includes(q) || position.includes(q);
-    });
-  }
-
-  // Apply department filter
-  if (filterDepartment !== 'all') {
-    departmentEmployees = departmentEmployees.filter(e => e.department === filterDepartment);
-  }
-
-  // Apply status filter
-  if (filterStatus !== 'all') {
-    departmentEmployees = departmentEmployees.filter(e => e.status === filterStatus);
-  }
-
-  const canManage = isAdmin || ['ecommerce', 'marketing', 'architecture', 'hrmanager', 'teamleader'].includes(currentUser.role);
-
+  
   const getAvgScore = (empId: string) => {
     const empTasks = tasks.filter(t => t.employeeId === empId);
     if (empTasks.length === 0) return 0;
     return Math.round(empTasks.reduce((sum, t) => sum + t.score, 0) / empTasks.length);
   };
 
-  const handleAdd = () => {
+  const handleUpdateSalary = async (emp: Employee) => {
+    const { value: newSalary } = await Swal.fire({
+      title: `Update Salary: ${emp.name}`,
+      input: 'number',
+      inputValue: emp.salary || 0,
+      inputLabel: 'Enter monthly salary (PKR)',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--accent)',
+    });
+
+    if (newSalary !== undefined && newSalary !== null && newSalary !== '') {
+      await updateEmployee(emp.id, { salary: parseInt(newSalary) });
+      Swal.fire('Updated!', 'Salary has been updated.', 'success');
+    }
+  };
+
+  const handleAdd = (deptId: string) => {
     setEditingEmployee(null);
     setFormData({
       status: 'active',
       joinDate: getCurrentDate(),
       monthlyHours: 176,
       salary: 0,
-      department: isAdmin ? 'ecommerce' : currentUser.role
+      department: deptId
     });
     setShowModal(true);
   };
@@ -78,200 +61,211 @@ export default function EmployeesPage() {
       Swal.fire('Error', 'Name and Employee ID are required!', 'error');
       return;
     }
+    if (!editingEmployee && employees.some(e => e.id === formData.id)) {
+      Swal.fire('Conflict', `ID "${formData.id}" is already in use.`, 'warning');
+      return;
+    }
 
     if (editingEmployee) {
       updateEmployee(editingEmployee.id, formData);
-      Swal.fire('Updated', 'Employee details updated successfully', 'success');
+      Swal.fire('Updated', 'Profile updated successfully', 'success');
     } else {
       addEmployee(formData as Employee);
-      Swal.fire('Added', 'New employee added successfully', 'success');
+      Swal.fire('Added', 'Employee registered successfully', 'success');
     }
     setShowModal(false);
   };
 
   const handleDelete = (id: string) => {
     Swal.fire({
-      title: 'Are you sure?',
-      text: "Employee record will be permanently deleted!",
+      title: 'Delete Employee?',
+      text: "This record will be permanently removed!",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: 'var(--red)',
-      confirmButtonText: 'Yes, delete it!'
     }).then((result) => {
       if (result.isConfirmed) {
         deleteEmployee(id);
-        Swal.fire('Deleted!', 'Employee has been removed.', 'success');
+        Swal.fire('Deleted!', 'Record removed.', 'success');
       }
     });
   };
 
-  const formatCurrency = (amount: number | undefined | null) => {
-    if (typeof amount !== 'number') return 'Rs. 0';
-    return `Rs. ${amount.toLocaleString()}`;
-  };
+  const departments = [
+    { id: 'ecommerce', label: 'E-Commerce', tagline: 'Digital storefront & online operations' },
+    { id: 'marketing', label: 'Marketing', tagline: 'Brand awareness & lead generation' },
+    { id: 'architecture', label: 'Architecture', tagline: 'System design & infrastructure' }
+  ];
 
   return (
-    <div>
-      {/* Search and Filter Bar */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '16px', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            <input
-              type="text"
-              placeholder="🔍 Search employees..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none' }}
-            />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+      
+      {/* Top Header Bar */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>👥</div>
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text)' }}>Employee Management</h2>
+            <div style={{ fontSize: '13px', color: 'var(--text2)' }}>{employees.length} total employees registered</div>
           </div>
-          {isAdmin && (
-            <select
-              value={filterDepartment}
-              onChange={(e) => setFilterDepartment(e.target.value)}
-              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
-            >
-              <option value="all">All Departments</option>
-              {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-            </select>
-          )}
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+           <div style={{ position: 'relative' }}>
+             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)' }}>🔍</span>
+             <input type="text" placeholder="Search employees..." style={{ padding: '10px 15px 10px 35px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', width: '250px', fontSize: '13px' }} />
+           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', color: 'var(--text2)' }}>{departmentEmployees.length} total employees</div>
-        {canManage && (
-          <button
-            onClick={handleAdd}
-            style={{ background: 'var(--accent)', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontSize: '14px', cursor: 'pointer', border: 'none', fontWeight: 'bold' }}
-          >
-            + Add Employee
-          </button>
-        )}
-      </div>
+      {/* 3 Department Portions */}
+      {departments.map(dept => {
+        // Isolation: Non-admins only see their own department portion
+        if (!isAdmin && currentUser.role !== dept.id) return null;
 
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>ID</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Name</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Department</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Position</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Address</th>
-                {isAdmin && (
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Salary</th>
-                )}
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Join Date</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Status</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Performance</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold', color: 'var(--text)', textTransform: 'uppercase' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {departmentEmployees.map(emp => {
-                const avgScore = getAvgScore(emp.id);
-                return (
-                  <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 'bold', color: 'var(--accent)' }}>{emp.id}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: '500' }}>
-                       <div>{emp.name}</div>
-                       <div style={{ fontSize: '11px', color: 'var(--text3)' }}>F: {emp.fatherName || '--'}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text2)', textTransform: 'capitalize' }}>{emp.department}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.position}</td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.address}</td>
-                    {isAdmin && (
-                      <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--green)', fontWeight: '600' }}>{formatCurrency(emp.salary)}</td>
-                    )}
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text2)' }}>{formatDateShort(emp.joinDate)}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '12px', background: emp.status === 'active' ? 'var(--greenbg)' : 'var(--redbg)', color: emp.status === 'active' ? 'var(--green)' : 'var(--red)', fontWeight: '600' }}>{emp.status}</span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: avgScore >= 80 ? 'var(--green)' : avgScore >= 60 ? 'var(--amber)' : 'var(--red)' }}>{avgScore || '—'}%</span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        {canManage && <button onClick={() => handleEdit(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>}
-                        {isAdmin && <button onClick={() => handleDelete(emp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>🗑️</button>}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        const deptEmps = employees.filter(e => e.department === dept.id);
 
-      {/* Modal */}
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)' }}>
-                {editingEmployee ? 'Edit Employee Profile' : 'Register New Employee'}
+        return (
+          <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '25px', boxShadow: 'var(--shadow)' }}>
+            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} Department
+                </h3>
+                <div style={{ fontSize: '11px', color: 'var(--text3)', fontStyle: 'italic', marginTop: '2px' }}>{dept.tagline}</div>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+              {(isAdmin || currentUser.role === dept.id) && (
+                <button onClick={() => handleAdd(dept.id)} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>+ Add Employee</button>
+              )}
             </div>
-            <div style={{ padding: '22px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ID</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Name</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Position</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Address</th>
+                    {isAdmin && <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Salary</th>}
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Join Date</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Perf.</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deptEmps.map(emp => (
+                    <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 'bold', color: 'var(--accent)' }}>{emp.id}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}>{emp.name}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text3)' }}>F: {emp.fatherName || '--'}</div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.position}</td>
+                      <td style={{ padding: '14px 16px', fontSize: '12px', color: 'var(--text2)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={emp.address}>{emp.address || '--'}</td>
+                      {isAdmin && <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--green)', fontWeight: 'bold' }}>Rs. {(emp.salary || 0).toLocaleString()}</td>}
+                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text2)' }}>{formatDateShort(emp.joinDate)}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '10px', background: emp.status === 'active' ? 'var(--greenbg)' : 'var(--redbg)', color: emp.status === 'active' ? 'var(--green)' : 'var(--red)', fontWeight: 'bold', textTransform: 'uppercase' }}>{emp.status}</span>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: getAvgScore(emp.id) >= 80 ? 'var(--green)' : 'var(--amber)' }}>{getAvgScore(emp.id)}%</div>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                           <button onClick={() => handleEdit(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--text2)' }} title="Edit">✏️</button>
+                           {isAdmin && <button onClick={() => handleUpdateSalary(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--green)' }} title="Salary">💰</button>}
+                           {isAdmin && <button onClick={() => handleDelete(emp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--red)' }} title="Delete">🗑️</button>}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {deptEmps.length === 0 && (
+                    <tr>
+                      <td colSpan={isAdmin ? 9 : 8} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>No employees in this department.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Modal Overlay */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '24px', width: '100%', maxWidth: '550px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+            <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg3)' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>{editingEmployee ? '📝' : '👤'}</span>
+                {editingEmployee ? 'Update Profile' : `Add New Employee`}
+              </div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '24px' }}>✕</button>
+            </div>
+            
+            <div style={{ padding: '30px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Full Name</label>
-                  <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }} placeholder="Employee Name" />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Full Name</label>
+                  <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Ali Ahmed" />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Father Name</label>
-                  <input type="text" value={formData.fatherName || ''} onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }} placeholder="Father's Name" />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Father Name</label>
+                  <input type="text" value={formData.fatherName || ''} onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="Father's Name" />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Employee ID</label>
-                  <input type="text" value={formData.id || ''} onChange={(e) => setFormData({ ...formData, id: e.target.value })} disabled={!!editingEmployee} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }} placeholder="EMP-001" />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Employee ID / Serial</label>
+                  <input type="text" value={formData.id || ''} onChange={(e) => setFormData({ ...formData, id: e.target.value })} disabled={!!editingEmployee} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none', opacity: editingEmployee ? 0.7 : 1 }} placeholder="EMP-001" />
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Phone Number</label>
-                  <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }} placeholder="03xx-xxxxxxx" />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Phone Number</label>
+                  <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="03xx-xxxxxxx" />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Department</label>
-                  <select value={formData.department || ''} onChange={(e) => setFormData({ ...formData, department: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }}>
-                    {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Department</label>
+                  <select value={formData.department || ''} onChange={(e) => setFormData({ ...formData, department: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }}>
+                    <option value="ecommerce">E-Commerce</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="architecture">Architecture</option>
+                    <option value="hr">HR</option>
+                    <option value="finance">Finance</option>
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Position</label>
-                  <input type="text" value={formData.position || ''} onChange={(e) => setFormData({ ...formData, position: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }} placeholder="Designation" />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Position / Designation</label>
+                  <input type="text" value={formData.position || ''} onChange={(e) => setFormData({ ...formData, position: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Senior Developer" />
                 </div>
               </div>
 
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Address</label>
-                <input type="text" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }} placeholder="Full Residential Address" />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-                {isAdmin && (
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Basic Salary</label>
-                    <input type="number" value={formData.salary || ''} onChange={(e) => setFormData({ ...formData, salary: parseInt(e.target.value) || 0 })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }} />
-                  </div>
-                )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Join Date</label>
-                  <input type="date" value={formData.joinDate || ''} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px', fontSize: '13px' }} />
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Joining Date</label>
+                  <input type="date" value={formData.joinDate || ''} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Current Status</label>
+                  <select value={formData.status || 'active'} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }}>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                <button onClick={() => setShowModal(false)} style={{ padding: '9px 18px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer' }}>Cancel</button>
-                <button onClick={handleSave} style={{ padding: '9px 24px', borderRadius: '8px', background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Save Employee</button>
+              <div style={{ marginBottom: '25px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Residential Address</label>
+                <input type="text" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="Complete Address" />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button onClick={() => setShowModal(false)} style={{ padding: '12px 25px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', color: 'var(--text)', fontWeight: 'bold', fontSize: '14px' }}>Cancel</button>
+                <button onClick={handleSave} style={{ padding: '12px 40px', borderRadius: '12px', background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 4px 10px rgba(var(--accent-rgb), 0.3)' }}>{editingEmployee ? 'Update' : 'Register'}</button>
               </div>
             </div>
           </div>

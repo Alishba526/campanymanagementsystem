@@ -1,356 +1,293 @@
 'use client';
 
 import { useApp } from '@/context/AppContext';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AttendanceRecord } from '@/types';
+import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
 import Swal from 'sweetalert2';
 
 export default function AttendancePage() {
-  const { currentUser, employees, attendance, announcements, breakRequests, addAttendance, updateAttendance, deleteAttendance } = useApp();
+  const { currentUser, employees, attendance, breakRequests, addAttendance, updateAttendance } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [formData, setFormData] = useState<Partial<AttendanceRecord>>({});
-  const [viewMode, setViewMode] = useState<'today' | 'all'>('today');
-  const [selectedDept, setSelectedDept] = useState<string>('all');
-
-  const [priorityItems, setPriorityItems] = useState<any[]>([]);
+  const [filterDate, setFilterDate] = useState(getCurrentDate());
+  const [targetDept, setTargetDept] = useState<string>('');
 
   if (!currentUser) return null;
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
-  const canManage = isAdmin || ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
-  const today = new Date().toISOString().split('T')[0];
+  const isManager = ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
 
-  // --- Dynamic Priority Feed Logic (ADMIN ONLY) ---
-  useEffect(() => {
-    if (!isAdmin) return;
-
-    // 1. Get recent attendance from today
-    const recentAtt = attendance
-      .filter(a => a.date === today)
-      .map(a => ({ 
-        id: `att-${a.id}`, 
-        type: 'attendance', 
-        title: 'Attendance Marked', 
-        content: `${a.employeeName} (${a.status.toUpperCase()}) at ${a.checkIn}`,
-        time: a.checkIn,
-        icon: '⏰',
-        color: 'var(--green)'
-      }));
-
-    // 2. Get recent break requests
-    const recentBreaks = (breakRequests || [])
-      .filter(b => b.date === today)
-      .map(b => ({
-        id: `break-${b.id}`,
-        type: 'break',
-        title: 'Break Update',
-        content: `${b.employeeName} requested break at ${b.startTime}`,
-        time: b.startTime,
-        icon: '☕',
-        color: 'var(--blue)'
-      }));
-
-    // 3. Get recent announcements
-    const recentAnnouncements = announcements
-      .slice(0, 3)
-      .map(a => ({
-        id: `ann-${a.id}`,
-        type: 'announcement',
-        title: 'Announcement',
-        content: a.title,
-        time: a.createdAt ? new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently',
-        icon: '📢',
-        color: 'var(--accent)'
-      }));
-
-    // Combine and sort by "time"
-    const combined = [...recentAtt, ...recentBreaks, ...recentAnnouncements]
-      .sort((a, b) => b.time.localeCompare(a.time))
-      .slice(0, 6);
-
-    setPriorityItems(combined);
-  }, [isAdmin, attendance, breakRequests, announcements, today]);
-
-  // Helper to ensure time is always displayed as AM/PM in the UI
-  const formatTime = (timeStr: string) => {
-    if (!timeStr || timeStr === '--' || timeStr === '0' || timeStr === '') return '--';
-    try {
-      if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) return timeStr;
-      const [hours, minutes] = timeStr.split(':');
-      const h = parseInt(hours);
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      const h12 = h % 12 || 12;
-      return `${h12.toString().padStart(2, '0')}:${minutes} ${ampm}`;
-    } catch (e) {
-      return timeStr;
-    }
-  };
-
-  if (!currentUser) return null;
-
-  const departmentEmployees = isAdmin
-    ? employees
-    : employees.filter(e => e.department === currentUser.role);
-
-  const filteredAttendance = attendance.filter(a => {
-    if (isAdmin) {
-      if (selectedDept === 'all') return true;
-      const employee = employees.find(e => e.id === a.employeeId);
-      return employee?.department === selectedDept;
-    }
-    const employee = employees.find(e => e.id === a.employeeId);
-    return employee?.department === currentUser.role;
-  }).filter(a => viewMode === 'today' ? a.date === today : true);
-
-  const handleAdd = () => {
+  const handleMarkAttendance = () => {
     setEditingRecord(null);
+    setTargetDept(isManager ? currentUser.role : 'ecommerce');
     setFormData({
-      date: today,
+      date: filterDate,
+      status: 'present',
       checkIn: '09:00',
       checkOut: '18:00',
       breakIn: '',
       breakOut: '',
-      overtime: 0,
-      status: 'present',
-      hours: 9
+      lateEntry: '00:00',
+      earlyExit: '00:00',
+      overtime: 0
     });
     setShowModal(true);
   };
 
   const handleEdit = (record: AttendanceRecord) => {
     setEditingRecord(record);
+    setTargetDept(employees.find(e => e.id === record.employeeId)?.department || 'ecommerce');
     setFormData(record);
     setShowModal(true);
   };
 
+  const handleRealtimeBreak = async (record: AttendanceRecord, type: 'in' | 'out') => {
+    const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const updates = type === 'in' ? { breakIn: now } : { breakOut: now };
+    await updateAttendance(record.id, updates);
+    Swal.fire({ title: `Break ${type === 'in' ? 'Started' : 'Ended'}`, text: `Time recorded: ${now}`, icon: 'success', timer: 1500, showConfirmButton: false });
+  };
+
   const handleSave = () => {
-    if (!formData.employeeId) {
-      Swal.fire({ icon: 'warning', title: 'Attention', text: 'Please select an employee' });
+    if (!formData.employeeId || !formData.date) {
+      Swal.fire('Error', 'Please select an employee and date', 'error');
       return;
     }
 
-    // --- STRICT VALIDATION: ONE ATTENDANCE PER DAY ---
-    if (!editingRecord) {
-      const alreadyMarked = attendance.find(a => a.employeeId === formData.employeeId && a.date === (formData.date || today));
-      if (alreadyMarked) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Duplicate Entry',
-          text: `Attendance for ${alreadyMarked.employeeName} has already been marked for today!`,
-          confirmButtonColor: 'var(--accent)'
-        });
-        return;
-      }
+    if (!editingRecord && attendance.some(a => a.employeeId === formData.employeeId && a.date === formData.date)) {
+      Swal.fire('Already Marked', 'Attendance for this employee on this date is already recorded.', 'warning');
+      return;
     }
 
-    const employee = employees.find(e => e.id === formData.employeeId);
-    if (!employee) return;
+    const emp = employees.find(e => e.id === formData.employeeId);
+    
+    // Calculate hours if not provided
+    const checkIn = formData.checkIn || '09:00';
+    const checkOut = formData.checkOut || '18:00';
+    let calculatedHours = 0;
+    if (checkIn !== '--' && checkOut !== '--') {
+        const [inH, inM] = checkIn.split(':').map(Number);
+        const [outH, outM] = checkOut.split(':').map(Number);
+        calculatedHours = ((outH * 60 + outM) - (inH * 60 + inM)) / 60;
+    }
 
-    const record: AttendanceRecord = {
-      id: editingRecord?.id || `AT${Date.now()}`,
-      employeeId: formData.employeeId,
-      employeeName: employee.name,
-      date: formData.date || today,
-      checkIn: formData.status === 'absent' || formData.status === 'leave' ? '--' : formData.checkIn || '09:00',
-      checkOut: formData.status === 'absent' || formData.status === 'leave' ? '--' : formData.checkOut || '18:00',
+    const record = { 
+      ...formData, 
+      employeeName: emp?.name || '',
+      hours: formData.hours || calculatedHours || 0,
+      overtime: Number(formData.overtime) || 0,
+      lateEntry: formData.lateEntry || '00:00',
+      earlyExit: formData.earlyExit || '00:00',
       breakIn: formData.breakIn || '',
-      breakOut: formData.breakOut || '',
-      lateEntry: formData.lateEntry || '',
-      earlyExit: formData.earlyExit || '',
-      overtime: formData.overtime || 0,
-      status: formData.status as any || 'present',
-      hours: formData.status === 'absent' || formData.status === 'leave' ? 0 : formData.hours || 9
-    };
-
+      breakOut: formData.breakOut || ''
+    } as AttendanceRecord;
+    
     if (editingRecord) {
       updateAttendance(editingRecord.id, record);
-      Swal.fire({ icon: 'success', title: 'Updated!', text: 'Attendance record updated', timer: 1500, showConfirmButton: false });
+      Swal.fire('Updated', 'Record updated successfully', 'success');
     } else {
-      addAttendance(record);
-      Swal.fire({ icon: 'success', title: 'Added!', text: 'Attendance record added', timer: 1500, showConfirmButton: false });
+      addAttendance({ ...record, id: `ATT${Date.now()}` });
+      Swal.fire('Success', 'Attendance marked successfully', 'success');
     }
     setShowModal(false);
   };
 
-  const handleDelete = (id: string) => {
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: 'var(--accent)',
-      cancelButtonColor: 'var(--red)',
-      confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        deleteAttendance(id);
-      }
-    });
+  const filteredAttendance = attendance.filter(a => {
+    const isDateMatch = a.date === filterDate;
+    const isDeptMatch = isAdmin || employees.find(e => e.id === a.employeeId)?.department === currentUser.role;
+    return isDateMatch && isDeptMatch;
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'present': return 'var(--green)';
+      case 'late': return 'var(--amber)';
+      case 'absent': return 'var(--red)';
+      case 'half-day': return 'var(--blue)';
+      case 'leave': return 'var(--purple)';
+      default: return 'var(--text2)';
+    }
   };
 
+  const departments = [
+    { id: 'ecommerce', label: 'E-Commerce', tagline: 'Digital storefront & online operations' },
+    { id: 'marketing', label: 'Marketing', tagline: 'Brand awareness & lead generation' },
+    { id: 'architecture', label: 'Architecture', tagline: 'System design & infrastructure' }
+  ];
+
   return (
-    <div>
-      {/* 0. Priority Activity Feed (ONLY ADMIN) - WhatsApp/TikTok Style Reordering */}
-      {isAdmin && priorityItems.length > 0 && (
-        <div style={{ marginBottom: '22px' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '12px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🔥</span> Priority Activity Feed
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+      
+      {/* Control Bar */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>⏰</div>
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text)' }}>Daily Attendance</h2>
+            <div style={{ fontSize: '13px', color: 'var(--text2)' }}>Tracking presence for {formatDateShort(filterDate)}</div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {priorityItems.map((item) => (
-              <div 
-                key={item.id} 
-                style={{ 
-                  background: 'var(--bg2)', 
-                  border: `1px solid var(--border)`, 
-                  borderLeft: `4px solid ${item.color}`,
-                  borderRadius: '12px', 
-                  padding: '12px 16px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  animation: 'slideIn 0.3s ease-out'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ fontSize: '20px' }}>{item.icon}</div>
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text)' }}>{item.title}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text2)' }}>{item.content}</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '600' }}>{item.time}</div>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg3)', padding: '8px 15px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+             <span style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'bold' }}>📅 Date:</span>
+             <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'transparent', border: 'none', color: 'var(--text)', outline: 'none', fontSize: '13px' }} />
+           </div>
+        </div>
+      </div>
+
+      {/* 3 Department Portions */}
+      {departments.map(dept => {
+        // Isolation: Non-admins only see their own department portion
+        if (!isAdmin && currentUser.role !== dept.id) return null;
+
+        const deptAtt = filteredAttendance.filter(a => employees.find(e => e.id === a.employeeId)?.department === dept.id);
+
+        return (
+          <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '25px', boxShadow: 'var(--shadow)' }}>
+            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} Attendance
+                </h3>
+                <div style={{ fontSize: '11px', color: 'var(--text3)', fontStyle: 'italic', marginTop: '2px' }}>{dept.tagline}</div>
               </div>
-            ))}
-          </div>
-          <style jsx>{`
-            @keyframes slideIn {
-              from { transform: translateY(-10px); opacity: 0; }
-              to { transform: translateY(0); opacity: 1; }
-            }
-          `}</style>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <div style={{ display: 'flex', gap: '4px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '4px' }}>
-            <button onClick={() => setViewMode('today')} style={{ padding: '8px 18px', borderRadius: '7px', cursor: 'pointer', fontSize: '14px', background: viewMode === 'today' ? 'var(--accentbg)' : 'transparent', color: viewMode === 'today' ? 'var(--accent2)' : '#333', border: 'none' }}>Today</button>
-            <button onClick={() => setViewMode('all')} style={{ padding: '8px 18px', borderRadius: '7px', cursor: 'pointer', fontSize: '14px', background: viewMode === 'all' ? 'var(--accentbg)' : 'transparent', color: viewMode === 'all' ? 'var(--accent2)' : '#333', border: 'none' }}>All Records</button>
-          </div>
-        </div>
-        {canManage && <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', border: 'none' }}>Mark Attendance</button>}
-      </div>
-
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text)' }}>Attendance Records</div>
-          <div style={{ fontSize: '13px', color: 'var(--text2)' }}>{filteredAttendance.length} records</div>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>Employee</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>Check In</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>Check Out</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>Breaks</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>Late/Early</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>OT</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>Status</th>
-                {canManage && <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'var(--text2)' }}>Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAttendance.map(record => (
-                <tr key={record.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)' }}>{record.date}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: '500' }}>{record.employeeName}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{formatTime(record.checkIn)}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{formatTime(record.checkOut)}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--text3)' }}>{formatTime(record.breakIn)} - {formatTime(record.breakOut)}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--red)' }}>L:{record.lateEntry || '0'} / E:{record.earlyExit || '0'}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--green)' }}>{record.overtime || 0}h</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <span style={{ borderRadius: '20px', padding: '3px 9px', fontSize: '11px', fontWeight: '600', background: record.status === 'present' ? 'var(--greenbg)' : 'var(--amberbg)', color: record.status === 'present' ? 'var(--green)' : 'var(--amber)' }}>
-                      {record.status}
-                    </span>
-                  </td>
-                  {canManage && (
-                    <td style={{ padding: '10px 16px' }}>
-                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        {!record.breakIn ? (
-                          <button 
-                            onClick={() => updateAttendance(record.id, { breakIn: new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }) })}
-                            style={{ background: 'var(--accentbg)', border: '1px solid var(--accent)', color: 'var(--accent2)', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                            title="Start Break"
-                          >
-                            ☕ In
-                          </button>
-                        ) : !record.breakOut ? (
-                          <button 
-                            onClick={() => updateAttendance(record.id, { breakOut: new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }) })}
-                            style={{ background: 'var(--redbg)', border: '1px solid var(--red)', color: 'var(--red)', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                            title="End Break"
-                          >
-                            🏃 Out
-                          </button>
-                        ) : null}
-                        <div style={{ width: '1px', height: '16px', background: 'var(--border)', margin: '0 4px' }} />
-                        <button onClick={() => handleEdit(record)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
-                        {isAdmin && <button onClick={() => handleDelete(record.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>🗑️</button>}
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px' }}>
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text)' }}>{editingRecord ? 'Edit Attendance' : 'Mark Attendance'}</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
+              {(isAdmin || currentUser.role === dept.id) && (
+                <button onClick={() => { setTargetDept(dept.id); handleMarkAttendance(); }} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>+ Mark Attendance</button>
+              )}
             </div>
-            <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <select value={formData.employeeId || ''} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} disabled={!!editingRecord}>
-                  <option value="">Select Employee</option>
-                  {departmentEmployees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1100px' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Employee</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>In / Out</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Break</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Late/Early</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>OT/Hours</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Status</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deptAtt.map(a => (
+                    <tr key={a.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}>{a.employeeName}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text3)' }}>ID: {a.employeeId}</div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px' }}>
+                        <div style={{ color: 'var(--green)', fontWeight: '500' }}>In: {a.checkIn}</div>
+                        <div style={{ color: 'var(--red)', fontWeight: '500' }}>Out: {a.checkOut}</div>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                           {!a.breakIn ? (
+                             <button onClick={() => handleRealtimeBreak(a, 'in')} style={{ padding: '4px 10px', background: 'var(--bluebg)', color: 'var(--blue)', border: '1px solid var(--blue)', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}>Start Break</button>
+                           ) : !a.breakOut ? (
+                             <button onClick={() => handleRealtimeBreak(a, 'out')} style={{ padding: '4px 10px', background: 'var(--redbg)', color: 'var(--red)', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}>End Break</button>
+                           ) : (
+                             <div style={{ fontSize: '12px', color: 'var(--text2)' }}>{a.breakIn} - {a.breakOut}</div>
+                           )}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--amber)' }}>Late: {a.lateEntry}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--purple)' }}>Early: {a.earlyExit}</div>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{a.hours.toFixed(1)} hrs</div>
+                        <div style={{ fontSize: '11px', color: 'var(--green)' }}>OT: {a.overtime}h</div>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '10px', background: `${getStatusColor(a.status)}22`, color: getStatusColor(a.status), fontWeight: 'bold', textTransform: 'uppercase', border: `1px solid ${getStatusColor(a.status)}44` }}>
+                          {a.status.replace('-', ' ')}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <button onClick={() => handleEdit(a)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
+                      </td>
+                    </tr>
+                  ))}
+                  {deptAtt.length === 0 && (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>No records for this department on this date.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Attendance Modal */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '24px', width: '100%', maxWidth: '500px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+            <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg3)' }}>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>{editingRecord ? '📝' : '🕒'}</span>
+                {editingRecord ? 'Update Attendance' : 'Mark Attendance'}
+              </div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '24px' }}>✕</button>
+            </div>
+            
+            <div style={{ padding: '30px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Select Employee</label>
+                <select value={formData.employeeId || ''} onChange={e => setFormData({ ...formData, employeeId: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }}>
+                  <option value="">Choose an employee...</option>
+                  {employees.filter(e => isAdmin || e.department === currentUser.role).map(e => (
+                    <option key={e.id} value={e.id}>{e.name} ({e.id})</option>
+                  ))}
                 </select>
-                <input type="date" value={formData.date || ''} onChange={(e) => setFormData({ ...formData, date: e.target.value })} style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={{ fontSize: '11px' }}>Check In</label><input type="time" value={formData.checkIn || ''} onChange={(e) => setFormData({ ...formData, checkIn: e.target.value })} style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} /></div>
-                <div><label style={{ fontSize: '11px' }}>Check Out</label><input type="time" value={formData.checkOut || ''} onChange={(e) => setFormData({ ...formData, checkOut: e.target.value })} style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} /></div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Check In</label>
+                  <input type="time" value={formData.checkIn || ''} onChange={e => setFormData({ ...formData, checkIn: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Check Out</label>
+                  <input type="time" value={formData.checkOut || ''} onChange={e => setFormData({ ...formData, checkOut: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div><label style={{ fontSize: '11px' }}>Break In</label><input type="time" value={formData.breakIn || ''} onChange={(e) => setFormData({ ...formData, breakIn: e.target.value })} style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} /></div>
-                <div><label style={{ fontSize: '11px' }}>Break Out</label><input type="time" value={formData.breakOut || ''} onChange={(e) => setFormData({ ...formData, breakOut: e.target.value })} style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} /></div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Late Entry (HH:MM)</label>
+                  <input type="text" value={formData.lateEntry || '00:00'} onChange={e => setFormData({ ...formData, lateEntry: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="00:00" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Early Exit (HH:MM)</label>
+                  <input type="text" value={formData.earlyExit || '00:00'} onChange={e => setFormData({ ...formData, earlyExit: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="00:00" />
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <input type="text" placeholder="Late Entry (min)" value={formData.lateEntry || ''} onChange={(e) => setFormData({ ...formData, lateEntry: e.target.value })} style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} />
-                <input type="text" placeholder="Early Exit (min)" value={formData.earlyExit || ''} onChange={(e) => setFormData({ ...formData, earlyExit: e.target.value })} style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '25px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Overtime (Hours)</label>
+                  <input type="number" value={formData.overtime || 0} onChange={e => setFormData({ ...formData, overtime: Number(e.target.value) })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Status</label>
+                  <select value={formData.status || 'present'} onChange={e => setFormData({ ...formData, status: e.target.value as any })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }}>
+                    <option value="present">Present</option>
+                    <option value="late">Late</option>
+                    <option value="absent">Absent</option>
+                    <option value="half-day">Half Day</option>
+                    <option value="leave">Leave Record</option>
+                  </select>
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <input type="number" placeholder="Overtime (hrs)" value={formData.overtime || ''} onChange={(e) => setFormData({ ...formData, overtime: parseFloat(e.target.value) || 0 })} style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }} />
-                <select value={formData.status || ''} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })} style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)' }}>
-                  <option value="present">Present</option>
-                  <option value="late">Late</option>
-                  <option value="absent">Absent</option>
-                  <option value="leave">Leave</option>
-                  <option value="half-day">Half Day</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
-                <button onClick={() => setShowModal(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer' }}>Cancel</button>
-                <button onClick={handleSave} style={{ padding: '8px 16px', borderRadius: '8px', background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: '700' }}>Save</button>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button onClick={() => setShowModal(false)} style={{ padding: '12px 25px', borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--bg3)', cursor: 'pointer', color: 'var(--text)', fontWeight: 'bold', fontSize: '14px' }}>Cancel</button>
+                <button onClick={handleSave} style={{ padding: '12px 40px', borderRadius: '12px', background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 4px 10px rgba(var(--accent-rgb), 0.3)' }}>{editingRecord ? 'Update' : 'Confirm'}</button>
               </div>
             </div>
           </div>

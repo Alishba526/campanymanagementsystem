@@ -66,7 +66,7 @@ export default function DepartmentAnalytics() {
       operationalExpense,
       profit,
       roi,
-      tasksCompleted: deptTasks.filter(t => t.completion === 100).length,
+      tasksCompleted: deptTasks.reduce((sum, t) => sum + (t.projectsCompleted || 0), 0),
       totalTasks: deptTasks.length
     };
   });

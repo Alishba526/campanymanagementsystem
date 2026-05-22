@@ -3,6 +3,7 @@
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { TaskLog } from '@/types';
+import { formatDateShort } from '@/lib/dateUtils';
 
 export default function PerformancePage() {
   const { currentUser, employees, tasks, addTask, updateTask, deleteTask } = useApp();
@@ -26,12 +27,10 @@ export default function PerformancePage() {
     const avgScore = empTasks.length > 0
       ? Math.round(empTasks.reduce((sum, t) => sum + t.score, 0) / empTasks.length)
       : 0;
-    const completedTasks = empTasks.filter(t => t.completion === 100).length;
     return {
       employee: emp,
       avgScore,
       totalTasks: empTasks.length,
-      completedTasks,
       rating: avgScore >= 90 ? 'Excellent' : avgScore >= 75 ? 'Good' : avgScore >= 60 ? 'Average' : 'Low'
     };
   }).sort((a, b) => b.avgScore - a.avgScore);
@@ -43,8 +42,7 @@ export default function PerformancePage() {
     setFormData({
       date: new Date().toISOString().split('T')[0],
       category: 'development',
-      hours: 0,
-      completion: 0,
+      workingDays: 1,
       quality: 0
     });
     setShowModal(true);
@@ -65,17 +63,15 @@ export default function PerformancePage() {
     const employee = employees.find(e => e.id === formData.employeeId);
     if (!employee) return;
 
-    const completion = formData.completion || 0;
     const quality = formData.quality || 0;
-    const hours = formData.hours || 0;
+    const workingDays = formData.workingDays || 0;
     const projectsCompleted = formData.projectsCompleted || 0;
     const leadsGenerated = formData.leadsGenerated || 0;
     
-    // Updated score calculation logic
+    // Updated score calculation logic (weighted towards quality and days)
     const score = Math.round(
-      (completion * 0.3) + 
-      (quality * 0.2) + 
-      (Math.min(hours / 8, 1) * 100 * 0.1) +
+      (quality * 0.4) + 
+      (Math.min(workingDays / 22, 1) * 100 * 0.2) +
       (Math.min(projectsCompleted / 2, 1) * 100 * 0.2) +
       (Math.min(leadsGenerated / 5, 1) * 100 * 0.2)
     );
@@ -85,10 +81,9 @@ export default function PerformancePage() {
       employeeId: formData.employeeId,
       employeeName: employee.name,
       date: formData.date || new Date().toISOString().split('T')[0],
-      task: formData.task,
+      task: formData.task || '',
       category: formData.category || 'development',
-      hours,
-      completion,
+      workingDays,
       quality,
       score,
       projectsAssigned: formData.projectsAssigned || 0,
@@ -185,75 +180,55 @@ export default function PerformancePage() {
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Avg Score</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Tasks Done</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Completion</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Rating</th>
               </tr>
             </thead>
             <tbody>
-              {performanceSummary.map(perf => {
-                const completionRate = perf.totalTasks > 0 ? Math.round((perf.completedTasks / perf.totalTasks) * 100) : 0;
-                return (
-                  <tr key={perf.employee.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'normal' }}>{perf.employee.name}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)', textTransform: 'capitalize' }}>{perf.employee.department}</td>
-                    <td style={{ padding: '10px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                          width: '46px',
-                          height: '46px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '14px',
-                          fontWeight: 'normal',
-                          border: '2.5px solid',
-                          color: perf.avgScore >= 80 ? 'var(--green)' : perf.avgScore >= 60 ? 'var(--amber)' : 'var(--red)',
-                          borderColor: perf.avgScore >= 80 ? 'var(--green)' : perf.avgScore >= 60 ? 'var(--amber)' : 'var(--red)'
-                        }}>
-                          {perf.avgScore}
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{perf.completedTasks}/{perf.totalTasks}</td>
-                    <td style={{ padding: '10px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ background: 'var(--border)', borderRadius: '99px', height: '6px', width: '80px', overflow: 'hidden', minWidth: '80px' }}>
-                          <div
-                            style={{
-                              height: '100%',
-                              borderRadius: '99px',
-                              transition: '.4s',
-                              width: `${completionRate}%`,
-                              background: completionRate >= 80 ? 'var(--green)' : completionRate >= 60 ? 'var(--amber)' : 'var(--red)'
-                            }}
-                          />
-                        </div>
-                        <span style={{ fontSize: '11px', color: 'var(--text2)' }}>{completionRate}%</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '10px 16px' }}>
-                      <span style={{
-                        display: 'inline-flex',
+              {performanceSummary.map(perf => (
+                <tr key={perf.employee.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'normal' }}>{perf.employee.name}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)', textTransform: 'capitalize' }}>{perf.employee.department}</td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '50%',
+                        display: 'flex',
                         alignItems: 'center',
-                        gap: '4px',
-                        borderRadius: '20px',
-                        padding: '3px 9px',
-                        fontSize: '11px',
+                        justifyContent: 'center',
+                        fontSize: '14px',
                         fontWeight: 'normal',
-                        background: perf.avgScore >= 90 ? 'var(--greenbg)' :
-                                   perf.avgScore >= 75 ? 'var(--bluebg)' :
-                                   perf.avgScore >= 60 ? 'var(--amberbg)' : 'var(--redbg)',
-                        color: perf.avgScore >= 90 ? 'var(--green)' :
-                               perf.avgScore >= 75 ? 'var(--blue)' :
-                               perf.avgScore >= 60 ? 'var(--amber)' : 'var(--red)'
+                        border: '2.5px solid',
+                        color: perf.avgScore >= 80 ? 'var(--green)' : perf.avgScore >= 60 ? 'var(--amber)' : 'var(--red)',
+                        borderColor: perf.avgScore >= 80 ? 'var(--green)' : perf.avgScore >= 60 ? 'var(--amber)' : 'var(--red)'
                       }}>
-                        {perf.rating}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                        {perf.avgScore}
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{perf.totalTasks}</td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      borderRadius: '20px',
+                      padding: '3px 9px',
+                      fontSize: '11px',
+                      fontWeight: 'normal',
+                      background: perf.avgScore >= 90 ? 'var(--greenbg)' :
+                                 perf.avgScore >= 75 ? 'var(--bluebg)' :
+                                 perf.avgScore >= 60 ? 'var(--amberbg)' : 'var(--redbg)',
+                      color: perf.avgScore >= 90 ? 'var(--green)' :
+                             perf.avgScore >= 75 ? 'var(--blue)' :
+                             perf.avgScore >= 60 ? 'var(--amber)' : 'var(--red)'
+                    }}>
+                      {perf.rating}
+                    </span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -289,8 +264,7 @@ export default function PerformancePage() {
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Employee</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Task</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Category</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Hours</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Completion</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Working Days</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>AI Score</th>
                 {canManage && (
                   <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--text2)' }}>Actions</th>
@@ -300,7 +274,7 @@ export default function PerformancePage() {
             <tbody>
               {tasks.map(task => (
                 <tr key={task.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{task.date}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{formatDateShort(task.date)}</td>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'normal' }}>{task.employeeName}</td>
                   <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={task.task}>{task.task}</td>
                   <td style={{ padding: '10px 16px' }}>
@@ -322,22 +296,7 @@ export default function PerformancePage() {
                       {task.category}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{task.hours}h</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ background: 'var(--border)', borderRadius: '99px', height: '6px', width: '70px', overflow: 'hidden', minWidth: '70px' }}>
-                        <div
-                          style={{
-                            height: '100%',
-                            borderRadius: '99px',
-                            width: `${task.completion}%`,
-                            background: task.completion >= 80 ? 'var(--green)' : task.completion >= 60 ? 'var(--amber)' : 'var(--red)'
-                          }}
-                        />
-                      </div>
-                      <span style={{ fontSize: '11px', color: 'var(--text2)' }}>{task.completion}%</span>
-                    </div>
-                  </td>
+                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{task.workingDays}d</td>
                   <td style={{ padding: '10px 16px' }}>
                     <span style={{
                       display: 'inline-flex',
@@ -446,32 +405,20 @@ export default function PerformancePage() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Hours Worked</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Working Days</label>
                   <input
                     type="number"
-                    value={formData.hours || ''}
-                    onChange={(e) => setFormData({ ...formData, hours: parseFloat(e.target.value) || 0 })}
+                    value={formData.workingDays || ''}
+                    onChange={(e) => setFormData({ ...formData, workingDays: parseFloat(e.target.value) || 0 })}
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    placeholder="4"
+                    placeholder="1"
                     min="0"
-                    max="12"
+                    max="31"
                     step="0.5"
                   />
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Completion %</label>
-                  <input
-                    type="number"
-                    value={formData.completion || 0}
-                    onChange={(e) => setFormData({ ...formData, completion: parseInt(e.target.value) || 0 })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    placeholder="80"
-                    min="0"
-                    max="100"
-                  />
-                </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Quality Score (0-100)</label>
                   <input
@@ -484,8 +431,6 @@ export default function PerformancePage() {
                     max="100"
                   />
                 </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Projects Assigned</label>
                   <input
@@ -495,6 +440,8 @@ export default function PerformancePage() {
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
                   />
                 </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Projects Completed</label>
                   <input
@@ -504,8 +451,6 @@ export default function PerformancePage() {
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
                   />
                 </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Pending Projects</label>
                   <input
@@ -515,6 +460,8 @@ export default function PerformancePage() {
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
                   />
                 </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Approved Projects</label>
                   <input
@@ -524,8 +471,6 @@ export default function PerformancePage() {
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
                   />
                 </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Rejected Projects</label>
                   <input
@@ -535,6 +480,8 @@ export default function PerformancePage() {
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
                   />
                 </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Client Responses</label>
                   <input
@@ -544,8 +491,6 @@ export default function PerformancePage() {
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
                   />
                 </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Leads Generated</label>
                   <input
@@ -555,6 +500,8 @@ export default function PerformancePage() {
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
                   />
                 </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Emails Sent</label>
                   <input
@@ -564,16 +511,16 @@ export default function PerformancePage() {
                     style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
                   />
                 </div>
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Conversion Ratio (%)</label>
-                <input
-                  type="number"
-                  value={formData.conversionRatio || 0}
-                  onChange={(e) => setFormData({ ...formData, conversionRatio: parseFloat(e.target.value) || 0 })}
-                  style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                  step="0.1"
-                />
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Conversion Ratio (%)</label>
+                  <input
+                    type="number"
+                    value={formData.conversionRatio || 0}
+                    onChange={(e) => setFormData({ ...formData, conversionRatio: parseFloat(e.target.value) || 0 })}
+                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
+                    step="0.1"
+                  />
+                </div>
               </div>
             </div>
             <div style={{ padding: '16px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>

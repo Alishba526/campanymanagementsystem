@@ -3,6 +3,7 @@
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { Income } from '@/types';
+import { formatDateShort } from '@/lib/dateUtils';
 
 export default function FinancePage() {
   const { currentUser, income, expenses, addIncome, deleteIncome } = useApp();
@@ -135,7 +136,7 @@ export default function FinancePage() {
                 <tr key={inc.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                   <td style={{ padding: '10px 16px', fontSize: '14px', color: '#000', fontWeight: 'normal' }}>{inc.client}</td>
                   <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{inc.project}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{inc.date}</td>
+                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{formatDateShort(inc.date)}</td>
                   <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--green)', fontWeight: 'normal' }}>{formatCurrency(inc.amount)}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <span style={{

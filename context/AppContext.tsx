@@ -123,26 +123,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const lastNotifIdRef = useRef<string | null>(null);
 
-  // Audio Notification Helper
   const playNotificationSound = () => {
     try {
       const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
       audio.volume = 1.0;
-      audio.play().catch(e => console.log('Audio blocked:', e));
-    } catch (e) {
-      console.log('Error playing sound:', e);
-    }
+      audio.play().catch(() => {});
+    } catch (e) {}
   };
 
   const showToast = (title: string, text: string, icon: any = 'info') => {
     Swal.fire({
       title, text, icon, toast: true, position: 'top', showConfirmButton: false, timer: 4500, timerProgressBar: true,
-      background: 'var(--bg2)', color: 'var(--text)',
-      customClass: { popup: 'tiktok-toast', title: 'tiktok-title', htmlContainer: 'tiktok-content' }
+      background: 'var(--bg2)', color: 'var(--text)'
     });
   };
 
   const hasInitializedNotifs = useRef(false);
+  const lastProcessedDateRef = useRef<string>('');
 
   const fetchData = async () => {
     try {
@@ -154,7 +151,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       setEmployees(empData as Employee[]);
       setAttendance(attData as AttendanceRecord[]);
-      setTasks(taskData as TaskLog[]);
+      setTasks(taskData as any);
       setExpenses(expData as any);
       setIncome(incData as Income[]);
       setAuditLogs(logData as AuditLog[]);
@@ -162,16 +159,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setDepartments(deptData as Department[]);
       
       const newNotifs = notifData as Notification[];
+      const todayStr = new Date().toISOString().split('T')[0];
+      const savedUser = localStorage.getItem('growzix-user');
+      const user = savedUser ? JSON.parse(savedUser) : null;
+      const isAdmin = user && ['admin', 'superadmin'].includes(user.role);
+
+      if (isAdmin && lastProcessedDateRef.current !== todayStr) {
+         const todayLates = (attData as AttendanceRecord[]).filter(a => a.date === todayStr && a.status === 'late');
+         for (const late of todayLates) {
+            const notified = newNotifs.some(n => n.title === 'Late Entry' && n.message.includes(late.employeeName));
+            if (!notified) await addNotification({ title: 'Late Entry', message: `${late.employeeName} is late today.`, type: 'warning', recipient: 'admin' });
+         }
+         const deadProjects = (projectData as Project[]).filter(p => p.deadline === todayStr && p.status !== 'completed');
+         for (const p of deadProjects) {
+            const notified = newNotifs.some(n => n.title === 'Deadline Alert' && n.message.includes(p.projectName));
+            if (!notified) await addNotification({ title: 'Deadline Alert', message: `Deadline for "${p.projectName}" is today!`, type: 'error', recipient: 'admin' });
+         }
+
+         const pendingLeaves = (leaveData as LeaveRequest[]).filter(l => l.status === 'pending');
+         for (const l of pendingLeaves) {
+            const notified = newNotifs.some(n => n.title === 'Leave Request' && n.message.includes(l.employeeName));
+            if (!notified) await addNotification({ title: 'Leave Request', message: `${l.employeeName} requested leave.`, type: 'info', recipient: 'admin' });
+         }
+
+         const activeEmps = (empData as Employee[]).filter(e => e.status === 'active');
+         const markedEmps = (attData as AttendanceRecord[]).filter(a => a.date === todayStr).map(a => a.employeeId);
+         const missingAtt = activeEmps.filter(e => !markedEmps.includes(e.id));
+         
+         const currentHour = new Date().getHours();
+         if (currentHour >= 11 && missingAtt.length > 0) { // Notify after 11 AM
+            const notified = newNotifs.some(n => n.title === 'Missing Attendance' && n.message.includes(`${missingAtt.length} employees`));
+            if (!notified) await addNotification({ title: 'Missing Attendance', message: `${missingAtt.length} employees haven't marked attendance today.`, type: 'warning', recipient: 'admin' });
+         }
+
+         lastProcessedDateRef.current = todayStr;
+      }
+
       if (newNotifs && newNotifs.length > 0) {
         const latest = newNotifs[0];
-        const savedUser = localStorage.getItem('growzix-user');
-        const user = savedUser ? JSON.parse(savedUser) : null;
         if (user) {
           if (!hasInitializedNotifs.current) {
             lastNotifIdRef.current = latest.id;
             hasInitializedNotifs.current = true;
           } else if (latest.id !== lastNotifIdRef.current) {
-            const isRecipient = latest.recipient === 'all' || ['admin', 'superadmin'].includes(user.role) || latest.recipient === user.role;
+            const isRecipient = latest.recipient === 'all' || isAdmin || latest.recipient === user.role;
             if (isRecipient && latest.sender !== user.name) {
               playNotificationSound();
               showToast(latest.title, latest.message, latest.type);
@@ -184,14 +215,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setNotifications(newNotifs || []);
       setLeaveRequests(leaveData as LeaveRequest[]);
       setAnnouncements(announceData as Announcement[]);
-      setProjects(projectData as Project[]);
+      setProjects(projectData as any);
       setSchedules(scheduleData as MonthlySchedule[]);
       setBills(billData as Bill[]);
-    } catch (error) {
-      console.error('Data fetch error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (error) {} finally { setIsLoading(false); }
   };
 
   useEffect(() => {
@@ -283,182 +310,288 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addEmployee = async (employee: Employee) => {
-    await actions.addEmployeeAction(employee);
-    setEmployees(prev => [employee, ...prev]);
-    const msg = `New employee registered: ${employee.name}`;
-    await addAuditLog(msg);
-    await addNotification({ title: 'New Employee', message: msg, type: 'success', recipient: 'admin' });
+    try {
+      await actions.addEmployeeAction(employee);
+      setEmployees(prev => [employee, ...prev]);
+      await addAuditLog(`Registered: ${employee.name}`);
+      
+      const user = JSON.parse(localStorage.getItem('growzix-user') || '{}');
+      if (user.role && !['admin', 'superadmin'].includes(user.role)) {
+        await addNotification({
+          title: 'New Employee Registered',
+          message: `${user.name} (${user.role.toUpperCase()}) registered a new employee: ${employee.name}`,
+          type: 'info',
+          recipient: 'admin'
+        });
+      }
+    } catch (e) {}
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
-    await actions.updateEmployeeAction(id, updates);
-    setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-    await addAuditLog(`Updated employee: ${id}`);
+    try {
+      await actions.updateEmployeeAction(id, updates);
+      setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    } catch (e) {}
   };
 
   const deleteEmployee = async (id: string) => {
-    await actions.deleteEmployeeAction(id);
-    setEmployees(prev => prev.filter(e => e.id !== id));
-    await addAuditLog(`Deleted employee: ${id}`);
+    try {
+      await actions.deleteEmployeeAction(id);
+      setEmployees(prev => prev.filter(e => e.id !== id));
+    } catch (e) {}
   };
 
   const addAttendance = async (record: AttendanceRecord) => {
-    await actions.addAttendanceAction(record);
-    setAttendance(prev => [record, ...prev]);
-    const msg = `Attendance marked for: ${record.employeeName}`;
-    await addAuditLog(msg);
-    await addNotification({ title: 'Attendance Alert', message: msg, type: 'info', recipient: 'admin' });
+    try {
+      await actions.addAttendanceAction(record);
+      setAttendance(prev => [record, ...prev]);
+
+      const user = JSON.parse(localStorage.getItem('growzix-user') || '{}');
+      if (user.role && !['admin', 'superadmin'].includes(user.role)) {
+        await addNotification({
+          title: 'Attendance Marked',
+          message: `${user.name} marked attendance for ${record.employeeName}`,
+          type: 'info',
+          recipient: 'admin'
+        });
+      }
+    } catch (e) {}
   };
 
   const updateAttendance = async (id: string, updates: Partial<AttendanceRecord>) => {
-    await actions.updateAttendanceAction(id, updates);
-    setAttendance(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+    try {
+      await actions.updateAttendanceAction(id, updates);
+      setAttendance(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+
+      // Break Notifications
+      if (updates.breakIn || updates.breakOut) {
+        const user = JSON.parse(localStorage.getItem('growzix-user') || '{}');
+        const record = attendance.find(a => a.id === id);
+        if (user.role && !['admin', 'superadmin'].includes(user.role)) {
+          await addNotification({
+            title: updates.breakIn ? 'Break Started' : 'Break Ended',
+            message: `${record?.employeeName} is ${updates.breakIn ? 'now on break' : 'back from break'} (Recorded by ${user.name})`,
+            type: 'warning',
+            recipient: 'admin'
+          });
+        }
+      }
+    } catch (e) {}
   };
 
   const deleteAttendance = async (id: string) => {
-    await actions.deleteAttendanceAction(id);
-    setAttendance(prev => prev.filter(a => a.id !== id));
+    try {
+      await actions.deleteAttendanceAction(id);
+      setAttendance(prev => prev.filter(a => a.id !== id));
+    } catch (e) {}
   };
 
   const addTask = async (task: TaskLog) => {
-    await actions.addTaskAction(task);
-    setTasks(prev => [task, ...prev]);
-    await addAuditLog(`Performance logged for ${task.employeeName}`);
+    try {
+      await actions.addTaskAction(task);
+      setTasks(prev => [task, ...prev]);
+    } catch (e) {}
   };
 
   const updateTask = async (id: string, updates: Partial<TaskLog>) => {
-    await actions.updateTaskAction(id, updates);
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    try {
+      await actions.updateTaskAction(id, updates);
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    } catch (e) {}
   };
 
   const deleteTask = async (id: string) => {
-    await actions.deleteTaskAction(id);
-    setTasks(prev => prev.filter(t => t.id !== id));
+    try {
+      await actions.deleteTaskAction(id);
+      setTasks(prev => prev.filter(t => t.id !== id));
+    } catch (e) {}
   };
 
   const addExpense = async (expense: Expense) => {
-    await actions.addExpenseAction(expense);
-    setExpenses(prev => [expense, ...prev]);
-    const msg = `New expense submitted: Rs.${expense.amount.toLocaleString()}`;
-    await addAuditLog(msg);
-    await addNotification({ title: '💰 Expense Alert', message: msg, type: 'warning', recipient: 'admin' });
+    try {
+      await actions.addExpenseAction(expense);
+      setExpenses(prev => [expense, ...prev]);
+    } catch (e) {}
   };
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
-    await actions.updateExpenseAction(id, updates);
-    setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    try {
+      await actions.updateExpenseAction(id, updates);
+      setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    } catch (e) {}
   };
 
   const deleteExpense = async (id: string) => {
-    await actions.deleteExpenseAction(id);
-    setExpenses(prev => prev.filter(e => e.id !== id));
+    try {
+      await actions.deleteExpenseAction(id);
+      setExpenses(prev => prev.filter(e => e.id !== id));
+    } catch (e) {}
   };
 
   const addIncome = async (inc: Income) => {
-    await actions.addIncomeAction(inc);
-    setIncome(prev => [inc, ...prev]);
+    try {
+      await actions.addIncomeAction(inc);
+      setIncome(prev => [inc, ...prev]);
+    } catch (e) {}
   };
 
   const deleteIncome = async (id: string) => {
-    await actions.deleteIncomeAction(id);
-    setIncome(prev => prev.filter(i => i.id !== id));
+    try {
+      await actions.deleteIncomeAction(id);
+      setIncome(prev => prev.filter(i => i.id !== id));
+    } catch (e) {}
   };
 
   const addLeaveRequest = async (request: LeaveRequest) => {
-    await actions.addLeaveRequestAction(request);
-    setLeaveRequests(prev => [request, ...prev]);
-    const msg = `New leave request from ${request.employeeName}`;
-    await addAuditLog(msg);
-    await addNotification({ title: '📅 Leave Request', message: msg, type: 'info', recipient: 'admin' });
+    try {
+      await actions.addLeaveRequestAction(request);
+      setLeaveRequests(prev => [request, ...prev]);
+    } catch (e) {}
   };
 
   const updateLeaveRequest = async (id: string, updates: Partial<LeaveRequest>) => {
-    await actions.updateLeaveRequestAction(id, updates);
-    setLeaveRequests(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
+    try {
+      await actions.updateLeaveRequestAction(id, updates);
+      setLeaveRequests(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
+    } catch (e) {}
   };
 
   const deleteLeaveRequest = async (id: string) => {
-    await actions.deleteLeaveRequestAction(id);
-    setLeaveRequests(prev => prev.filter(l => l.id !== id));
+    try {
+      await actions.deleteLeaveRequestAction(id);
+      setLeaveRequests(prev => prev.filter(l => l.id !== id));
+    } catch (e) {}
   };
 
   const addBreakRequest = async (request: BreakRequest) => {
-    await actions.addBreakRequestAction(request);
-    setBreakRequests(prev => [request, ...prev]);
-    const msg = `New break request from ${request.employeeName}`;
-    await addAuditLog(msg);
-    await addNotification({ title: '☕ Break Request', message: msg, type: 'info', recipient: 'admin' });
+    try {
+      await actions.addBreakRequestAction(request);
+      setBreakRequests(prev => [request, ...prev]);
+    } catch (e) {}
   };
 
   const updateBreakRequest = async (id: string, updates: Partial<BreakRequest>) => {
-    await actions.updateBreakRequestAction(id, updates);
-    setBreakRequests(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+    try {
+      await actions.updateBreakRequestAction(id, updates);
+      setBreakRequests(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+    } catch (e) {}
   };
 
   const addDepartment = async (name: string) => {
-    const result = await actions.addDepartmentAction(name);
-    if (result) setDepartments(prev => [...prev, result as any]);
+    try {
+      const result = await actions.addDepartmentAction(name);
+      if (result) setDepartments(prev => [...prev, result as any]);
+    } catch (e) {}
   };
 
   const updateDepartment = async (id: string, name: string) => {
-    await actions.updateDepartmentAction(id, name);
-    setDepartments(prev => prev.map(d => d.id === id ? { ...d, name } : d));
+    try {
+      await actions.updateDepartmentAction(id, name);
+      setDepartments(prev => prev.map(d => d.id === id ? { ...d, name } : d));
+    } catch (e) {}
   };
 
   const addAnnouncement = async (announcement: Announcement) => {
-    await actions.addAnnouncementAction(announcement);
-    setAnnouncements(prev => [announcement, ...prev]);
-    await addNotification({ title: '📢 New Announcement', message: announcement.title, type: 'info', recipient: 'all' });
+    try {
+      await actions.addAnnouncementAction(announcement);
+      setAnnouncements(prev => [announcement, ...prev]);
+      
+      // Notify all managers realtime
+      await addNotification({
+        title: 'New Admin Announcement',
+        message: `Admin posted: ${announcement.title}`,
+        type: 'info',
+        recipient: 'all' // This will hit all manager dashboards
+      });
+    } catch (e) {}
   };
 
   const deleteAnnouncement = async (id: string) => {
-    await actions.deleteAnnouncementAction(id);
-    setAnnouncements(prev => prev.filter(a => a.id !== id));
+    try {
+      await actions.deleteAnnouncementAction(id);
+      setAnnouncements(prev => prev.filter(a => a.id !== id));
+    } catch (e) {}
   };
 
   const addProject = async (project: Project) => {
-    await actions.addProjectAction(project);
-    setProjects(prev => [project, ...prev]);
+    try {
+      // 1. Save to LocalStorage immediately as a safety net
+      const localProjectsRaw = localStorage.getItem('growzix-projects-backup');
+      const localProjects = localProjectsRaw ? JSON.parse(localProjectsRaw) : [];
+      localStorage.setItem('growzix-projects-backup', JSON.stringify([project, ...localProjects]));
+      
+      // Update UI instantly
+      setProjects(prev => [project, ...prev]);
+
+      // 2. Save to Database
+      await actions.addProjectAction(project);
+      
+      // 3. Refresh from DB to sync
+      await fetchData();
+    } catch (e) {}
   };
 
   const updateProject = async (id: string, updates: Partial<Project>) => {
-    await actions.updateProjectAction(id, updates);
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    try {
+      await actions.updateProjectAction(id, updates);
+      await fetchData(); 
+    } catch (e) {}
   };
 
   const deleteProject = async (id: string) => {
-    await actions.deleteProjectAction(id);
-    setProjects(prev => prev.filter(p => p.id !== id));
+    try {
+      // Remove from LocalStorage backup
+      const localProjectsRaw = localStorage.getItem('growzix-projects-backup');
+      if (localProjectsRaw) {
+        const localProjects = JSON.parse(localProjectsRaw).filter((p: any) => p.id !== id);
+        localStorage.setItem('growzix-projects-backup', JSON.stringify(localProjects));
+      }
+      
+      await actions.deleteProjectAction(id);
+      setProjects(prev => prev.filter(p => p.id !== id));
+    } catch (e) {}
   };
 
   const addMonthlySchedule = async (schedule: MonthlySchedule) => {
-    await actions.addMonthlyScheduleAction(schedule);
-    setSchedules(prev => [schedule, ...prev]);
+    try {
+      await actions.addMonthlyScheduleAction(schedule);
+      setSchedules(prev => [schedule, ...prev]);
+    } catch (e) {}
   };
 
   const updateMonthlySchedule = async (id: string, updates: Partial<MonthlySchedule>) => {
-    await actions.updateMonthlyScheduleAction(id, updates);
-    setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    try {
+      await actions.updateMonthlyScheduleAction(id, updates);
+      setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    } catch (e) {}
   };
 
   const deleteMonthlySchedule = async (id: string) => {
-    await actions.deleteMonthlyScheduleAction(id);
-    setSchedules(prev => prev.filter(s => s.id !== id));
+    try {
+      await actions.deleteMonthlyScheduleAction(id);
+      setSchedules(prev => prev.filter(s => s.id !== id));
+    } catch (e) {}
   };
 
   const addBill = async (bill: Bill) => {
-    await actions.addBillAction(bill);
-    setBills(prev => [bill, ...prev]);
+    try {
+      await actions.addBillAction(bill);
+      setBills(prev => [bill, ...prev]);
+    } catch (e) {}
   };
 
   const updateBill = async (id: string, updates: Partial<Bill>) => {
-    await actions.updateBillAction(id, updates);
-    setBills(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+    try {
+      await actions.updateBillAction(id, updates);
+      setBills(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+    } catch (e) {}
   };
 
   const deleteBill = async (id: string) => {
-    await actions.deleteBillAction(id);
-    setBills(prev => prev.filter(b => b.id !== id));
+    try {
+      await actions.deleteBillAction(id);
+      setBills(prev => prev.filter(b => b.id !== id));
+    } catch (e) {}
   };
 
   return (

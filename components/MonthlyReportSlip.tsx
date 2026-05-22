@@ -60,8 +60,7 @@ export default function MonthlyReportSlip() {
       ? Math.round(monthTasks.reduce((sum, t) => sum + t.score, 0) / monthTasks.length)
       : 0;
 
-    const completedTasks = monthTasks.filter(t => t.completion === 100).length;
-    const totalTaskHours = monthTasks.reduce((sum, t) => sum + t.hours, 0);
+    const totalWorkingDays = monthTasks.reduce((sum, t) => sum + (t.workingDays || 0), 0);
 
     const approvedLeaves = monthLeaves.filter(l => l.status === 'approved').length;
     const pendingLeaves = monthLeaves.filter(l => l.status === 'pending').length;
@@ -141,10 +140,8 @@ export default function MonthlyReportSlip() {
       head: [['Metric', 'Value']],
       body: [
         ['Average Performance Score', `${avgPerformance}/100`],
-        ['Total Tasks Assigned', monthTasks.length.toString()],
-        ['Tasks Completed', completedTasks.toString()],
-        ['Completion Rate', monthTasks.length > 0 ? `${Math.round((completedTasks/monthTasks.length)*100)}%` : '0%'],
-        ['Total Task Hours', totalTaskHours.toFixed(1) + 'h'],
+        ['Total Tasks Logged', monthTasks.length.toString()],
+        ['Total Working Days', totalWorkingDays.toFixed(1) + 'd'],
         ['Performance Rating', avgPerformance >= 90 ? 'Excellent ⭐' : avgPerformance >= 75 ? 'Good ✓' : avgPerformance >= 60 ? 'Average' : 'Needs Improvement ⚠'],
       ],
       theme: 'striped',
@@ -183,14 +180,14 @@ export default function MonthlyReportSlip() {
         .slice(0, 5)
         .map(t => [
           t.date,
-          t.task.substring(0, 40) + (t.task.length > 40 ? '...' : ''),
+          t.task.substring(0, 50) + (t.task.length > 50 ? '...' : ''),
           t.score.toString(),
-          t.completion + '%'
+          t.workingDays + 'd'
         ]);
 
       autoTable(doc, {
         startY: topY + 4,
-        head: [['Date', 'Task', 'Score', 'Completion']],
+        head: [['Date', 'Task', 'Score', 'Days']],
         body: topTasks,
         theme: 'grid',
         headStyles: { fillColor: [234, 88, 12] },

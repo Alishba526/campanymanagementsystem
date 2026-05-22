@@ -28,7 +28,68 @@ async function main() {
     await prisma.user.create({ data: user });
   }
 
-  console.log('Database cleaned! All dummy data removed.');
+  console.log('Adding specific employees requested by user...');
+  
+  const requestedEmployees = [
+    {
+      id: 'emp001',
+      name: 'rehman',
+      fatherName: 'rehman',
+      department: 'ecommerce',
+      position: 'senior',
+      address: 'etc',
+      phone: '0300-0000000',
+      email: 'rehman.senior@growzix.com',
+      salary: 0,
+      status: 'active',
+      joinDate: '2026-05-21',
+      monthlyHours: 176
+    },
+    {
+      id: 'EMP-001',
+      name: 'Rehman',
+      fatherName: '--',
+      department: 'marketing',
+      position: 'Employee',
+      address: '',
+      phone: '0300-0000000',
+      email: 'rehman.marketing@growzix.com',
+      salary: 0,
+      status: 'active',
+      joinDate: '2026-05-21',
+      monthlyHours: 176
+    },
+    {
+      id: 'EC001',
+      name: 'owais',
+      fatherName: '--',
+      department: 'ecommerce',
+      position: 'Employee',
+      address: '',
+      phone: '0300-0000000',
+      email: 'owais@growzix.com',
+      salary: 0,
+      status: 'active',
+      joinDate: '2026-05-21',
+      monthlyHours: 176
+    }
+  ];
+
+  for (const emp of requestedEmployees) {
+    await prisma.employee.create({ data: emp });
+    // Also create a user account for them to login
+    await prisma.user.create({
+      data: {
+        email: emp.email,
+        password: 'Growzix@2026#', // Default password
+        role: emp.department === 'ecommerce' ? 'ecommerce' : (emp.department === 'marketing' ? 'marketing' : 'employee'),
+        name: emp.name
+      }
+    });
+  }
+
+  console.log('Employees added successfully!');
+  console.log('Database cleaned and seeded! All dummy data removed.');
   console.log('System is now ready for real data entry.');
 }
 

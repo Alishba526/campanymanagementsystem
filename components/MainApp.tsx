@@ -26,6 +26,7 @@ import ExpensesDepartmentPage from './ExpensesDepartmentPage';
 import HistoricalReportsPage from './HistoricalReportsPage';
 import BreakPage from './BreakPage';
 import DeptSettingsPage from './DeptSettingsPage';
+import AdminManagementView from './AdminManagementView';
 
 export default function MainApp() {
   const { currentUser, notifications, markNotificationAsRead, markAllNotificationsAsRead, logout } = useApp();
@@ -34,11 +35,13 @@ export default function MainApp() {
 
   if (!currentUser) return null;
 
+  const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+
   // Filter notifications for current user
   const userNotifications = (notifications || []).filter(n => 
     n && (
       n.recipient === 'all' || 
-      (['admin', 'superadmin'].includes(currentUser.role) && n.recipient === 'admin') ||
+      (isAdmin && n.recipient === 'admin') ||
       n.recipient === currentUser.role
     )
   );
@@ -50,6 +53,7 @@ export default function MainApp() {
     analytics: <DepartmentAnalytics />,
     employees: <EmployeesPage />,
     attendance: <AttendancePage />,
+    management: <AdminManagementView />,
     deptattendance: <DepartmentAttendance />,
     schedule: <SchedulePage />,
     performance: <PerformancePage />,

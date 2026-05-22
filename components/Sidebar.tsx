@@ -18,6 +18,7 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
   const navigation = {
     admin: [
       { section: 'Overview', items: [
+        { id: 'financialoverview', icon: '📊', label: 'Financial Overview' },
         { id: 'dashboard', icon: '📊', label: 'Dashboard' },
         { id: 'projects', icon: '📁', label: 'Client Projects' },
         { id: 'broadcast', icon: '📢', label: 'Announcements' }
@@ -32,7 +33,6 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
       ]},
       { section: 'Finance', items: [
         { id: 'payroll', icon: '💳', label: 'Payroll' },
-        { id: 'financialoverview', icon: '📊', label: 'Financial Overview' },
         { id: 'finance', icon: '💰', label: 'Income & Profit' },
         { id: 'expenses', icon: '🧾', label: 'Expenses' },
         { id: 'expensesdept', icon: '🏢', label: 'Dept. Expenses' },

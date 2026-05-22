@@ -45,8 +45,7 @@ export interface TaskLog {
   date: string;
   task: string;
   category: string;
-  hours: number;
-  completion: number;
+  workingDays: number;
   quality: number;
   score: number;
   projectsAssigned: number;
@@ -152,15 +151,24 @@ export interface Announcement {
 
 export interface Project {
   id: string;
-  clientName: string;
+  projectNo: string;
   projectName: string;
+  employeeName: string;
   scope: string;
-  totalBudget: number;
+  cost: number;
+  totalBudget: number; 
   amountReceived: number;
-  status: 'active' | 'completed' | 'on-hold' | 'approved' | 'pending' | 'rejected';
+  paymentStatus: 'upfront_50' | 'remaining_50' | '100_received';
+  paymentMethod: string;
+  workingDays: number;
   startDate: string;
-  endDate?: string;
   deadline: string;
+  clientName: string;
+  clientEmail: string;
+  managerName: string;
+  managerEmail: string;
+  department: string;
+  status: 'active' | 'completed' | 'on-hold' | 'pending' | 'approved' | 'rejected';
 }
 
 export interface MonthlySchedule {
