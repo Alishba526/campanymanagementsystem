@@ -52,7 +52,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
              {announcements.slice(0, 2).map((a, i) => (
                <div key={i} style={{ background: 'var(--bg2)', padding: '12px', borderRadius: '10px', borderLeft: '4px solid var(--accent)' }}>
                   <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{a.title}</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text2)', marginTop: '4px' }}>{a.message}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text2)', marginTop: '4px' }}>{a.content}</div>
                </div>
              ))}
           </div>
