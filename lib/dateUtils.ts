@@ -32,3 +32,12 @@ export function getCurrentDate(): string {
 export function getCurrentDateFormatted(): string {
   return formatDate(getCurrentDate());
 }
+
+export function formatTimeAMPM(time: string): string {
+  if (!time || time === '--' || time === '') return '--';
+  const [hours, minutes] = time.split(':').map(Number);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  const displayMinutes = String(minutes).padStart(2, '0');
+  return `${String(displayHours).padStart(2, '0')}:${displayMinutes} ${ampm}`;
+}

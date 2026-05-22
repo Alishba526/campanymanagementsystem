@@ -10,10 +10,38 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
-  const { currentUser, logout, themeColor, themeMode, setThemeColor, setThemeMode } = useApp();
+  const { currentUser, logout, themeColor, themeMode, setThemeColor, setThemeMode, notifications, markCategoryNotificationsAsRead } = useApp();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   if (!currentUser) return null;
+
+  const handleNavClick = (id: string) => {
+    markCategoryNotificationsAsRead(id);
+    onNavigate(id);
+  };
+
+  const getUnreadCount = (itemId: string) => {
+    if (!notifications) return 0;
+    // Filter notifications that are unread AND not sent by the current user
+    const unread = notifications.filter(n => !n.read && n.sender !== currentUser.name);
+    
+    if (itemId === 'broadcast') return unread.filter(n => n.title.toLowerCase().includes('announcement')).length;
+    if (itemId === 'leave') return unread.filter(n => n.title.toLowerCase().includes('leave')).length;
+    if (itemId === 'attendance' || itemId === 'deptattendance') return unread.filter(n => n.title.toLowerCase().includes('attendance') || n.title.toLowerCase().includes('break')).length;
+    if (itemId === 'employees') return unread.filter(n => n.title.toLowerCase().includes('employee')).length;
+    
+    if (itemId === 'dashboard') {
+      // Dashboard shows general system alerts not covered by specific pages
+      return unread.filter(n => 
+        !n.title.toLowerCase().includes('announcement') && 
+        !n.title.toLowerCase().includes('leave') && 
+        !n.title.toLowerCase().includes('attendance') && 
+        !n.title.toLowerCase().includes('break') &&
+        !n.title.toLowerCase().includes('employee')
+      ).length;
+    }
+    return 0;
+  };
 
   const navigation = {
     admin: [
@@ -206,7 +234,7 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
             {section.items.map((item) => (
               <button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
+                onClick={() => handleNavClick(item.id)}
                 style={{
                   width: '100%',
                   display: 'flex',
@@ -221,7 +249,8 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
                   fontSize: '14px',
                   fontWeight: currentPage === item.id ? '700' : 'normal',
                   background: currentPage === item.id ? 'var(--accentbg)' : 'transparent',
-                  border: currentPage === item.id ? '1px solid var(--accent)' : '1px solid transparent'
+                  border: currentPage === item.id ? '1px solid var(--accent)' : '1px solid transparent',
+                  position: 'relative'
                 }}
                 onMouseEnter={(e) => {
                   if (currentPage !== item.id) {
@@ -237,7 +266,24 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
                 }}
               >
                 <span style={{ fontSize: '17px', minWidth: '17px' }}>{item.icon}</span>
-                <span>{item.label}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                
+                {/* WhatsApp Style Badge - specific to category */}
+                {getUnreadCount(item.id) > 0 && (
+                   <span style={{ 
+                     background: '#ff4444', 
+                     color: '#fff', 
+                     fontSize: '10px', 
+                     fontWeight: 'bold', 
+                     padding: '2px 6px', 
+                     borderRadius: '10px',
+                     minWidth: '18px',
+                     textAlign: 'center',
+                     boxShadow: '0 2px 5px rgba(255,68,68,0.3)'
+                   }}>
+                     {getUnreadCount(item.id)}
+                   </span>
+                )}
               </button>
             ))}
           </div>

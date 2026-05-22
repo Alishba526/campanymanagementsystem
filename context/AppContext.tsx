@@ -46,6 +46,7 @@ interface AppContextType {
   addAuditLog: (action: string) => Promise<void>;
   addNotification: (notif: Partial<Notification>) => Promise<void>;
   markNotificationAsRead: (id: string) => Promise<void>;
+  markCategoryNotificationsAsRead: (category: string) => Promise<void>;
   markAllNotificationsAsRead: () => Promise<void>;
   addLeaveRequest: (request: LeaveRequest) => Promise<void>;
   updateLeaveRequest: (id: string, request: Partial<LeaveRequest>) => Promise<void>;
@@ -55,6 +56,7 @@ interface AppContextType {
   addDepartment: (name: string) => Promise<void>;
   updateDepartment: (id: string, name: string) => Promise<void>;
   addAnnouncement: (announcement: Announcement) => Promise<void>;
+  markAnnouncementAsRead: (id: string, name: string, role: string) => Promise<void>;
   deleteAnnouncement: (id: string) => Promise<void>;
   addProject: (project: Project) => Promise<void>;
   updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
@@ -143,26 +145,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const fetchData = async () => {
     try {
+      const savedUser = localStorage.getItem('growzix-user');
+      const user = savedUser ? JSON.parse(savedUser) : null;
+      const isAdmin = user && ['admin', 'superadmin'].includes(user.role);
+
       const [empData, attData, taskData, expData, incData, logData, leaveData, announceData, projectData, scheduleData, billData, notifData, breakData, deptData] = await Promise.all([
         actions.getEmployees(), actions.getAttendance(), actions.getTasks(), actions.getExpenses(), actions.getIncome(), actions.getAuditLogs(),
         actions.getLeaveRequests(), actions.getAnnouncements(), actions.getProjects(), actions.getMonthlySchedules(), actions.getBills(), actions.getNotifications(),
         actions.getBreakRequests(), actions.getDepartments()
       ]);
 
-      setEmployees(empData as Employee[]);
-      setAttendance(attData as AttendanceRecord[]);
-      setTasks(taskData as any);
-      setExpenses(expData as any);
-      setIncome(incData as Income[]);
-      setAuditLogs(logData as AuditLog[]);
-      setBreakRequests(breakData as BreakRequest[]);
-      setDepartments(deptData as Department[]);
+      if (empData) setEmployees(empData as Employee[]);
+      if (attData) setAttendance(attData as AttendanceRecord[]);
+      if (taskData) setTasks(taskData as any);
+      if (expData) setExpenses(expData as any);
+      if (incData) setIncome(incData as Income[]);
+      if (logData) setAuditLogs(logData as AuditLog[]);
+      if (breakData) setBreakRequests(breakData as BreakRequest[]);
+      if (deptData) setDepartments(deptData as Department[]);
+      if (leaveData) setLeaveRequests(leaveData as LeaveRequest[]);
+      if (announceData) setAnnouncements(announceData as Announcement[]);
+      if (projectData) setProjects(projectData as any);
+      if (scheduleData) setSchedules(scheduleData as MonthlySchedule[]);
+      if (billData) setBills(billData as Bill[]);
       
-      const newNotifs = notifData as Notification[];
+      const newNotifs = (notifData as Notification[] || []).filter(n => n.sender !== user?.name);
       const todayStr = new Date().toISOString().split('T')[0];
-      const savedUser = localStorage.getItem('growzix-user');
-      const user = savedUser ? JSON.parse(savedUser) : null;
-      const isAdmin = user && ['admin', 'superadmin'].includes(user.role);
 
       if (isAdmin && lastProcessedDateRef.current !== todayStr) {
          const todayLates = (attData as AttendanceRecord[]).filter(a => a.date === todayStr && a.status === 'late');
@@ -212,10 +220,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
-      setNotifications(newNotifs || []);
+      if (newNotifs && newNotifs.length > 0) {
+        setNotifications(newNotifs);
+      }
+      
       setLeaveRequests(leaveData as LeaveRequest[]);
-      setAnnouncements(announceData as Announcement[]);
-      setProjects(projectData as any);
+      
+      // Critical Fix: Announcements persistence
+      if (announceData) {
+        const validAnnounces = announceData as Announcement[];
+        if (validAnnounces.length > 0 || announcements.length === 0) {
+          setAnnouncements(validAnnounces);
+        }
+      }
+
+      if (projectData && (projectData as any).length > 0) {
+        setProjects(projectData as any);
+      }
       setSchedules(scheduleData as MonthlySchedule[]);
       setBills(billData as Bill[]);
     } catch (error) {} finally { setIsLoading(false); }
@@ -292,9 +313,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addNotification = async (notif: Partial<Notification>) => {
-    const fullNotif = { ...notif, sender: currentUser?.name || 'System', createdAt: new Date() };
+    const senderName = currentUser?.name || 'System';
+    const fullNotif = { ...notif, sender: senderName, createdAt: new Date() };
     const result = await actions.addNotificationAction(fullNotif);
-    if (result) setNotifications(prev => [result as any, ...prev]);
+    
+    if (result) {
+       const user = JSON.parse(localStorage.getItem('growzix-user') || '{}');
+       const isAdmin = ['admin', 'superadmin'].includes(user.role);
+       const isRecipient = result.recipient === 'all' || (result.recipient === 'admin' && isAdmin) || result.recipient === user.role;
+       
+       // Only add to current user's local state if they are NOT the sender
+       if (isRecipient && result.sender !== user.name) {
+         setNotifications(prev => [result as any, ...prev]);
+       }
+    }
   };
 
   const markNotificationAsRead = async (id: string) => {
@@ -302,7 +334,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
+  const markCategoryNotificationsAsRead = async (category: string) => {
+    if (!notifications || notifications.length === 0) return;
+    const keywords: Record<string, string[]> = {
+      broadcast: ['announcement'],
+      leave: ['leave'],
+      attendance: ['attendance', 'break'],
+      deptattendance: ['attendance', 'break'],
+      employees: ['employee'],
+      dashboard: [] 
+    };
+
+    const tags = keywords[category as keyof typeof keywords] || [];
+    const toMark = notifications.filter(n => !n.read && (
+      tags.length === 0 
+        ? !keywords.broadcast.some(t => n.title.toLowerCase().includes(t)) &&
+          !keywords.leave.some(t => n.title.toLowerCase().includes(t)) &&
+          !keywords.attendance.some(t => n.title.toLowerCase().includes(t)) &&
+          !keywords.employees.some(t => n.title.toLowerCase().includes(t))
+        : tags.some(tag => n.title.toLowerCase().includes(tag))
+    ));
+
+    if (toMark.length === 0) return;
+
+    // Update local state instantly for "hat jaye auto" feel
+    setNotifications(prev => prev.map(n => {
+      const isMatch = toMark.some(m => m.id === n.id);
+      return isMatch ? { ...n, read: true } : n;
+    }));
+
+    // Update DB in background
+    try {
+      await Promise.all(toMark.map(n => actions.markNotificationReadAction(n.id)));
+    } catch (e) {}
+  };
   const markAllNotificationsAsRead = async () => {
+
     if (!currentUser) return;
     const recipient = ['admin', 'superadmin'].includes(currentUser.role) ? 'admin' : currentUser.role;
     await actions.markAllNotificationsReadAction(recipient);
@@ -493,21 +560,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addAnnouncement = async (announcement: Announcement) => {
     try {
-      await actions.addAnnouncementAction(announcement);
+      // 1. Local Backup (Safety Net)
+      const localAnnRaw = localStorage.getItem('growzix-announce-backup');
+      const localAnn = localAnnRaw ? JSON.parse(localAnnRaw) : [];
+      localStorage.setItem('growzix-announce-backup', JSON.stringify([announcement, ...localAnn]));
+
+      // 2. Instant UI Update
       setAnnouncements(prev => [announcement, ...prev]);
+
+      // 3. Save to Database
+      await actions.addAnnouncementAction(announcement);
       
-      // Notify all managers realtime
+      // 4. Force sync with DB
+      await fetchData();
+
+      // 5. Notify all managers
       await addNotification({
         title: 'New Admin Announcement',
         message: `Admin posted: ${announcement.title}`,
         type: 'info',
-        recipient: 'all' // This will hit all manager dashboards
+        recipient: 'all' 
       });
+    } catch (e) {}
+  };
+
+  const markAnnouncementAsRead = async (id: string, name: string, role: string) => {
+    try {
+      await actions.markAnnouncementAsReadAction(id, name, role);
+      await fetchData(); // Update seen status for Admin
     } catch (e) {}
   };
 
   const deleteAnnouncement = async (id: string) => {
     try {
+      // Remove from Local Backup
+      const localAnnRaw = localStorage.getItem('growzix-announce-backup');
+      if (localAnnRaw) {
+        const localAnn = JSON.parse(localAnnRaw).filter((a: any) => a.id !== id);
+        localStorage.setItem('growzix-announce-backup', JSON.stringify(localAnn));
+      }
+
       await actions.deleteAnnouncementAction(id);
       setAnnouncements(prev => prev.filter(a => a.id !== id));
     } catch (e) {}
@@ -599,8 +691,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentUser, employees, attendance, tasks, expenses, income, auditLogs, notifications, leaveRequests, breakRequests, departments, announcements, projects, schedules, bills,
       themeColor, themeMode, isLoading, login, logout, addEmployee, updateEmployee, deleteEmployee, addAttendance, updateAttendance, deleteAttendance,
       addTask, updateTask, deleteTask, addExpense, updateExpense, deleteExpense, addIncome, deleteIncome, addAuditLog, addNotification, markNotificationAsRead,
-      markAllNotificationsAsRead, addLeaveRequest, updateLeaveRequest, deleteLeaveRequest, addBreakRequest, updateBreakRequest, addDepartment, updateDepartment,
-      addAnnouncement, deleteAnnouncement, addProject, updateProject, deleteProject, addMonthlySchedule, updateMonthlySchedule, deleteMonthlySchedule, addBill, updateBill, deleteBill,
+      markCategoryNotificationsAsRead, markAllNotificationsAsRead, addLeaveRequest, updateLeaveRequest, deleteLeaveRequest, addBreakRequest, updateBreakRequest, addDepartment, updateDepartment,
+      addAnnouncement, markAnnouncementAsRead, deleteAnnouncement, addProject, updateProject, deleteProject, addMonthlySchedule, updateMonthlySchedule, deleteMonthlySchedule, addBill, updateBill, deleteBill,
       setThemeColor, setThemeMode
     }}>
       {children}

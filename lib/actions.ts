@@ -74,7 +74,7 @@ export async function getUsers() {
 
 // --- Employee Actions ---
 export async function getEmployees() {
-  try { return await prisma.employee.findMany({ orderBy: { createdAt: 'desc' } }); } catch (e) { return []; }
+  try { return await prisma.employee.findMany({ orderBy: { updatedAt: 'desc' } }); } catch (e) { return []; }
 }
 
 export async function addEmployeeAction(employee: Employee) {
@@ -196,7 +196,7 @@ export async function getProjects() {
   try {
     // Select ONLY the core columns that definitely exist in your database
     const rawProjects = await (prisma.project as any).findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
         projectName: true,
@@ -363,11 +363,85 @@ export async function deleteProjectAction(id: string) {
 
 // --- Announcement Actions ---
 export async function getAnnouncements() {
-  try { return await prisma.announcement.findMany({ orderBy: { createdAt: 'desc' } }); } catch (e) { return []; }
+  try {
+    const raw = await prisma.announcement.findMany({ orderBy: { createdAt: 'desc' } });
+    return raw.map((a: any) => {
+      const content = a.content || "";
+      if (content.startsWith('S:')) {
+        try {
+          const extra = JSON.parse(content.substring(2));
+          return { ...a, ...extra, content: extra.content || content };
+        } catch (e) { return a; }
+      }
+      return a;
+    });
+  } catch (e) { return []; }
 }
 
 export async function addAnnouncementAction(announcement: Announcement) {
-  try { return await prisma.announcement.create({ data: announcement as any }); } catch (e) { return null; }
+  const superData = { ...announcement, seenBy: "" };
+  const compositeContent = `S:${JSON.stringify(superData)}`;
+  
+  try {
+    // 1. Try Prisma (Include ID to prevent mismatch)
+    const result = await prisma.announcement.create({ 
+      data: {
+        id: announcement.id,
+        title: announcement.title,
+        content: compositeContent,
+        author: announcement.author,
+        priority: announcement.priority,
+        createdAt: new Date()
+      } as any 
+    });
+    revalidatePath('/');
+    return result;
+  } catch (e) {
+    console.warn("Announcement prisma failed, using SQL fallback");
+    try {
+      // 2. Direct SQL Fallback
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO "Announcement" (id, title, content, author, priority, "createdAt") VALUES ($1, $2, $3, $4, $5, NOW())`,
+        announcement.id, announcement.title, compositeContent, announcement.author, announcement.priority
+      );
+      revalidatePath('/');
+      return announcement;
+    } catch (sqlE) {
+      console.error("Announcement critical failure", sqlE);
+      return null;
+    }
+  }
+}
+
+export async function markAnnouncementAsReadAction(id: string, readerName: string, readerRole: string) {
+  try {
+    const ann = await prisma.announcement.findUnique({ where: { id } });
+    if (!ann) return null;
+    
+    let currentData: any = {};
+    if (ann.content.startsWith('S:')) {
+      currentData = JSON.parse(ann.content.substring(2));
+    } else {
+      currentData = { content: ann.content, seenBy: "" };
+    }
+
+    const currentSeenBy = currentData.seenBy || "";
+    if (currentSeenBy.includes(readerName)) return ann;
+
+    const now = new Date();
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const dateStr = `${days[now.getDay()]}, ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+    const readReceipt = `${readerName} (${readerRole.toUpperCase()}) at ${timeStr} on ${dateStr}`;
+
+    currentData.seenBy = currentSeenBy ? `${currentSeenBy}\n${readReceipt}` : readReceipt;
+    const compositeContent = `S:${JSON.stringify(currentData)}`;
+
+    return await prisma.announcement.update({ 
+      where: { id }, 
+      data: { content: compositeContent } as any 
+    });
+  } catch (e) { return null; }
 }
 
 export async function deleteAnnouncementAction(id: string) {

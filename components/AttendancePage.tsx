@@ -3,7 +3,7 @@
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { AttendanceRecord } from '@/types';
-import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
+import { formatDateShort, getCurrentDate, formatTimeAMPM } from '@/lib/dateUtils';
 import Swal from 'sweetalert2';
 
 export default function AttendancePage() {
@@ -179,8 +179,8 @@ export default function AttendancePage() {
                         <div style={{ fontSize: '11px', color: 'var(--text3)' }}>ID: {a.employeeId}</div>
                       </td>
                       <td style={{ padding: '14px 16px', fontSize: '13px' }}>
-                        <div style={{ color: 'var(--green)', fontWeight: 'bold' }}>In: {a.checkIn}</div>
-                        <div style={{ color: 'var(--red)', fontWeight: 'bold' }}>Out: {a.checkOut}</div>
+                        <div style={{ color: 'var(--green)', fontWeight: 'bold' }}>In: {formatTimeAMPM(a.checkIn)}</div>
+                        <div style={{ color: 'var(--red)', fontWeight: 'bold' }}>Out: {formatTimeAMPM(a.checkOut)}</div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ display: 'flex', gap: '8px' }}>
@@ -189,7 +189,7 @@ export default function AttendancePage() {
                            ) : !a.breakOut ? (
                              <button onClick={() => handleRealtimeBreak(a, 'out')} style={{ padding: '4px 10px', background: 'var(--redbg)', color: 'var(--red)', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}>End Break</button>
                            ) : (
-                             <div style={{ fontSize: '12px', color: 'var(--blue)', fontWeight: 'bold' }}>{a.breakIn} - {a.breakOut}</div>
+                             <div style={{ fontSize: '12px', color: 'var(--blue)', fontWeight: 'bold' }}>{formatTimeAMPM(a.breakIn)} - {formatTimeAMPM(a.breakOut)}</div>
                            )}
                         </div>
                       </td>

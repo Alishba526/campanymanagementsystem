@@ -146,7 +146,8 @@ export interface Announcement {
   content: string;
   author: string;
   priority: 'normal' | 'high';
-  createdAt?: Date;
+  createdAt: Date;
+  seenBy?: string; // Stringified JSON or comma-separated list of "Name|Role|Time"
 }
 
 export interface Project {

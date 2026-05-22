@@ -510,6 +510,85 @@ export default function HistoricalReportsPage() {
           </div>
         ))}
       </div>
+      {/* Detailed Data Tables */}
+      <div style={{ marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        
+        {/* 1. Detailed Attendance Logs */}
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '25px', boxShadow: 'var(--shadow)' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span>📋</span> Detailed Attendance Logs ({getPeriodLabel()})
+          </h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Date</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Employee</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>In/Out</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Hours</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAttendance.length > 0 ? (
+                  filteredAttendance.slice(0, 50).map(a => (
+                    <tr key={a.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text)' }}>{a.date}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'bold' }}>{a.employeeName}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text2)' }}>
+                        <span style={{ color: 'var(--green)' }}>{a.checkIn}</span> - <span style={{ color: 'var(--red)' }}>{a.checkOut}</span>
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '10px', background: a.status === 'present' ? 'var(--greenbg)' : 'var(--redbg)', color: a.status === 'present' ? 'var(--green)' : 'var(--red)', fontWeight: 'bold', textTransform: 'uppercase' }}>{a.status}</span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'bold' }}>{a.hours.toFixed(1)}h</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan={5} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)' }}>No logs found for this period.</td></tr>
+                )}
+                {filteredAttendance.length > 50 && (
+                  <tr><td colSpan={5} style={{ padding: '15px', textAlign: 'center', fontSize: '12px', color: 'var(--text3)' }}>Showing first 50 records. Export PDF for full list.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 2. Staff Overview */}
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '25px', boxShadow: 'var(--shadow)' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span>👥</span> Staff Registered / Joined ({getPeriodLabel()})
+          </h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>ID</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Name</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Dept.</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Join Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.filter(e => filterByPeriod(e.joinDate)).length > 0 ? (
+                  employees.filter(e => filterByPeriod(e.joinDate)).map(e => (
+                    <tr key={e.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--accent)', fontWeight: 'bold' }}>{e.id}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '14px', color: 'var(--text)', fontWeight: 'bold' }}>{e.name}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text2)', textTransform: 'uppercase' }}>{e.department}</td>
+                      <td style={{ padding: '12px 16px', fontSize: '13px', color: 'var(--text)' }}>{e.joinDate}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan={4} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)' }}>No employees joined during this period.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
