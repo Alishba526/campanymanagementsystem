@@ -214,15 +214,17 @@ export async function getProjects() {
       const name: string = p.projectName || "";
       let extraData: any = {};
 
-      // 1. Recover data from Super-Persistence string
-      if (name.includes('S:[')) {
+      // 1. Recover data from Super-Persistence string (Check for S: prefix)
+      if (name.startsWith('S:')) {
         try {
-          const jsonStr = name.split('S:')[1];
+          const jsonStr = name.substring(2); // Remove 'S:'
           extraData = JSON.parse(jsonStr);
-        } catch (e) {}
+        } catch (e) {
+          console.error("Parse failed for super-persistence data:", e);
+        }
       }
       
-      // 2. Compatibility with older composite format
+      // 2. Compatibility with older composite format (||)
       let managerPart = "";
       let deptPart = "";
       if (name.includes('||')) {
@@ -231,16 +233,17 @@ export async function getProjects() {
         deptPart = parts.find((x: string) => x.startsWith('D:'))?.replace('D:', '') || "";
       }
 
+      // 3. Merge all sources
       const actualName = extraData.projectName || (name.includes('||') ? name.split('||')[0] : (name.startsWith('S:') ? "Project" : name)).replace(/^\[.*?\]\s/, '');
-      const actualProjNo = extraData.projectNo || (name.match(/^\[(.*?)\]/)?.[1] || "");
+      const actualProjNo = extraData.projectNo || (name.match(/^\[(.*?)\]/)?.[1] || p.projectNo || "");
       
       return {
         ...p,
-        ...extraData, 
+        ...extraData, // This spreads all 14 fields: employeeName, paymentMethod, workingDays, etc.
         projectName: actualName,
         projectNo: actualProjNo,
-        department: extraData.department || deptPart || 'ecommerce',
-        managerEmail: extraData.managerEmail || managerPart || '',
+        department: extraData.department || p.department || deptPart || 'ecommerce',
+        managerEmail: extraData.managerEmail || p.managerEmail || managerPart || '',
         cost: extraData.cost || p.totalBudget || 0
       };
     });

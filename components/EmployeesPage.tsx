@@ -144,6 +144,8 @@ export default function EmployeesPage() {
                   <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ID</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Name</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Father Name</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Position</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Address</th>
                     {isAdmin && <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Salary</th>}
@@ -158,18 +160,21 @@ export default function EmployeesPage() {
                     <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                       <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 'bold', color: 'var(--accent)' }}>{emp.id}</td>
                       <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}>{emp.name}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--text3)' }}>F: {emp.fatherName || '--'}</div>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--accent)', background: 'var(--accentbg)', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>{emp.name}</div>
                       </td>
-                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.position}</td>
-                      <td style={{ padding: '14px 16px', fontSize: '12px', color: 'var(--text2)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={emp.address}>{emp.address || '--'}</td>
-                      {isAdmin && <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--green)', fontWeight: 'bold' }}>Rs. {(emp.salary || 0).toLocaleString()}</td>}
-                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text2)' }}>{formatDateShort(emp.joinDate)}</td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text2)', fontWeight: 'bold' }}>{emp.fatherName || '--'}</td>
+                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text2)', fontWeight: 'bold' }}>{emp.phone || '--'}</td>
                       <td style={{ padding: '14px 16px' }}>
-                        <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '10px', background: emp.status === 'active' ? 'var(--greenbg)' : 'var(--redbg)', color: emp.status === 'active' ? 'var(--green)' : 'var(--red)', fontWeight: 'bold', textTransform: 'uppercase' }}>{emp.status}</span>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--blue)', background: 'var(--bluebg)', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>{emp.position}</div>
+                      </td>
+                      <td style={{ padding: '14px 16px', fontSize: '12px', color: 'var(--text3)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={emp.address}>{emp.address || '--'}</td>
+                      {isAdmin && <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--green)', fontWeight: 'bold', background: 'var(--greenbg)', borderRadius: '8px', textAlign: 'center' }}>Rs. {(emp.salary || 0).toLocaleString()}</td>}
+                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text2)', fontWeight: '500' }}>{formatDateShort(emp.joinDate)}</td>
+                      <td style={{ padding: '14px 16px' }}>
+                        <span style={{ fontSize: '10px', padding: '4px 10px', borderRadius: '10px', background: emp.status === 'active' ? 'var(--greenbg)' : 'var(--redbg)', color: emp.status === 'active' ? 'var(--green)' : 'var(--red)', fontWeight: 'bold', textTransform: 'uppercase', border: `1px solid ${emp.status === 'active' ? 'var(--green)' : 'var(--red)'}44` }}>{emp.status}</span>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: getAvgScore(emp.id) >= 80 ? 'var(--green)' : 'var(--amber)' }}>{getAvgScore(emp.id)}%</div>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: getAvgScore(emp.id) >= 80 ? 'var(--green)' : getAvgScore(emp.id) >= 50 ? 'var(--amber)' : 'var(--red)' }}>{getAvgScore(emp.id)}%</div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ display: 'flex', gap: '10px' }}>

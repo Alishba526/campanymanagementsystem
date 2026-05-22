@@ -179,8 +179,8 @@ export default function AttendancePage() {
                         <div style={{ fontSize: '11px', color: 'var(--text3)' }}>ID: {a.employeeId}</div>
                       </td>
                       <td style={{ padding: '14px 16px', fontSize: '13px' }}>
-                        <div style={{ color: 'var(--green)', fontWeight: '500' }}>In: {a.checkIn}</div>
-                        <div style={{ color: 'var(--red)', fontWeight: '500' }}>Out: {a.checkOut}</div>
+                        <div style={{ color: 'var(--green)', fontWeight: 'bold' }}>In: {a.checkIn}</div>
+                        <div style={{ color: 'var(--red)', fontWeight: 'bold' }}>Out: {a.checkOut}</div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
                         <div style={{ display: 'flex', gap: '8px' }}>
@@ -189,23 +189,24 @@ export default function AttendancePage() {
                            ) : !a.breakOut ? (
                              <button onClick={() => handleRealtimeBreak(a, 'out')} style={{ padding: '4px 10px', background: 'var(--redbg)', color: 'var(--red)', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}>End Break</button>
                            ) : (
-                             <div style={{ fontSize: '12px', color: 'var(--text2)' }}>{a.breakIn} - {a.breakOut}</div>
+                             <div style={{ fontSize: '12px', color: 'var(--blue)', fontWeight: 'bold' }}>{a.breakIn} - {a.breakOut}</div>
                            )}
                         </div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontSize: '12px', color: 'var(--amber)' }}>Late: {a.lateEntry}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--purple)' }}>Early: {a.earlyExit}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold' }}>Late: {a.lateEntry}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--purple)', fontWeight: 'bold' }}>Early: {a.earlyExit}</div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{a.hours.toFixed(1)} hrs</div>
-                        <div style={{ fontSize: '11px', color: 'var(--green)' }}>OT: {a.overtime}h</div>
+                        <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text)' }}>{a.hours.toFixed(1)} hrs</div>
+                        <div style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 'bold' }}>OT: {a.overtime}h</div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
-                        <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '10px', background: `${getStatusColor(a.status)}22`, color: getStatusColor(a.status), fontWeight: 'bold', textTransform: 'uppercase', border: `1px solid ${getStatusColor(a.status)}44` }}>
+                        <span style={{ fontSize: '10px', padding: '4px 10px', borderRadius: '10px', background: `${getStatusColor(a.status)}22`, color: getStatusColor(a.status), fontWeight: 'bold', textTransform: 'uppercase', border: `1px solid ${getStatusColor(a.status)}44` }}>
                           {a.status.replace('-', ' ')}
                         </span>
                       </td>
+
                       <td style={{ padding: '14px 16px' }}>
                         <button onClick={() => handleEdit(a)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
                       </td>

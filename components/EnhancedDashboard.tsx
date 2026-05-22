@@ -146,8 +146,11 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                        <div style={{ width: '35px', height: '35px', borderRadius: '10px', background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
                        <div>
-                          <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{log.user}:{log.action}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--text2)' }}>{log.timestamp}</div>
+                          <div style={{ fontSize: '13px', fontWeight: 'bold' }}>
+                            <span style={{ color: 'var(--accent)' }}>{log.user}</span>:
+                            <span style={{ color: log.action.toLowerCase().includes('delete') ? 'var(--red)' : log.action.toLowerCase().includes('add') || log.action.toLowerCase().includes('register') ? 'var(--green)' : 'var(--text)' }}> {log.action}</span>
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: 'bold' }}>{log.timestamp}</div>
                        </div>
                     </div>
                  </div>
@@ -159,12 +162,12 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
             <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '20px' }}>🏆 Performance Ranking</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                {rankings.map((r, i) => (
-                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 15px', background: 'var(--bg3)', borderRadius: '12px' }}>
+                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 15px', background: 'var(--bg3)', borderRadius: '12px', borderLeft: `4px solid ${i === 0 ? 'var(--green)' : i === 1 ? 'var(--accent)' : 'var(--border)'}` }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                       <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)' }}>#{i+1}</span>
-                       <span style={{ fontSize: '14px', fontWeight: '600' }}>{r.name}</span>
+                       <span style={{ fontSize: '12px', fontWeight: 'bold', color: i === 0 ? 'var(--green)' : 'var(--text2)' }}>#{i+1}</span>
+                       <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text)' }}>{r.name}</span>
                     </div>
-                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--accent)' }}>{r.score}%</span>
+                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: r.score >= 80 ? 'var(--green)' : r.score >= 50 ? 'var(--accent)' : 'var(--red)' }}>{r.score}%</span>
                  </div>
                ))}
             </div>

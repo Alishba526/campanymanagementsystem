@@ -72,8 +72,7 @@ model TaskLog {
   date              String
   task              String
   category          String
-  hours             Float
-  completion        Int
+  workingDays       Float
   quality           Int
   score             Int
   projectsAssigned  Int      @default(0)
@@ -181,18 +180,27 @@ model LeaveRequest {
 }
 
 model Project {
-  id             String   @id @default(cuid())
-  clientName     String
-  projectName    String
-  scope          String   @default("")
-  totalBudget    Int
-  amountReceived Int      @default(0)
-  status         String   // 'active', 'completed', 'on-hold', 'approved', 'pending', 'rejected'
-  startDate      String
-  endDate        String?
-  deadline       String   @default("")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String   @id @default(cuid())
+  projectNo       String   @default("")
+  projectName     String
+  employeeName    String   @default("")
+  scope           String   @default("")
+  cost            Float    @default(0)
+  totalBudget     Int
+  amountReceived  Int      @default(0)
+  paymentStatus   String   @default("upfront_50")
+  paymentMethod   String   @default("")
+  workingDays     Float    @default(0)
+  startDate       String
+  deadline        String   @default("")
+  clientName      String
+  clientEmail     String   @default("")
+  managerName     String   @default("")
+  managerEmail    String   @default("")
+  department      String   @default("")
+  status          String   // 'active', 'completed', 'on-hold', 'approved', 'pending', 'rejected'
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Announcement {

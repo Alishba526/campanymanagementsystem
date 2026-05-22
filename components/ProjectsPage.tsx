@@ -156,31 +156,31 @@ export default function ProjectsPage() {
                 <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                   <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 'bold', color: 'var(--accent)' }}>{p.projectNo || '—'}</td>
                   <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)' }}>{p.projectName}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text3)' }}>Scope: {p.scope}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 'bold' }}>Staff: {p.employeeName || '—'}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--accent)', background: 'var(--accentbg)', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>{p.projectName}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text3)', marginTop: '4px' }}>Scope: {p.scope}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--blue)', fontWeight: 'bold', background: 'var(--bluebg)', padding: '2px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>Staff: {p.employeeName || '—'}</div>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text)' }}>{p.clientName}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text3)' }}>{p.clientEmail}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--purple)', background: 'var(--accentbg)', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>{p.clientName}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold', marginTop: '4px' }}>{p.clientEmail}</div>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--green)' }}>{formatCurrency(p.cost || p.totalBudget)}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase' }}>{(p.paymentStatus || '').replace('_', ' ')}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text3)' }}>Via: {p.paymentMethod || '—'}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--green)', background: 'var(--greenbg)', borderRadius: '6px', textAlign: 'center', padding: '4px' }}>{formatCurrency(p.cost || p.totalBudget)}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--accent)', textTransform: 'uppercase', fontWeight: 'bold', marginTop: '4px' }}>{(p.paymentStatus || '').replace('_', ' ')}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 'bold' }}>Via: {p.paymentMethod || '—'}</div>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Start: {p.startDate}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Days: {p.workingDays}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--red)', fontWeight: 'bold' }}>Due: {formatDateShort(p.deadline)}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: 'bold' }}>Start: {p.startDate}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text2)' }}>Days: {p.workingDays}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--red)', fontWeight: 'bold', background: 'var(--redbg)', padding: '2px 5px', borderRadius: '4px', display: 'inline-block', marginTop: '4px' }}>Due: {formatDateShort(p.deadline)}</div>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <div style={{ fontSize: '13px', color: 'var(--text2)', fontWeight: 'bold' }}>{p.managerName}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text3)' }}>{p.managerEmail}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase' }}>{p.department}</div>
+                    <div style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: 'bold' }}>{p.managerName}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold' }}>{p.managerEmail}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', fontWeight: 'bold' }}>{p.department}</div>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
-                    <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '10px', background: p.status === 'completed' ? 'var(--greenbg)' : 'var(--accentbg)', color: p.status === 'completed' ? 'var(--green)' : 'var(--accent)', fontWeight: 'bold', textTransform: 'uppercase' }}>{p.status}</span>
+                    <span style={{ fontSize: '10px', padding: '4px 10px', borderRadius: '10px', background: p.status === 'completed' ? 'var(--greenbg)' : 'var(--accentbg)', color: p.status === 'completed' ? 'var(--green)' : 'var(--accent)', fontWeight: 'bold', textTransform: 'uppercase', border: `1px solid ${p.status === 'completed' ? 'var(--green)' : 'var(--accent)'}44` }}>{p.status}</span>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', gap: '10px' }}>
