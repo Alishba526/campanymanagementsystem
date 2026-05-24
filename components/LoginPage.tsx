@@ -1,195 +1,174 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { UserRole } from '@/types';
 import Swal from 'sweetalert2';
 
 export default function LoginPage() {
   const { login } = useApp();
-  const [selectedRole, setSelectedRole] = useState<UserRole>('admin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  const roleConfig: Record<string, { icon: string; label: string; defaultEmail: string; defaultPassword: string }> = {
-    admin: {
-      icon: '👑',
-      label: 'Admin',
-      defaultEmail: 'admin@growzix.com',
-      defaultPassword: 'Admin@2024#Secure'
-    },
-    ecommerce: {
-      icon: '🛒',
-      label: 'Manager Ecommerce',
-      defaultEmail: 'ecommerce@growzix.com',
-      defaultPassword: 'Ecom$Manager789'
-    },
-    marketing: {
-      icon: '📢',
-      label: 'Manager Marketing',
-      defaultEmail: 'marketing@growzix.com',
-      defaultPassword: 'Market!ng456Pro'
-    },
-    architecture: {
-      icon: '🏗️',
-      label: 'Manager Architecture',
-      defaultEmail: 'architecture@growzix.com',
-      defaultPassword: 'Arch#Tech321Mgr'
-    },
-    superadmin: {
-      icon: '🛡️',
-      label: 'Super Admin',
-      defaultEmail: 'superadmin@growzix.com',
-      defaultPassword: 'SuperAdmin@2024#'
-    }
-  };
-
-  const handleRoleSelect = (role: string) => {
-    setSelectedRole(role as UserRole);
-    if (roleConfig[role]) {
-      setEmail(roleConfig[role].defaultEmail);
-    }
-    setPassword(''); // Don't auto-fill password for security
-    setError('');
-  };
-
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
-    setError('');
     
     try {
       const success = await login(email, password);
       if (success) {
         Swal.fire({
-          title: 'Success!',
-          text: 'Login successful',
+          title: 'Welcome Back',
+          text: 'Establishing secure session...',
           icon: 'success',
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
+          background: 'var(--bg2)',
+          color: 'var(--text)',
+          iconColor: 'var(--accent)'
         });
       } else {
-        setError('Invalid email or password');
         Swal.fire({
-          title: 'Error!',
-          text: 'Invalid credentials',
-          icon: 'error'
+          title: 'Access Denied',
+          text: 'Invalid credentials. Please verify your details.',
+          icon: 'error',
+          confirmButtonColor: 'var(--accent)',
+          background: 'var(--bg2)',
+          color: 'var(--text)'
         });
       }
     } catch (err) {
-      setError('Connection error. Please try again.');
-      Swal.fire({
-        title: 'Error!',
-        text: 'Connection error. Please try again.',
-        icon: 'error'
-      });
+      Swal.fire('System Error', 'Could not reach server. Please try again.', 'error');
     } finally {
       setIsLoggingIn(false);
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '40px', width: '100%', maxWidth: '420px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '32px', justifyContent: 'center' }}>
-          <div style={{ width: '44px', height: '44px', background: 'var(--accent)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'radial-gradient(circle at 0% 0%, var(--accent) -100%, var(--bg) 50%)', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      padding: '20px'
+    }}>
+      <div style={{ 
+        background: 'var(--bg2)', 
+        border: '1px solid var(--border)', 
+        borderRadius: '35px', 
+        padding: '50px 45px', 
+        width: '100%', 
+        maxWidth: '460px', 
+        boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.3)', 
+        textAlign: 'center',
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? 'scale(1)' : 'scale(0.95)',
+        transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+        position: 'relative'
+      }}>
+        
+        {/* Logo Section */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px', justifyContent: 'center' }}>
+          <div style={{ 
+            width: '52px', 
+            height: '52px', 
+            background: 'linear-gradient(135deg, var(--accent), var(--primary))', 
+            borderRadius: '16px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            fontSize: '26px',
+            boxShadow: '0 8px 16px rgba(var(--accent-rgb), 0.3)',
+            color: '#fff'
+          }}>
             🚀
           </div>
-          <div>
-            <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text)' }}>GROWZIX</div>
-            <div style={{ fontSize: '11px', color: 'var(--text2)' }}>AI-Powered Enterprise System</div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text)', letterSpacing: '-0.5px' }}>GROWZIX</div>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>Enterprise OS</div>
           </div>
         </div>
 
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: '600', marginBottom: '20px', width: '100%', justifyContent: 'center' }}>
-          <span>🔒</span> Role-Based Secure Access
-        </div>
+        <h2 style={{ fontSize: '28px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>Secure Access</h2>
+        <p style={{ fontSize: '14px', color: 'var(--text2)', marginBottom: '35px', fontWeight: '500' }}>Enter your credentials to manage your workspace</p>
 
-        <p style={{ fontSize: '13px', color: 'var(--text2)', textAlign: 'center', marginBottom: '28px' }}>Select your role to continue</p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px' }}>
-          {(Object.keys(roleConfig) as UserRole[]).map((role) => (
-            <button
-              key={role}
-              onClick={() => handleRoleSelect(role)}
-              style={{
-                background: selectedRole === role ? 'var(--accentbg)' : 'var(--bg3)',
-                border: selectedRole === role ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
-                borderRadius: 'var(--radius)',
-                padding: '14px 8px',
-                cursor: 'pointer',
-                textAlign: 'center',
-                transition: '.2s',
-                color: selectedRole === role ? 'var(--text)' : 'var(--text2)'
-              }}
-            >
-              <div style={{ fontSize: '24px', marginBottom: '6px' }}>{roleConfig[role].icon}</div>
-              <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '.5px', textTransform: 'uppercase' }}>
-                {roleConfig[role].label}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
           <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
-              Email Address
+            <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text2)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>
+              Email or Username
             </label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none' }}
-              placeholder="Enter your email"
+              style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '14px', padding: '15px', color: 'var(--text)', fontSize: '15px', outline: 'none', transition: '0.2s' }}
+              placeholder="admin@growzix.com"
               required
-              onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+              className="login-input"
             />
           </div>
 
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>
+          <div style={{ position: 'relative' }}>
+            <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text2)', marginBottom: '8px', display: 'block', textTransform: 'uppercase' }}>
               Password
             </label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none' }}
-              placeholder="Enter your password"
+              style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '14px', padding: '15px', color: 'var(--text)', fontSize: '15px', outline: 'none', transition: '0.2s' }}
+              placeholder="••••••••"
               required
-              onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+              className="login-input"
             />
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ position: 'absolute', right: '15px', bottom: '13px', background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '18px' }}
+            >
+              {showPassword ? '👁️' : '🙈'}
+            </button>
           </div>
-
-          {error && (
-            <div style={{ background: 'var(--redbg)', border: '1px solid var(--red)', color: 'var(--red)', borderRadius: 'var(--radius)', padding: '12px 14px', fontSize: '13px', fontWeight: '600' }}>
-              {error}
-            </div>
-          )}
 
           <button
             type="submit"
             disabled={isLoggingIn}
-            style={{ width: '100%', background: isLoggingIn ? 'var(--accent2)' : 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', padding: '13px', fontSize: '15px', fontWeight: '700', cursor: isLoggingIn ? 'not-allowed' : 'pointer', transition: '.2s', opacity: isLoggingIn ? 0.7 : 1 }}
-            onMouseEnter={(e) => !isLoggingIn && (e.currentTarget.style.background = 'var(--accent2)')}
-            onMouseLeave={(e) => !isLoggingIn && (e.currentTarget.style.background = 'var(--accent)')}
+            style={{ 
+              width: '100%', 
+              background: 'var(--accent)', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: '14px', 
+              padding: '18px', 
+              fontSize: '16px', 
+              fontWeight: '800', 
+              cursor: isLoggingIn ? 'not-allowed' : 'pointer', 
+              transition: '0.3s', 
+              boxShadow: '0 10px 20px rgba(var(--accent-rgb), 0.2)',
+              marginTop: '10px'
+            }}
           >
-            {isLoggingIn ? '⌛ Logging in...' : '🔐 Enter System'}
+            {isLoggingIn ? '⌛ Authenticating...' : '🔐 Sign In'}
           </button>
         </form>
 
-        <div style={{ marginTop: '24px', padding: '12px', background: 'var(--bg3)', borderRadius: 'var(--radius2)', border: '1px solid var(--border)', textAlign: 'center' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text2)' }}>
-            🔐 Secure Login - Contact admin for credentials
-          </div>
+        <div style={{ marginTop: '35px', padding: '15px', background: 'var(--bg3)', borderRadius: '16px', border: '1px solid var(--border)', fontSize: '12px', color: 'var(--text3)', fontWeight: '600' }}>
+          🛡️ This connection is encrypted and monitored for security.
         </div>
       </div>
+
+      <style jsx>{`
+        .login-input:focus {
+          border-color: var(--accent) !important;
+          background: var(--bg) !important;
+        }
+      `}</style>
     </div>
   );
 }
+

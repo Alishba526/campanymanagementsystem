@@ -1,13 +1,14 @@
 'use client';
 
 import { useApp } from '@/context/AppContext';
-import { useState } from 'react';
-import { Employee } from '@/types';
+import { useState, useEffect } from 'react';
+import { Employee, User } from '@/types';
 import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
 import Swal from 'sweetalert2';
+import * as actions from '@/lib/actions';
 
 export default function EmployeesPage() {
-  const { currentUser, employees, addEmployee, updateEmployee, deleteEmployee, tasks } = useApp();
+  const { currentUser, users, employees, addEmployee, updateEmployee, deleteEmployee, tasks, fetchData } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState<Partial<Employee>>({});
@@ -16,6 +17,109 @@ export default function EmployeesPage() {
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
   
+  const handleManageAccessActual = async (emp: Employee) => {
+     // Find user by either email or a specific format like "EMP_ID"
+     const existingUser = users.find((u: any) => u.email === emp.id || u.email === emp.email);
+
+     if (existingUser) {
+       const result = await Swal.fire({
+         title: `Access Control: ${emp.name}`,
+         html: `<div style="text-align:left; font-size:14px; background:var(--bg3); padding:15px; border-radius:10px; border:1px solid var(--border)">
+                  <div style="margin-bottom:8px"><b>User ID:</b> <span style="color:var(--accent)">${existingUser.email}</span></div>
+                  <div style="margin-bottom:8px"><b>Status:</b> <span style="color:var(--green)">Active Portal Access</span></div>
+                  <div style="padding-top:10px; border-top:1px solid var(--border); color:var(--accent); font-weight:bold">Current Password: ${existingUser.password}</div>
+                </div>`,
+         icon: 'info',
+         showCancelButton: true,
+         showDenyButton: true,
+         confirmButtonText: '🔑 Change Password',
+         denyButtonText: '🗑️ Revoke Access',
+         cancelButtonText: 'Close',
+         confirmButtonColor: 'var(--accent)',
+         denyButtonColor: 'var(--red)',
+       });
+
+       if (result.isConfirmed) {
+         const { value: newPassword } = await Swal.fire({
+           title: 'Set New Password',
+           input: 'text',
+           inputPlaceholder: 'Enter new password',
+           showCancelButton: true,
+           confirmButtonColor: 'var(--accent)',
+         });
+         if (newPassword) {
+           await actions.updateUserAction(existingUser.id, { password: newPassword });
+           await fetchData(); // Force refresh to sync global state
+           Swal.fire('Updated', 'Password changed successfully', 'success');
+         }
+       } else if (result.isDenied) {
+         const confirm = await Swal.fire({
+           title: 'Revoke Access?',
+           text: `${emp.name} will no longer be able to log in to their portal.`,
+           icon: 'warning',
+           showCancelButton: true,
+           confirmButtonColor: 'var(--red)',
+           confirmButtonText: 'Yes, Revoke'
+         });
+         if (confirm.isConfirmed) {
+           await actions.deleteUserAction(existingUser.id);
+           await fetchData(); // Force refresh
+           Swal.fire('Revoked', 'Employee access has been removed.', 'success');
+         }
+       }
+     } else {
+       const { value: formValues } = await Swal.fire({
+         title: `Grant Portal Access`,
+         html: `
+           <div style="text-align:left; font-size:14px; margin-bottom:15px">
+             <label style="display:block; margin-bottom:5px; font-weight:bold">Employee:</label>
+             <div style="padding:10px; background:var(--bg3); border-radius:8px; margin-bottom:15px">${emp.name} (${emp.id})</div>
+             
+             <label style="display:block; margin-bottom:5px; font-weight:bold">Set User ID (Username):</label>
+             <input id="swal-username" class="swal2-input" style="margin:0; width:100%" value="${emp.id}" placeholder="e.g. user123">
+             
+             <label style="display:block; margin-top:15px; margin-bottom:5px; font-weight:bold">Set Password:</label>
+             <input id="swal-password" type="text" class="swal2-input" style="margin:0; width:100%" placeholder="e.g. Pass123">
+           </div>
+         `,
+         focusConfirm: false,
+         showCancelButton: true,
+         confirmButtonText: 'Create Account',
+         confirmButtonColor: 'var(--green)',
+         preConfirm: () => {
+           return [
+             (document.getElementById('swal-username') as HTMLInputElement).value,
+             (document.getElementById('swal-password') as HTMLInputElement).value
+           ]
+         }
+       });
+
+       if (formValues && formValues[0] && formValues[1]) {
+         const [username, password] = formValues;
+         
+         if (users.some((u: any) => u.email === username)) {
+           Swal.fire('Error', 'This User ID is already taken. Please use a unique ID.', 'error');
+           return;
+         }
+
+         await actions.addUserAction({
+           email: username, 
+           password: password,
+           name: emp.name,
+           role: 'employee'
+         });
+         
+         await fetchData(); // Sync global state
+         
+         Swal.fire({
+           title: 'Access Granted!',
+           html: `Employee can now login using:<br><b>ID:</b> ${username}<br><b>Pass:</b> ${password}`,
+           icon: 'success'
+         });
+       }
+     }
+  };
+
   const getAvgScore = (empId: string) => {
     const empTasks = tasks.filter(t => t.employeeId === empId);
     if (empTasks.length === 0) return 0;
@@ -109,19 +213,11 @@ export default function EmployeesPage() {
             <div style={{ fontSize: '13px', color: 'var(--text2)' }}>{employees.length} total employees registered</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-           <div style={{ position: 'relative' }}>
-             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)' }}>🔍</span>
-             <input type="text" placeholder="Search employees..." style={{ padding: '10px 15px 10px 35px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', width: '250px', fontSize: '13px' }} />
-           </div>
-        </div>
       </div>
 
       {/* 3 Department Portions */}
       {departments.map(dept => {
-        // Isolation: Non-admins only see their own department portion
         if (!isAdmin && currentUser.role !== dept.id) return null;
-
         const deptEmps = employees.filter(e => e.department === dept.id);
 
         return (
@@ -131,7 +227,6 @@ export default function EmployeesPage() {
                 <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} Department
                 </h3>
-                <div style={{ fontSize: '11px', color: 'var(--text3)', fontStyle: 'italic', marginTop: '2px' }}>{dept.tagline}</div>
               </div>
               {(isAdmin || currentUser.role === dept.id) && (
                 <button onClick={() => handleAdd(dept.id)} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>+ Add Employee</button>
@@ -139,65 +234,73 @@ export default function EmployeesPage() {
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1100px' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ID</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Name</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Father Name</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Position</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Address</th>
-                    {isAdmin && <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Salary</th>}
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Join Date</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Perf.</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Actions</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>ID</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Name</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Father</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Phone</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Position</th>
+                    {isAdmin && (
+                      <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Portal ID</th>
+                    )}
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Address</th>
+                    {isAdmin && <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Salary</th>}
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Join Date</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Status</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Perf.</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {deptEmps.map(emp => (
-                    <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                      <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 'bold', color: 'var(--accent)' }}>{emp.id}</td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontSize: '14px', fontWeight: '800', color: '#4338ca', background: 'var(--accentbg)', padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>{emp.name}</div>
-                      </td>
-                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: '800' }}>{emp.fatherName || '--'}</td>
-                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: '800' }}>{emp.phone || '--'}</td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ 
-                          fontSize: '13px', 
-                          fontWeight: '900', 
-                          color: emp.position?.toLowerCase().includes('senior') ? '#059669' : '#2563eb', 
-                          background: emp.position?.toLowerCase().includes('senior') ? '#ecfdf5' : '#eff6ff', 
-                          padding: '4px 8px', 
-                          borderRadius: '6px', 
-                          display: 'inline-block',
-                          border: `1px solid ${emp.position?.toLowerCase().includes('senior') ? '#10b981' : '#3b82f6'}44`
-                        }}>{emp.position}</div>
-                      </td>
-                      <td style={{ padding: '14px 16px', fontSize: '12px', color: 'var(--text2)', fontWeight: '700', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={emp.address}>{emp.address || '--'}</td>
-                      {isAdmin && <td style={{ padding: '14px 16px', fontSize: '13px', color: '#059669', fontWeight: '900', background: '#ecfdf5', borderRadius: '8px', textAlign: 'center', border: '1px solid #10b98133' }}>Rs. {(emp.salary || 0).toLocaleString()}</td>}
-                      <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: '800' }}>{formatDateShort(emp.joinDate)}</td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <span style={{ fontSize: '10px', padding: '4px 10px', borderRadius: '10px', background: emp.status === 'active' ? '#ecfdf5' : '#fef2f2', color: emp.status === 'active' ? '#059669' : '#dc2626', fontWeight: '900', textTransform: 'uppercase', border: `2px solid ${emp.status === 'active' ? '#10b981' : '#ef4444'}44` }}>{emp.status}</span>
-                      </td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: '900', color: getAvgScore(emp.id) >= 80 ? '#059669' : getAvgScore(emp.id) >= 50 ? '#d97706' : '#dc2626' }}>{getAvgScore(emp.id)}%</div>
-                      </td>
-                      <td style={{ padding: '14px 16px' }}>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                           <button onClick={() => handleEdit(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--text2)' }} title="Edit">✏️</button>
-                           {isAdmin && <button onClick={() => handleUpdateSalary(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--green)' }} title="Salary">💰</button>}
-                           {isAdmin && <button onClick={() => handleDelete(emp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--red)' }} title="Delete">🗑️</button>}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {deptEmps.map(emp => {
+                    const user = users.find(u => u.email === emp.id || u.email === emp.email);
+                    return (
+                      <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                        <td style={{ padding: '10px 10px', fontSize: '11px', fontWeight: 'bold', color: 'var(--accent)', whiteSpace: 'nowrap' }}>{emp.id}</td>
+                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: '12px', fontWeight: '800', color: '#4338ca', background: 'var(--accentbg)', padding: '3px 8px', borderRadius: '4px', display: 'inline-block' }}>{emp.name}</div>
+                        </td>
+                        <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{emp.fatherName || '--'}</td>
+                        <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{emp.phone || '--'}</td>
+                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                          <div style={{ 
+                            fontSize: '10px', 
+                            fontWeight: '900', 
+                            color: emp.position?.toLowerCase().includes('senior') ? '#059669' : '#2563eb', 
+                            background: emp.position?.toLowerCase().includes('senior') ? '#ecfdf5' : '#eff6ff', 
+                            padding: '2px 6px', 
+                            borderRadius: '4px', 
+                            display: 'inline-block',
+                            border: `1px solid ${emp.position?.toLowerCase().includes('senior') ? '#10b981' : '#3b82f6'}44`
+                          }}>{emp.position}</div>
+                        </td>
+                        {isAdmin && (
+                          <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{user?.email || '—'}</td>
+                        )}
+                        <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text2)', fontWeight: '600', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={emp.address}>{emp.address || '--'}</td>
+                        {isAdmin && <td style={{ padding: '10px 10px', fontSize: '11px', color: '#059669', fontWeight: '900', whiteSpace: 'nowrap' }}>Rs. {(emp.salary || 0).toLocaleString()}</td>}
+                        <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{formatDateShort(emp.joinDate)}</td>
+                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '6px', background: emp.status === 'active' ? '#ecfdf5' : '#fef2f2', color: emp.status === 'active' ? '#059669' : '#dc2626', fontWeight: '900', textTransform: 'uppercase', border: `1px solid ${emp.status === 'active' ? '#10b981' : '#ef4444'}44` }}>{emp.status}</span>
+                        </td>
+                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: '11px', fontWeight: '900', color: getAvgScore(emp.id) >= 80 ? '#059669' : getAvgScore(emp.id) >= 50 ? '#d97706' : '#dc2626' }}>{getAvgScore(emp.id)}%</div>
+                        </td>
+                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                             <button onClick={() => handleEdit(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
+                             {isAdmin && <button onClick={() => handleManageAccessActual(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🔑</button>}
+                             {isAdmin && <button onClick={() => handleUpdateSalary(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>💰</button>}
+                             {isAdmin && <button onClick={() => handleDelete(emp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🗑️</button>}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {deptEmps.length === 0 && (
-                    <tr>
-                      <td colSpan={isAdmin ? 9 : 8} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>No employees in this department.</td>
-                    </tr>
+                    <tr><td colSpan={12} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)', fontSize: '12px' }}>No employees found.</td></tr>
                   )}
                 </tbody>
               </table>

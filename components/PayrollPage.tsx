@@ -103,7 +103,7 @@ export default function PayrollPage() {
     doc.line(20, 85, 190, 85);
     
     doc.text('Description', 20, 95);
-    doc.text('Amount (Rs.)', 140, 95);
+    doc.text('Amount (PKR Rs.)', 140, 95);
     
     doc.text('Basic Salary', 20, 110);
     doc.text(selectedEmp.salary.toLocaleString(), 140, 110);

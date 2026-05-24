@@ -3,14 +3,20 @@
 import { useApp } from '@/context/AppContext';
 import { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
+import { formatTimeAMPM } from '@/lib/dateUtils';
 
 interface DashboardProps {
   onNavigate?: (page: string) => void;
 }
 
 export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
-  const { currentUser, employees, attendance, auditLogs, income, expenses, tasks, announcements, projects } = useApp();
+  const { currentUser, employees, attendance, auditLogs, income, expenses, tasks, announcements, projects, bills } = useApp();
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Historical Filtering States
+  const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
+  const [filterMonth, setFilterMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
+  const [isFiltered, setIsFiltered] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -21,15 +27,34 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
   const today = new Date().toISOString().split('T')[0];
+  const filterPrefix = `${filterYear}-${filterMonth}`;
 
   const formatCurrency = (amount: number) => `Rs. ${(amount || 0).toLocaleString()}`;
+  
+  // Currency Conversion Rate (1 USD = 280 PKR)
+  const USD_TO_PKR = 280;
 
-  const todayAttendance = attendance.filter(a => a.date === today);
+  // Filtering Logic
+  const displayAttendance = isFiltered 
+    ? attendance.filter(a => a.date.startsWith(filterPrefix))
+    : attendance.filter(a => a.date === today);
+
+  const displayIncome = isFiltered
+    ? income.filter(i => i.date.startsWith(filterPrefix) && i.status === 'received')
+    : income.filter(i => i.status === 'received');
+
+  const displayExpenses = isFiltered
+    ? expenses.filter(e => e.date.startsWith(filterPrefix))
+    : expenses;
+
+  const displayTasks = isFiltered
+    ? tasks.filter(t => t.date.startsWith(filterPrefix))
+    : tasks;
 
   // Manager Specific Data
   const managerDept = currentUser.role;
   const myDeptEmps = employees.filter(e => e.department === managerDept);
-  const myDeptAtt = todayAttendance.filter(a => myDeptEmps.find(e => e.id === a.employeeId));
+  const myDeptAtt = displayAttendance.filter(a => myDeptEmps.find(e => e.id === a.employeeId));
   const myDeptPresent = myDeptAtt.filter(a => a.status === 'present' || a.status === 'late').length;
   const myDeptProjects = projects.filter(p => p.department === managerDept);
   
@@ -43,31 +68,87 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
   const formattedDateDay = currentTime.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const formattedTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  // Admin Stats
-  const totalIncome = income.filter(i => i.status === 'received').reduce((sum, i) => sum + i.amount, 0);
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalSalaries = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
-  const totalCashOut = totalExpenses + totalSalaries;
-  const netProfit = totalIncome - totalCashOut;
-  const profitMargin = totalIncome > 0 ? Math.round((netProfit / totalIncome) * 100) : 0;
-  const attRate = employees.length > 0 ? Math.round((todayAttendance.filter(a => a.status === 'present' || a.status === 'late').length / employees.length) * 100) : 0;
+  // Admin Stats Calculations (ALL IN PKR)
+  const totalManualIncomePKR = displayIncome.reduce((sum, i) => sum + i.amount, 0);
+  
+  // Dynamic Project Income Calculation (Convert USD to PKR)
+  const displayProjects = isFiltered 
+    ? projects.filter(p => p.startDate.startsWith(filterPrefix))
+    : projects;
+    
+  const totalProjectIncomeUSD = displayProjects.reduce((sum, p) => sum + (p.amountReceived || 0), 0);
+  const totalProjectBudgetUSD = displayProjects.reduce((sum, p) => sum + (p.cost || 0), 0);
+  const totalProjectIncomePKR = totalProjectIncomeUSD * USD_TO_PKR;
+  
+  const totalIncomePKR = totalManualIncomePKR + totalProjectIncomePKR;
 
-  const rankings = employees.map(emp => {
-    const empTasks = tasks.filter(t => t.employeeId === emp.id);
-    const score = empTasks.length > 0 ? Math.round(empTasks.reduce((sum, t) => sum + t.score, 0) / empTasks.length) : 0;
-    return { name: emp.name, score };
-  }).sort((a, b) => b.score - a.score).slice(0, 5);
+  const totalExpensesPKR = displayExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalBillsPKR = isFiltered 
+    ? bills.filter(b => b.date.startsWith(filterPrefix)).reduce((sum, b) => sum + b.amount, 0)
+    : bills.reduce((sum, b) => sum + b.amount, 0);
+  
+  // Salaries for filtered month (assume base salary if filtered)
+  const totalSalariesPKR = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
+  
+  const totalCashOutPKR = totalExpensesPKR + totalSalariesPKR + totalBillsPKR;
+  const netProfitPKR = totalIncomePKR - totalCashOutPKR;
+  const profitMargin = totalIncomePKR > 0 ? Math.round((netProfitPKR / totalIncomePKR) * 100) : 0;
+  
+  const activeEmpsCount = employees.filter(e => e.status === 'active').length;
+  const attRate = activeEmpsCount > 0 ? Math.round((displayAttendance.filter(a => a.status === 'present' || a.status === 'late').length / (isFiltered ? (activeEmpsCount * 22) : activeEmpsCount)) * 100) : 0;
 
   const myDeptScore = myDeptEmps.length > 0 
     ? Math.round(myDeptEmps.reduce((sum, emp) => {
-        const empTasks = tasks.filter(t => t.employeeId === emp.id);
+        const empTasks = displayTasks.filter(t => t.employeeId === emp.id);
         return sum + (empTasks.length > 0 ? empTasks.reduce((s, t) => s + t.score, 0) / empTasks.length : 0);
       }, 0) / myDeptEmps.length) 
     : 0;
 
+  const currentYearNum = new Date().getFullYear();
+  const years = Array.from({ length: 21 }, (_, i) => (currentYearNum + 10 - i).toString());
+  const months = [
+    { v: '01', l: 'January' }, { v: '02', l: 'February' }, { v: '03', l: 'March' },
+    { v: '04', l: 'April' }, { v: '05', l: 'May' }, { v: '06', l: 'June' },
+    { v: '07', l: 'July' }, { v: '08', l: 'August' }, { v: '09', l: 'September' },
+    { v: '10', l: 'October' }, { v: '11', l: 'November' }, { v: '12', l: 'December' }
+  ];
+
+  const rankings = employees.map(emp => {
+    const empTasks = displayTasks.filter(t => t.employeeId === emp.id);
+    const score = empTasks.length > 0 ? Math.round(empTasks.reduce((sum, t) => sum + t.score, 0) / empTasks.length) : 0;
+    return { name: emp.name, score };
+  }).sort((a, b) => b.score - a.score).slice(0, 5);
+
+  const formatUSD = (val: number) => `$ ${val.toLocaleString()}`;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
       
+      {/* 0. HISTORICAL FILTER BAR */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 25px', boxShadow: 'var(--shadow)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '20px' }}>🔍</span>
+          <div style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text)' }}>Global Search Engine:</div>
+          <select value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', color: 'var(--text)', outline: 'none', fontWeight: 'bold' }}>
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', color: 'var(--text)', outline: 'none', fontWeight: 'bold' }}>
+            {months.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+          </select>
+          <button 
+            onClick={() => setIsFiltered(!isFiltered)}
+            style={{ background: isFiltered ? 'var(--accent)' : 'var(--bg3)', color: isFiltered ? '#fff' : 'var(--text)', border: 'none', borderRadius: '10px', padding: '8px 20px', fontWeight: 'bold', cursor: 'pointer', transition: '0.3s' }}
+          >
+            {isFiltered ? '✨ History Active' : 'Search Ledger'}
+          </button>
+        </div>
+        {isFiltered && (
+          <div style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: 'bold', background: 'var(--accent)22', padding: '5px 12px', borderRadius: '20px' }}>
+            Retrieving records for {months.find(m => m.v === filterMonth)?.l} {filterYear}
+          </div>
+        )}
+      </div>
+
       {/* 1. EXECUTIVE HEADER (Managers Only) */}
       {!isAdmin && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -92,41 +173,21 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
         </div>
       )}
 
-      {/* 3. ANNOUNCEMENTS */}
-      {announcements.length > 0 && (
-        <div style={{ background: 'var(--accentbg)', border: '2px solid #6366f1', borderRadius: '24px', padding: '20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ background: '#6366f1', color: '#fff', width: '50px', height: '50px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>📢</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '14px', fontWeight: '800', color: '#4338ca' }}>ADMIN UPDATE: {announcements[0].title}</div>
-            <div style={{ fontSize: '13px', color: 'var(--text2)', marginTop: '2px', fontWeight: '500' }}>{announcements[0].content}</div>
-          </div>
-          <button onClick={() => onNavigate?.('broadcast')} style={{ background: 'none', border: '2px solid #6366f1', color: '#6366f1', padding: '8px 15px', borderRadius: '10px', fontSize: '12px', fontWeight: '800', cursor: 'pointer' }}>View All</button>
-        </div>
-      )}
-
-      {/* 4. QUICK ACTIONS */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)' }}>
-         <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '20px', color: 'var(--text)' }}>⚡ {isAdmin ? 'Global Management' : 'Quick Controls'}</h3>
-         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-            <ActionCard icon="👥" label="Add Employee" desc="Register team member" onClick={() => onNavigate?.('employees')} />
-            <ActionCard icon="⏰" label="Mark Attendance" desc="Daily team status" onClick={() => onNavigate?.('attendance')} />
-            {isAdmin && <ActionCard icon="💸" label="Add Expense" desc="Log new expense" onClick={() => onNavigate?.('expenses')} />}
-            {isAdmin && <ActionCard icon="💰" label="Add Income" desc="Record client payment" onClick={() => onNavigate?.('finance')} />}
-            <ActionCard icon="📊" label="View Reports" desc="Analytics & Data" onClick={() => onNavigate?.('reports')} />
-            <ActionCard icon="🏖️" label="Leave Requests" desc="Review team leaves" onClick={() => onNavigate?.('leaves')} />
-            <ActionCard icon="🚀" label="Project Tracker" desc="Client milestones" onClick={() => onNavigate?.('projects')} />
-            <ActionCard icon="📅" label="Work Schedule" desc="Shifts & Hours" onClick={() => onNavigate?.('schedule')} />
-         </div>
-      </div>
-
-      {/* 5. KPI GRID (ADMIN ONLY) */}
+      {/* 5. DUAL-CURRENCY KPI GRID (ADMIN ONLY) */}
       {isAdmin && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
-          <KPICard title="Net Profit / Loss" value={formatCurrency(netProfit)} subtitle={netProfit >= 0 ? `Benefit Margin: ${profitMargin}%` : `Loss Margin: ${Math.abs(profitMargin)}%`} icon={netProfit >= 0 ? "📈" : "📉"} color={netProfit >= 0 ? "#059669" : "#dc2626"} highlight={true} />
-          <KPICard title="Total Income" value={formatCurrency(totalIncome)} subtitle="Revenue Received" icon="💰" color="#059669" />
-          <KPICard title="Total Cash Out" value={formatCurrency(totalCashOut)} subtitle="Exp + Salaries" icon="💸" color="#dc2626" />
-          <KPICard title="Attendance Rate" value={`${attRate}%`} subtitle="System wide" icon="👥" color="#2563eb" />
-        </div>
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
+            <KPICard title="Project Revenue" value={formatUSD(totalProjectIncomeUSD)} subtitle={`Budget: ${formatUSD(totalProjectBudgetUSD)}`} icon="💵" color="#6366f1" />
+            <KPICard title="Staff Salaries" value={formatCurrency(totalSalariesPKR)} subtitle={`${employees.length} Employees`} icon="💳" color="#dc2626" />
+            <KPICard title="Office Expenses" value={formatCurrency(totalExpensesPKR)} subtitle="Maintenance & Ops" icon="🧾" color="#f59e0b" />
+            <KPICard title="Utility Bills" value={formatCurrency(totalBillsPKR)} subtitle="Electric, Rent, etc." icon="🏢" color="#2563eb" />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+            <KPICard title="Overall Net Profit (PKR)" value={formatCurrency(netProfitPKR)} subtitle={netProfitPKR >= 0 ? `Benefit Margin: ${profitMargin}%` : `Loss Margin: ${Math.abs(profitMargin)}%`} icon={netProfitPKR >= 0 ? "📈" : "📉"} color={netProfitPKR >= 0 ? "#059669" : "#dc2626"} highlight={true} />
+            <KPICard title="Combined Income (PKR)" value={formatCurrency(totalIncomePKR)} subtitle={`Incl. USD conversion @ ${USD_TO_PKR}`} icon="💰" color="#059669" />
+          </div>
+        </>
       )}
 
       {/* 6. TEAM ACTIVITY & RANKINGS */}
@@ -143,7 +204,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
                             <span style={{ color: '#6366f1', fontWeight: '900' }}>{log.user}</span>:
                             <span style={{ color: log.action.toLowerCase().includes('delete') ? '#dc2626' : log.action.toLowerCase().includes('add') ? '#059669' : 'var(--text2)', fontWeight: '800' }}> {log.action}</span>
                           </div>
-                          <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: 'bold' }}>{log.timestamp}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: 'bold' }}>{log.timestamp.includes(',') ? `${log.timestamp.split(',')[0].split('/').reverse().join('/')}, ${formatTimeAMPM(log.timestamp.split(',')[1].trim().substring(0,5))}` : log.timestamp}</div>
                        </div>
                     </div>
                  </div>

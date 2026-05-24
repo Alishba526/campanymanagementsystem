@@ -10,6 +10,7 @@ export type ThemeMode = 'light' | 'dark';
 
 interface AppContextType {
   currentUser: User | null;
+  users: User[];
   employees: Employee[];
   attendance: AttendanceRecord[];
   tasks: TaskLog[];
@@ -27,6 +28,7 @@ interface AppContextType {
   themeColor: ThemeColor;
   themeMode: ThemeMode;
   isLoading: boolean;
+  fetchData: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   addEmployee: (employee: Employee) => Promise<void>;
@@ -106,6 +108,7 @@ const themeColors = {
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [tasks, setTasks] = useState<TaskLog[]>([]);
@@ -143,16 +146,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const hasInitializedNotifs = useRef(false);
   const lastProcessedDateRef = useRef<string>('');
 
+  const pendingProjectUpdates = useRef<Set<string>>(new Set());
+
   const fetchData = async () => {
     try {
       const savedUser = localStorage.getItem('growzix-user');
       const user = savedUser ? JSON.parse(savedUser) : null;
       const isAdmin = user && ['admin', 'superadmin'].includes(user.role);
 
-      const [empData, attData, taskData, expData, incData, logData, leaveData, announceData, projectData, scheduleData, billData, notifData, breakData, deptData] = await Promise.all([
+      const [empData, attData, taskData, expData, incData, logData, leaveData, announceData, projectData, scheduleData, billData, notifData, breakData, deptData, userData] = await Promise.all([
         actions.getEmployees(), actions.getAttendance(), actions.getTasks(), actions.getExpenses(), actions.getIncome(), actions.getAuditLogs(),
         actions.getLeaveRequests(), actions.getAnnouncements(), actions.getProjects(), actions.getMonthlySchedules(), actions.getBills(), actions.getNotifications(),
-        actions.getBreakRequests(), actions.getDepartments()
+        actions.getBreakRequests(), actions.getDepartments(), actions.getUsers()
       ]);
 
       if (empData) setEmployees(empData as Employee[]);
@@ -165,9 +170,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (deptData) setDepartments(deptData as Department[]);
       if (leaveData) setLeaveRequests(leaveData as LeaveRequest[]);
       if (announceData) setAnnouncements(announceData as Announcement[]);
-      if (projectData) setProjects(projectData as any);
-      if (scheduleData) setSchedules(scheduleData as MonthlySchedule[]);
-      if (billData) setBills(billData as Bill[]);
+      if (userData) setUsers(userData as User[]);
+
+      if (projectData && (projectData as any).length > 0) {
+        setProjects(prev => {
+          const freshProjects = projectData as any;
+          return prev.map(p => {
+            if (pendingProjectUpdates.current.has(p.id)) return p;
+            const fresh = freshProjects.find((fp: any) => fp.id === p.id);
+            return fresh || p;
+          }).concat(freshProjects.filter((fp: any) => !prev.some(p => p.id === fp.id)));
+        });
+      }
+      setSchedules(scheduleData as MonthlySchedule[]);
+      setBills(billData as Bill[]);
       
       const newNotifs = (notifData as Notification[] || []).filter(n => n.sender !== user?.name);
       const todayStr = new Date().toISOString().split('T')[0];
@@ -624,10 +640,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProject = async (id: string, updates: Partial<Project>) => {
+    // 1. Mark as pending to prevent polling revert
+    pendingProjectUpdates.current.add(id);
+
+    // 2. Optimistic UI update for "realtime" feel
+    const originalProjects = [...projects];
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+
     try {
-      await actions.updateProjectAction(id, updates);
-      await fetchData(); 
-    } catch (e) {}
+      const result = await actions.updateProjectAction(id, updates);
+      if (!result) {
+        setProjects(originalProjects);
+        showToast('Error', 'Failed to update project', 'error');
+      } else {
+        // Success - server now has the data
+      }
+    } catch (e) {
+      setProjects(originalProjects);
+      showToast('Error', 'Something went wrong', 'error');
+    } finally {
+      // 3. Clear pending status AFTER server is definitely done
+      // Wait a bit to ensure Next.js cache revalidation is reflected in next poll
+      setTimeout(() => {
+        pendingProjectUpdates.current.delete(id);
+      }, 2000);
+    }
   };
 
   const deleteProject = async (id: string) => {
@@ -688,8 +725,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      currentUser, employees, attendance, tasks, expenses, income, auditLogs, notifications, leaveRequests, breakRequests, departments, announcements, projects, schedules, bills,
-      themeColor, themeMode, isLoading, login, logout, addEmployee, updateEmployee, deleteEmployee, addAttendance, updateAttendance, deleteAttendance,
+      currentUser, users, employees, attendance, tasks, expenses, income, auditLogs, notifications, leaveRequests, breakRequests, departments, announcements, projects, schedules, bills,
+      themeColor, themeMode, isLoading, fetchData, login, logout, addEmployee, updateEmployee, deleteEmployee, addAttendance, updateAttendance, deleteAttendance,
       addTask, updateTask, deleteTask, addExpense, updateExpense, deleteExpense, addIncome, deleteIncome, addAuditLog, addNotification, markNotificationAsRead,
       markCategoryNotificationsAsRead, markAllNotificationsAsRead, addLeaveRequest, updateLeaveRequest, deleteLeaveRequest, addBreakRequest, updateBreakRequest, addDepartment, updateDepartment,
       addAnnouncement, markAnnouncementAsRead, deleteAnnouncement, addProject, updateProject, deleteProject, addMonthlySchedule, updateMonthlySchedule, deleteMonthlySchedule, addBill, updateBill, deleteBill,

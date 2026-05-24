@@ -4,325 +4,242 @@ import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { Expense } from '@/types';
 import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
+import Swal from 'sweetalert2';
 
 export default function ExpensesPage() {
-  const { currentUser, expenses, addExpense, updateExpense, deleteExpense } = useApp();
+  const { currentUser, expenses, addExpense, deleteExpense } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<Partial<Expense>>({});
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewTab, setViewTab] = useState<'active' | 'archives'>('active');
+  const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string | null>(null);
 
   if (!currentUser) return null;
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
-  const canManage = isAdmin || ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
 
-  if (!canManage) {
-    return (
-      <div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
-          <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
-          <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-          <p>Your role does not have permission to view this data.</p>
-        </div>
-      </div>
-    );
-  }
+  // Archive Grouping
+  const currentMonthPrefix = getCurrentDate().substring(0, 7);
+  const archiveGroups = expenses.reduce((groups: Record<string, Expense[]>, exp) => {
+    const month = exp.date.substring(0, 7);
+    if (month === currentMonthPrefix) return groups;
+    if (!groups[month]) groups[month] = [];
+    groups[month].push(exp);
+    return groups;
+  }, {});
 
-  // Filter expenses based on role
-  const userExpenses = isAdmin
-    ? expenses
-    : expenses.filter(e => e.submittedBy === currentUser.name || e.department === currentUser.role);
-
-  const pendingExpenses = userExpenses.filter(e => e.status === 'pending');
-  const approvedExpenses = userExpenses.filter(e => e.status === 'approved');
-  const rejectedExpenses = userExpenses.filter(e => e.status === 'rejected');
-
-  const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString()}`;
+  const sortedArchiveMonths = Object.keys(archiveGroups).sort().reverse();
 
   const handleAdd = () => {
     setFormData({
       date: getCurrentDate(),
-      status: 'pending',
-      department: isAdmin ? 'admin' : currentUser.role,
-      submittedBy: currentUser.name
+      category: 'office'
     });
     setShowModal(true);
   };
 
   const handleSave = () => {
-    if (!formData.category || !formData.description || !formData.amount) {
-      alert('Please fill all required fields');
+    if (!formData.title || !formData.amount) {
+      Swal.fire('Error', 'Title and Amount are required!', 'error');
       return;
     }
 
     const newExpense: Expense = {
-      id: `EX${Date.now()}`,
-      date: formData.date || getCurrentDate(),
-      category: formData.category,
-      description: formData.description,
+      id: `EXP${Date.now()}`,
+      title: formData.title,
       amount: formData.amount,
-      status: formData.status || 'pending',
-      approvedBy: formData.status === 'approved' ? currentUser.name : 'Pending',
-      submittedBy: formData.submittedBy || currentUser.name,
-      department: formData.department
+      category: formData.category || 'office',
+      date: formData.date || getCurrentDate(),
+      description: formData.description || ''
     };
 
     addExpense(newExpense);
     setShowModal(false);
-  };
-
-  const handleApprove = (id: string) => {
-    updateExpense(id, { status: 'approved', approvedBy: currentUser.name });
-  };
-
-  const handleReject = (id: string) => {
-    updateExpense(id, { status: 'rejected', approvedBy: currentUser.name });
+    Swal.fire({ title: 'Expense Logged', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this expense?')) {
-      deleteExpense(id);
+    Swal.fire({
+      title: 'Delete Expense?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--red)',
+      confirmButtonText: 'Yes, delete'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteExpense(id);
+        Swal.fire('Deleted', 'Expense removed', 'success');
+      }
+    });
+  };
+
+  // Filter Logic
+  const displayExpenses = expenses.filter(exp => {
+    const searchLower = searchQuery.toLowerCase();
+    const isSearchMatch = !searchQuery || 
+      exp.title.toLowerCase().includes(searchLower) || 
+      exp.category.toLowerCase().includes(searchLower);
+
+    if (viewTab === 'active') {
+      return exp.date.startsWith(currentMonthPrefix) && isSearchMatch;
+    } else {
+      if (selectedArchiveMonth) {
+        return exp.date.startsWith(selectedArchiveMonth) && isSearchMatch;
+      }
+      return false;
     }
+  });
+
+  const getMonthName = (yearMonth: string) => {
+    const [year, month] = yearMonth.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   };
 
   return (
-    <div>
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '22px' }}>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            📊
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+      
+      {/* Header */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ width: '50px', height: '50px', borderRadius: '14px', background: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>🧾</div>
+          <div>
+            <h2 style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text)' }}>Expense Search Engine</h2>
+            <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: '700' }}>Monitoring {expenses.length} logs in real-time</div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{userExpenses.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Total Expenses</div>
         </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            ⏳
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search title or category..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 15px 12px 35px', color: 'var(--text)', outline: 'none', width: '250px', fontSize: '13px' }}
+            />
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{pendingExpenses.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Pending Approval</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            ✅
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{approvedExpenses.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Approved</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--redbg)', color: 'var(--red)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            ❌
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{rejectedExpenses.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Rejected</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'normal', color: '#000', margin: 0 }}>💰 Expenses Management</h1>
-        <button
-          onClick={handleAdd}
-          style={{ background: 'var(--accent)', color: '#fff', padding: '10px 18px', borderRadius: '8px', fontSize: '14px', fontWeight: 'normal', cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
-        >
-          <span>➕</span> Add Expense
-        </button>
+      {/* View Toggles */}
+      <div style={{ display: 'flex', gap: '10px', padding: '5px', background: 'var(--bg2)', borderRadius: '15px', border: '1px solid var(--border)', width: 'fit-content' }}>
+        <button 
+          onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
+          style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+        >⚡ Current Month</button>
+        <button 
+          onClick={() => setViewTab('archives')}
+          style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+        >📁 Expense Archives</button>
       </div>
 
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
-            <span style={{ color: 'var(--accent)' }}>🧾</span>
-            Expense Records
-          </div>
+      {viewTab === 'archives' && !selectedArchiveMonth && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+          {sortedArchiveMonths.map(month => {
+            const monthExp = archiveGroups[month];
+            const total = monthExp.reduce((sum, e) => sum + e.amount, 0);
+            
+            return (
+              <div 
+                key={month} 
+                onClick={() => setSelectedArchiveMonth(month)}
+                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+              >
+                <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>📊 {monthExp.length} LOG ENTRIES</div>
+                  <div style={{ fontSize: '12px', color: 'var(--red)', fontWeight: 'bold' }}>📉 Rs. {total.toLocaleString()} TOTAL EXPENSE</div>
+                </div>
+              </div>
+            );
+          })}
+          {sortedArchiveMonths.length === 0 && (
+             <div style={{ gridColumn: '1/-1', padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No past months to archive yet.</div>
+          )}
         </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Category</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Description</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Amount</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Submitted By</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Status</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Approved By</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {userExpenses.map(expense => (
-                <tr key={expense.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)' }}>{formatDateShort(expense.date)}</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--accentbg)', color: 'var(--accent)', borderRadius: '20px', padding: '3px 9px', fontSize: '11px', fontWeight: 'bold' }}>
-                      {expense.category}
-                    </span>
-                  </td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)' }}>{expense.description}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--red)', fontWeight: 'bold' }}>{formatCurrency(expense.amount)}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{expense.submittedBy}</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      borderRadius: '20px',
-                      padding: '3px 9px',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      background: expense.status === 'approved' ? 'var(--greenbg)' : expense.status === 'rejected' ? 'var(--redbg)' : 'var(--amberbg)',
-                      color: expense.status === 'approved' ? 'var(--green)' : expense.status === 'rejected' ? 'var(--red)' : 'var(--amber)'
-                    }}>
-                      {expense.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)' }}>{expense.approvedBy}</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {isAdmin && expense.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleApprove(expense.id)}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--green)', transition: '.15s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-                          >
-                            ✓
-                          </button>
-                          <button
-                            onClick={() => handleReject(expense.id)}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-                          >
-                            ✗
-                          </button>
-                        </>
-                      )}
-                      {(isAdmin || expense.submittedBy === currentUser.name) && (
-                        <button
-                          onClick={() => handleDelete(expense.id)}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-                        >
-                          🗑️
-                        </button>
-                      )}
-                    </div>
-                  </td>
+      )}
+
+      {(viewTab === 'active' || (viewTab === 'archives' && selectedArchiveMonth)) && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {selectedArchiveMonth ? (
+               <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '8px 15px', borderRadius: '10px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold' }}>← Back to Archives</button>
+            ) : <div />}
+            {viewTab === 'active' && isAdmin && (
+              <button onClick={handleAdd} style={{ background: 'var(--red)', color: '#fff', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ New Expense</button>
+            )}
+          </div>
+
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Date (DD/MM/YYYY)</th>
+                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Title</th>
+                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Category</th>
+                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Amount (PKR Rs.)</th>
+                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody>
+                {displayExpenses.map(exp => (
+                  <tr key={exp.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)', fontWeight: 'bold' }}>{formatDateShort(exp.date)}</td>
+                    <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)' }}>{exp.title}</td>
+                    <td style={{ padding: '15px 20px' }}>
+                      <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', background: 'var(--bg3)', color: 'var(--text2)', border: '1px solid var(--border)' }}>{exp.category.toUpperCase()}</span>
+                    </td>
+                    <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--red)', fontWeight: 'bold' }}>Rs. {exp.amount.toLocaleString()}</td>
+                    <td style={{ padding: '15px 20px' }}>
+                      <button onClick={() => handleDelete(exp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>🗑️</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
 
-      {/* Modal */}
+      {/* Expense Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px' }}>
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'normal', color: '#000' }}>Add Expense</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
-            </div>
-            <div style={{ padding: '22px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: '30px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '25px', color: 'var(--text)' }}>Log New Expense</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Title</label>
+                <input type="text" value={formData.title || ''} onChange={(e) => setFormData({ ...formData, title: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Office Rent" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Category</label>
-                  <select
-                    value={formData.category || ''}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  >
-                    <option value="">Select Category</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Operations">Operations</option>
-                    <option value="Payroll">Payroll</option>
-                    <option value="Software">Software</option>
-                    <option value="Infrastructure">Infrastructure</option>
-                    <option value="Utilities">Utilities</option>
-                    <option value="Travel">Travel</option>
+                  <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Amount (PKR Rs.)</label>
+                  <input type="number" value={formData.amount || ''} onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} placeholder="Rs. 5,000" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Category</label>
+                  <select value={formData.category || 'office'} onChange={(e) => setFormData({ ...formData, category: e.target.value as any })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }}>
+                    <option value="office">Office</option>
+                    <option value="travel">Travel</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Amount (Rs.)</label>
-                  <input
-                    type="number"
-                    value={formData.amount || ''}
-                    onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    placeholder="50000"
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  />
-                </div>
               </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Description</label>
-                <input
-                  type="text"
-                  value={formData.description || ''}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                  placeholder="Google Ads Campaign"
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                />
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Date</label>
+                <input type="date" value={formData.date || ''} onChange={(e) => setFormData({ ...formData, date: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Date</label>
-                  <input
-                    type="date"
-                    value={formData.date || ''}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Status</label>
-                  <select
-                  value={formData.status || ''}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  disabled={!isAdmin}
-                  >
-                  <option value="pending">Pending</option>
-                  {isAdmin && (
-                    <>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                    </>
-                  )}
-                  </select>                </div>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '15px' }}>
+                <button onClick={() => setShowModal(false)} style={{ padding: '12px 25px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
+                <button onClick={handleSave} style={{ padding: '12px 35px', borderRadius: '10px', background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Log Expense</button>
               </div>
-            </div>
-            <div style={{ padding: '16px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
-              >
-                Save
-              </button>
             </div>
           </div>
         </div>

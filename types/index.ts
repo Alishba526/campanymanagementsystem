@@ -169,7 +169,7 @@ export interface Project {
   managerName: string;
   managerEmail: string;
   department: string;
-  status: 'active' | 'completed' | 'on-hold' | 'pending' | 'approved' | 'rejected';
+  status: 'active' | 'completed' | 'on-hold' | 'pending' | 'approved' | 'rejected' | 'Working on' | 'Submited' | 'Close' | 'on hold';
 }
 
 export interface MonthlySchedule {

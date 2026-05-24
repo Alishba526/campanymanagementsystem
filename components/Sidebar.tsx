@@ -197,7 +197,8 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
     ]
   };
 
-  const nav = navigation[currentUser.role as keyof typeof navigation] || navigation.admin;
+  const isEmployee = currentUser.role === 'employee';
+  const nav = isEmployee ? [] : (navigation[currentUser.role as keyof typeof navigation] || navigation.admin);
 
   const themeOptions: { color: ThemeColor; label: string; icon: string }[] = [
     { color: 'purple', label: 'Purple', icon: '🟣' },
@@ -210,189 +211,191 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
   ];
 
   return (
-    <div style={{ width: '220px', minWidth: '220px', background: 'var(--bg2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ 
+      width: '240px', 
+      minWidth: '240px', 
+      background: 'linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%)', 
+      borderRight: '1px solid var(--border)', 
+      display: 'flex', 
+      flexDirection: 'column',
+      boxShadow: '10px 0 30px rgba(0,0,0,0.05)',
+      zIndex: 50
+    }}>
       {/* Logo */}
-      <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{ width: '34px', height: '34px', background: 'var(--accent)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
+      <div style={{ padding: '30px 24px 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ 
+          width: '42px', 
+          height: '42px', 
+          background: 'linear-gradient(135deg, var(--accent), var(--primary))', 
+          borderRadius: '14px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          fontSize: '20px',
+          boxShadow: '0 8px 16px rgba(var(--accent-rgb), 0.3)',
+          color: '#fff'
+        }}>
           🚀
         </div>
         <div>
-          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text)', letterSpacing: '1px' }}>GROWZIX</div>
-          <div style={{ fontSize: '10px', color: 'var(--text2)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '.5px' }}>
+          <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text)', letterSpacing: '-0.5px' }}>GROWZIX</div>
+          <div style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' }}>
             v2.0 PRO
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <div style={{ flex: 1, padding: '12px 8px', overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: '15px 12px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }} className="custom-scrollbar">
         {nav.map((section, idx) => (
           <div key={idx}>
-            <div style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '.8px', textTransform: 'uppercase', color: 'var(--text2)', padding: '8px 10px 4px' }}>
+            <div style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--text3)', padding: '0 15px 10px', opacity: 0.6 }}>
               {section.section}
             </div>
-            {section.items.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 14px',
-                  borderRadius: 'var(--radius)',
-                  cursor: 'pointer',
-                  color: currentPage === item.id ? 'var(--accent)' : 'var(--text2)',
-                  transition: '.2s',
-                  marginBottom: '4px',
-                  fontSize: '14px',
-                  fontWeight: currentPage === item.id ? '700' : 'normal',
-                  background: currentPage === item.id ? 'var(--accentbg)' : 'transparent',
-                  border: currentPage === item.id ? '1px solid var(--accent)' : '1px solid transparent',
-                  position: 'relative'
-                }}
-                onMouseEnter={(e) => {
-                  if (currentPage !== item.id) {
-                    e.currentTarget.style.background = 'var(--bg3)';
-                    e.currentTarget.style.color = 'var(--text)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (currentPage !== item.id) {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = 'var(--text2)';
-                  }
-                }}
-              >
-                <span style={{ fontSize: '17px', minWidth: '17px' }}>{item.icon}</span>
-                <span style={{ flex: 1 }}>{item.label}</span>
-                
-                {/* WhatsApp Style Badge - specific to category */}
-                {getUnreadCount(item.id) > 0 && (
-                   <span style={{ 
-                     background: '#ff4444', 
-                     color: '#fff', 
-                     fontSize: '10px', 
-                     fontWeight: 'bold', 
-                     padding: '2px 6px', 
-                     borderRadius: '10px',
-                     minWidth: '18px',
-                     textAlign: 'center',
-                     boxShadow: '0 2px 5px rgba(255,68,68,0.3)'
-                   }}>
-                     {getUnreadCount(item.id)}
-                   </span>
-                )}
-              </button>
-            ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {section.items.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    borderRadius: '14px',
+                    cursor: 'pointer',
+                    color: currentPage === item.id ? '#fff' : 'var(--text2)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    fontSize: '14px',
+                    fontWeight: currentPage === item.id ? '700' : '600',
+                    background: currentPage === item.id ? 'var(--accent)' : 'transparent',
+                    border: 'none',
+                    boxShadow: currentPage === item.id ? '0 10px 20px -5px rgba(var(--accent-rgb), 0.4)' : 'none',
+                    position: 'relative',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== item.id) {
+                      e.currentTarget.style.background = 'var(--bg3)';
+                      e.currentTarget.style.transform = 'translateX(5px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== item.id) {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                    }
+                  }}
+                >
+                  <span style={{ fontSize: '18px', filter: currentPage === item.id ? 'brightness(0) invert(1)' : 'none' }}>{item.icon}</span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  
+                  {getUnreadCount(item.id) > 0 && (
+                     <span style={{ 
+                       background: '#ff4444', 
+                       color: '#fff', 
+                       fontSize: '10px', 
+                       fontWeight: '900', 
+                       padding: '2px 8px', 
+                       borderRadius: '10px',
+                       boxShadow: '0 4px 10px rgba(255,68,68,0.4)'
+                     }}>
+                       {getUnreadCount(item.id)}
+                     </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* User Info */}
-      <div style={{ padding: '14px', borderTop: '1px solid var(--border)' }}>
-        {/* Theme Selector */}
-        <div style={{ marginBottom: '12px', position: 'relative' }}>
-          <button
-            onClick={() => setShowThemeMenu(!showThemeMenu)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', transition: '.15s', color: 'var(--text2)', fontSize: '12px' }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border2)'}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {/* User Info / Footer Section */}
+      <div style={{ 
+        padding: '20px', 
+        background: 'rgba(var(--bg3-rgb), 0.5)', 
+        backdropFilter: 'blur(10px)',
+        borderTop: '1px solid var(--border)',
+        margin: '10px',
+        borderRadius: '24px'
+      }}>
+        {/* Theme & Mode Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '15px' }}>
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowThemeMenu(!showThemeMenu)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text2)', fontSize: '14px' }}
+            >
               🎨 <span>Theme</span>
-            </span>
-            <span>{themeOptions.find(t => t.color === themeColor)?.icon}</span>
-          </button>
-
-          {showThemeMenu && (
-            <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setShowThemeMenu(false)} />
-              <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: '8px', background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '10px', padding: '6px', zIndex: 20, boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                {themeOptions.map(option => (
-                  <button
-                    key={option.color}
-                    onClick={() => {
-                      setThemeColor(option.color);
-                      setShowThemeMenu(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      background: themeColor === option.color ? 'var(--accentbg)' : 'transparent',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      transition: '.15s',
-                      color: themeColor === option.color ? 'var(--accent2)' : 'var(--text2)',
-                      fontSize: '12px',
-                      fontWeight: 'normal'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (themeColor !== option.color) {
-                        e.currentTarget.style.background = 'var(--bg3)';
-                        e.currentTarget.style.color = 'var(--text)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (themeColor !== option.color) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text2)';
-                      }
-                    }}
-                  >
-                    <span style={{ fontSize: '16px' }}>{option.icon}</span>
-                    <span>{option.label}</span>
-                    {themeColor === option.color && <span style={{ marginLeft: 'auto', fontSize: '10px' }}>✓</span>}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Dark/Light Mode Toggle */}
-        <div style={{ marginBottom: '12px' }}>
+            </button>
+            {showThemeMenu && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setShowThemeMenu(false)} />
+                <div style={{ position: 'absolute', bottom: '100%', left: 0, right: 0, marginBottom: '10px', background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '16px', padding: '8px', zIndex: 20, boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}>
+                  {themeOptions.map(option => (
+                    <button
+                      key={option.color}
+                      onClick={() => { setThemeColor(option.color); setShowThemeMenu(false); }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: themeColor === option.color ? 'var(--accentbg)' : 'transparent', border: 'none', borderRadius: '10px', cursor: 'pointer', color: themeColor === option.color ? 'var(--accent2)' : 'var(--text2)', fontSize: '13px' }}
+                    >
+                      <span>{option.icon}</span>
+                      <span>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={() => setThemeMode(themeMode === 'light' ? 'dark' : 'light')}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', transition: '.15s', color: 'var(--text2)', fontSize: '12px' }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border2)'}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', cursor: 'pointer', color: 'var(--text2)', fontSize: '14px' }}
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {themeMode === 'light' ? '☀️' : '🌙'} <span>{themeMode === 'light' ? 'Light Mode' : 'Dark Mode'}</span>
-            </span>
-            <span style={{ fontSize: '10px', fontWeight: 'normal' }}>Toggle</span>
+            {themeMode === 'light' ? '☀️' : '🌙'}
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'normal', background: 'var(--accentbg)', color: 'var(--accent2)' }}>
+        {/* Profile Card */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg3)', padding: '12px', borderRadius: '16px', border: '1px solid var(--border)' }}>
+          <div style={{ 
+            width: '38px', 
+            height: '38px', 
+            borderRadius: '12px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            fontSize: '14px', 
+            fontWeight: '900', 
+            background: 'linear-gradient(135deg, var(--accent), var(--accent2))', 
+            color: '#fff',
+            boxShadow: '0 4px 10px rgba(var(--accent-rgb), 0.2)'
+          }}>
             {currentUser.name.split(' ').map(n => n[0]).join('')}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {currentUser.name}
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '.5px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {currentUser.role}
             </div>
           </div>
           <button
             onClick={logout}
-            style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '16px', transition: '.15s' }}
-            title="Logout"
-            onMouseEnter={(e) => e.currentTarget.style.color = 'var(--red)'}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text2)'}
+            style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: '18px', transition: '.2s' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text3)'}
           >
             🚪
           </button>
         </div>
       </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border); borderRadius: 10px; }
+      `}</style>
     </div>
   );
 }

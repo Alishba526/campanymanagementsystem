@@ -3,6 +3,7 @@
 import { useApp } from '@/context/AppContext';
 import LoginPage from '@/components/LoginPage';
 import MainApp from '@/components/MainApp';
+import EmployeePortal from '@/components/EmployeePortal';
 import Loader from '@/components/Loader';
 
 export default function Home() {
@@ -16,5 +17,11 @@ export default function Home() {
     );
   }
 
-  return currentUser ? <MainApp /> : <LoginPage />;
+  if (!currentUser) return <LoginPage />;
+  
+  if (currentUser.role === 'employee') {
+    return <EmployeePortal />;
+  }
+
+  return <MainApp />;
 }

@@ -3,12 +3,17 @@
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { Income } from '@/types';
-import { formatDateShort } from '@/lib/dateUtils';
+import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
+import Swal from 'sweetalert2';
 
 export default function FinancePage() {
   const { currentUser, income, expenses, addIncome, deleteIncome } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<Partial<Income>>({});
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewTab, setViewTab] = useState<'active' | 'archives'>('active');
+  const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string | null>(null);
 
   if (!currentUser) return null;
 
@@ -16,27 +21,29 @@ export default function FinancePage() {
 
   if (!isAdmin) {
     return (
-      <div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
-          <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
-          <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-          <p>Your role does not have permission to view this data.</p>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
+        <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
+        <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
+        <p>Your role does not have permission to view this data.</p>
       </div>
     );
   }
 
-  const totalIncome = income.filter(i => i.status === 'received').reduce((sum, i) => sum + i.amount, 0);
-  const pendingIncome = income.filter(i => i.status === 'pending').reduce((sum, i) => sum + i.amount, 0);
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const profit = totalIncome - totalExpenses;
-  const margin = totalIncome > 0 ? Math.round((profit / totalIncome) * 100) : 0;
+  // Archive Grouping
+  const currentMonthPrefix = getCurrentDate().substring(0, 7);
+  const archiveGroups = income.reduce((groups: Record<string, Income[]>, inc) => {
+    const month = inc.date.substring(0, 7);
+    if (month === currentMonthPrefix) return groups;
+    if (!groups[month]) groups[month] = [];
+    groups[month].push(inc);
+    return groups;
+  }, {});
 
-  const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString()}`;
+  const sortedArchiveMonths = Object.keys(archiveGroups).sort().reverse();
 
   const handleAdd = () => {
     setFormData({
-      date: new Date().toISOString().split('T')[0],
+      date: getCurrentDate(),
       status: 'received'
     });
     setShowModal(true);
@@ -44,13 +51,13 @@ export default function FinancePage() {
 
   const handleSave = () => {
     if (!formData.client || !formData.project || !formData.amount) {
-      alert('Please fill all required fields');
+      Swal.fire('Error', 'Please fill all required fields', 'error');
       return;
     }
 
     const newIncome: Income = {
       id: `IN${Date.now()}`,
-      date: formData.date || new Date().toISOString().split('T')[0],
+      date: formData.date || getCurrentDate(),
       client: formData.client,
       project: formData.project,
       amount: formData.amount,
@@ -59,247 +66,201 @@ export default function FinancePage() {
 
     addIncome(newIncome);
     setShowModal(false);
+    Swal.fire({ title: 'Income Saved', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this income record?')) {
-      deleteIncome(id);
+    Swal.fire({
+      title: 'Delete Record?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--red)',
+      confirmButtonText: 'Yes, delete'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteIncome(id);
+        Swal.fire('Deleted', 'Record removed', 'success');
+      }
+    });
+  };
+
+  // Filter Income
+  const displayIncome = income.filter(inc => {
+    const searchLower = searchQuery.toLowerCase();
+    const isSearchMatch = !searchQuery || 
+      inc.client.toLowerCase().includes(searchLower) || 
+      inc.project.toLowerCase().includes(searchLower);
+
+    if (viewTab === 'active') {
+      return inc.date.startsWith(currentMonthPrefix) && isSearchMatch;
+    } else {
+      if (selectedArchiveMonth) {
+        return inc.date.startsWith(selectedArchiveMonth) && isSearchMatch;
+      }
+      return false;
     }
+  });
+
+  const formatPKR = (amount: number) => `Rs. ${amount.toLocaleString()}`;
+
+  const getMonthName = (yearMonth: string) => {
+    const [year, month] = yearMonth.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   };
 
   return (
-    <div>
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '22px' }}>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            📈
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: 'var(--green)' }}>{formatCurrency(profit)}</div>
-          <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Net Profit</div>
-          <div style={{ fontSize: '12px', color: 'var(--green)', marginTop: '4px', fontWeight: 'normal' }}>Margin: {margin}%</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            💰
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(totalIncome)}</div>
-          <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Total Income</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--redbg)', color: 'var(--red)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            🧾
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(totalExpenses)}</div>
-          <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Total Expenses</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            ⏳
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(pendingIncome)}</div>
-          <div style={{ fontSize: '13px', color: '#000', fontWeight: 'normal' }}>Pending Income</div>
-        </div>
-      </div>
-
-      {/* Income Table */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
-          <span style={{ color: 'var(--accent)' }}>💰</span>
-          Client Income — <span style={{ color: 'var(--red)' }}>🔒 ADMIN ONLY</span>
-        </div>
-        <button
-          onClick={handleAdd}
-          style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 'normal', cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
-        >
-          <span>➕</span> Add Income
-        </button>
-      </div>
-
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', marginBottom: '18px' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Client</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Project</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Amount</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Status</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {income.map(inc => (
-                <tr key={inc.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#000', fontWeight: 'normal' }}>{inc.client}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{inc.project}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: '#333', fontWeight: 'normal' }}>{formatDateShort(inc.date)}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '14px', color: 'var(--green)', fontWeight: 'normal' }}>{formatCurrency(inc.amount)}</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      borderRadius: '20px',
-                      padding: '3px 9px',
-                      fontSize: '12px',
-                      fontWeight: 'normal',
-                      background: inc.status === 'received' ? 'var(--greenbg)' : 'var(--amberbg)',
-                      color: inc.status === 'received' ? 'var(--green)' : 'var(--amber)'
-                    }}>
-                      {inc.status}
-                    </span>
-                  </td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <button
-                      onClick={() => handleDelete(inc.id)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-                    >
-                      🗑️ Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* P&L Breakdown */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
-            <span style={{ color: 'var(--accent)' }}>📊</span>
-            P&L Breakdown
-          </div>
-        </div>
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+      
+      {/* Finance Header */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ width: '50px', height: '50px', borderRadius: '14px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>💰</div>
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
-              <span style={{ color: '#000', fontWeight: 'normal' }}>Income</span>
-              <span style={{ color: 'var(--green)', fontWeight: 'normal' }}>{formatCurrency(totalIncome)}</span>
-            </div>
-            <div style={{ background: 'var(--border)', borderRadius: '99px', height: '10px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--green)', borderRadius: '99px', width: '100%' }} />
-            </div>
+            <h2 style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text)' }}>Financial Search Engine</h2>
+            <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: '700' }}>Archiving {income.length} records securely</div>
           </div>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
-              <span style={{ color: '#000', fontWeight: 'normal' }}>Expenses</span>
-              <span style={{ color: 'var(--red)', fontWeight: 'normal' }}>{formatCurrency(totalExpenses)}</span>
-            </div>
-            <div style={{ background: 'var(--border)', borderRadius: '99px', height: '10px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--red)', borderRadius: '99px', width: `${Math.round((totalExpenses / totalIncome) * 100)}%` }} />
-            </div>
-          </div>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
-              <span style={{ color: '#000', fontWeight: 'normal' }}>Profit</span>
-              <span style={{ color: 'var(--amber)', fontWeight: 'normal' }}>{formatCurrency(profit)} ({margin}%)</span>
-            </div>
-            <div style={{ background: 'var(--border)', borderRadius: '99px', height: '10px', overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--amber)', borderRadius: '99px', width: `${margin}%` }} />
-            </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>💼</span>
+            <input 
+              type="text" 
+              placeholder="Search Client or Project..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 15px 12px 35px', color: 'var(--text)', outline: 'none', width: '250px', fontSize: '13px' }}
+            />
           </div>
         </div>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px' }}>
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '15px', fontWeight: 'normal', color: 'var(--text)' }}>Add Income Record</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
-            </div>
-            <div style={{ padding: '22px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Client Name</label>
-                  <input
-                    type="text"
-                    value={formData.client || ''}
-                    onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    placeholder="TechCorp Solutions"
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Project</label>
-                  <input
-                    type="text"
-                    value={formData.project || ''}
-                    onChange={(e) => setFormData({ ...formData, project: e.target.value })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    placeholder="E-Commerce Platform"
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  />
+      {/* View Toggles */}
+      <div style={{ display: 'flex', gap: '10px', padding: '5px', background: 'var(--bg2)', borderRadius: '15px', border: '1px solid var(--border)', width: 'fit-content' }}>
+        <button 
+          onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
+          style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+        >⚡ Current Ledger</button>
+        <button 
+          onClick={() => setViewTab('archives')}
+          style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+        >📁 Financial Archives</button>
+      </div>
+
+      {viewTab === 'archives' && !selectedArchiveMonth && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+          {sortedArchiveMonths.map(month => {
+            const monthInc = archiveGroups[month];
+            const total = monthInc.filter(i => i.status === 'received').reduce((sum, i) => sum + i.amount, 0);
+            
+            return (
+              <div 
+                key={month} 
+                onClick={() => setSelectedArchiveMonth(month)}
+                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+              >
+                <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>📊 {monthInc.length} INCOME ENTRIES</div>
+                  <div style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 'bold' }}>💰 {formatPKR(total)} TOTAL</div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Amount (Rs.)</label>
-                  <input
-                    type="number"
-                    value={formData.amount || ''}
-                    onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    placeholder="350000"
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Status</label>
-                  <select
-                    value={formData.status || ''}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  >
-                    <option value="received">Received</option>
-                    <option value="pending">Pending</option>
-                  </select>
-                </div>
+            );
+          })}
+          {sortedArchiveMonths.length === 0 && (
+             <div style={{ gridColumn: '1/-1', padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No previous financial months to archive yet.</div>
+          )}
+        </div>
+      )}
+
+      {(viewTab === 'active' || (viewTab === 'archives' && selectedArchiveMonth)) && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {selectedArchiveMonth ? (
+               <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '8px 15px', borderRadius: '10px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold' }}>← Back to Archives</button>
+            ) : <div />}
+            {viewTab === 'active' && (
+              <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Add Income</button>
+            )}
+          </div>
+
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow)' }}>
+            <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)', borderRadius: '24px 24px 0 0' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: 'var(--accent)' }}>🧾</span> {viewTab === 'active' ? 'Current Month Income' : `Income Log: ${getMonthName(selectedArchiveMonth!)}`}
+              </h3>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Date (DD/MM/YYYY)</th>
+                    <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Client</th>
+                    <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Project</th>
+                    <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Amount</th>
+                    <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Status</th>
+                    <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayIncome.map(inc => (
+                    <tr key={inc.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                      <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)', fontWeight: 'bold' }}>{formatDateShort(inc.date)}</td>
+                      <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)' }}>{inc.client}</td>
+                      <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text2)' }}>{inc.project}</td>
+                      <td style={{ padding: '15px 20px', fontSize: '15px', color: 'var(--green)', fontWeight: 'bold' }}>{formatPKR(inc.amount)}</td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', background: inc.status === 'received' ? 'var(--greenbg)' : 'var(--amberbg)', color: inc.status === 'received' ? 'var(--green)' : 'var(--amber)' }}>
+                          {inc.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <button onClick={() => handleDelete(inc.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--red)' }}>🗑️</button>
+                      </td>
+                    </tr>
+                  ))}
+                  {displayIncome.length === 0 && (
+                    <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No financial records found in this view.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Income Modal */}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: '30px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '25px', color: 'var(--text)' }}>Add Income Record</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Client Name</label>
+                <input type="text" value={formData.client || ''} onChange={(e) => setFormData({ ...formData, client: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Aim Global" />
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '6px', display: 'block' }}>Date</label>
-                <input
-                  type="date"
-                  value={formData.date || ''}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                />
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Project Details</label>
+                <input type="text" value={formData.project || ''} onChange={(e) => setFormData({ ...formData, project: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Web Development" />
               </div>
-            </div>
-            <div style={{ padding: '16px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
-              >
-                Save
-              </button>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Amount (PKR Rs.)</label>
+                  <input type="number" value={formData.amount || ''} onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} placeholder="Rs. 50,000" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Date</label>
+                  <input type="date" value={formData.date || ''} onChange={(e) => setFormData({ ...formData, date: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '15px' }}>
+                <button onClick={() => setShowModal(false)} style={{ padding: '12px 25px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
+                <button onClick={handleSave} style={{ padding: '12px 35px', borderRadius: '10px', background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Save Record</button>
+              </div>
             </div>
           </div>
         </div>

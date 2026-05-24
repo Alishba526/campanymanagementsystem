@@ -72,6 +72,18 @@ export async function getUsers() {
   try { return await prisma.user.findMany(); } catch (e) { return []; }
 }
 
+export async function addUserAction(user: any) {
+  try { return await prisma.user.create({ data: user }); } catch (e) { return null; }
+}
+
+export async function updateUserAction(id: string, updates: any) {
+  try { return await prisma.user.update({ where: { id }, data: updates }); } catch (e) { return null; }
+}
+
+export async function deleteUserAction(id: string) {
+  try { await prisma.user.delete({ where: { id } }); return true; } catch (e) { return false; }
+}
+
 // --- Employee Actions ---
 export async function getEmployees() {
   try { return await prisma.employee.findMany({ orderBy: { updatedAt: 'desc' } }); } catch (e) { return []; }
@@ -239,7 +251,8 @@ export async function getProjects() {
       
       return {
         ...p,
-        ...extraData, // This spreads all 14 fields: employeeName, paymentMethod, workingDays, etc.
+        ...extraData, // This spreads other fields
+        status: p.status, // FORCE the DB column to be the source of truth for status
         projectName: actualName,
         projectNo: actualProjNo,
         department: extraData.department || p.department || deptPart || 'ecommerce',
@@ -254,7 +267,7 @@ export async function getProjects() {
 }
 
 export async function addProjectAction(project: Project) {
-  // Super-Persistence: Pack ALL 14 fields into one JSON string
+  // Super-Persistence: Include status explicitly
   const superData = {
     projectNo: project.projectNo,
     projectName: project.projectName,
@@ -269,12 +282,12 @@ export async function addProjectAction(project: Project) {
     cost: project.cost,
     amountReceived: project.amountReceived,
     scope: project.scope,
-    clientName: project.clientName
+    clientName: project.clientName,
+    status: project.status || 'Working on'
   };
   
   const compositeName = `S:${JSON.stringify(superData)}`;
 
-  // Prepare data using ONLY columns that exist in the DB
   const dbData = {
     id: project.id,
     projectName: compositeName,
@@ -282,13 +295,13 @@ export async function addProjectAction(project: Project) {
     scope: project.scope || "",
     totalBudget: Number(project.cost) || 0,
     amountReceived: Number(project.amountReceived) || 0,
-    status: project.status || "active",
+    status: project.status || "Working on",
     startDate: project.startDate || new Date().toISOString().split('T')[0],
     deadline: project.deadline || ""
   };
 
   try {
-    const result = await (prisma.project as any).create({ data: dbData });
+    const result = await (prisma as any).project.create({ data: dbData });
     revalidatePath('/');
     return result;
   } catch (error: any) {
@@ -298,54 +311,74 @@ export async function addProjectAction(project: Project) {
       
       await prisma.$executeRawUnsafe(q, dbData.id, dbData.projectName, dbData.clientName, dbData.scope, dbData.totalBudget, dbData.amountReceived, dbData.status, dbData.startDate, dbData.deadline);
       revalidatePath('/');
-      return { ...project, projectName: compositeName };
-    } catch (sqlError) { 
-      throw sqlError; 
-    }
+      return { ...project, projectName: compositeName, status: dbData.status };
+    } catch (sqlError) { throw sqlError; }
   }
 }
 
 export async function updateProjectAction(id: string, updates: Partial<Project>) {
   try {
-    const p = await prisma.project.findUnique({ where: { id } });
-    let currentData = {};
-    if (p?.projectName?.includes('S:[')) {
-      currentData = JSON.parse(p.projectName.split('S:')[1]);
+    const p = await (prisma.project as any).findUnique({ where: { id } });
+    if (!p) {
+      console.error(`Project not found: ${id}`);
+      return null;
     }
+
+    let currentData: any = {};
+    const nameStr = p.projectName || "";
+    
+    // Improved parsing with fallback
+    if (nameStr.startsWith('S:')) {
+      try {
+        currentData = JSON.parse(nameStr.substring(2));
+      } catch (e) {
+        currentData = { projectName: nameStr };
+      }
+    } else {
+      currentData = { projectName: nameStr.split('||')[0] };
+    }
+
+    // Merge updates into our JSON object
     const mergedData = { ...currentData, ...updates };
     const compositeName = `S:${JSON.stringify(mergedData)}`;
 
-    const filteredUpdate: any = {
+    // Prepare DB update with proper type casting for Int fields
+    const dbUpdates: any = {
       projectName: compositeName,
-      clientName: updates.clientName,
-      scope: updates.scope,
-      status: updates.status,
-      deadline: updates.deadline,
-      totalBudget: Number(mergedData.cost) || 0,
-      amountReceived: Number(mergedData.amountReceived) || 0
+      status: updates.status || mergedData.status || 'Working on',
+      clientName: updates.clientName || mergedData.clientName || 'Client',
+      scope: updates.scope || mergedData.scope || '',
+      deadline: updates.deadline || mergedData.deadline || '',
+      totalBudget: Math.floor(Number(mergedData.cost || mergedData.totalBudget || 0)),
+      amountReceived: Math.floor(Number(mergedData.amountReceived || 0)),
+      updatedAt: new Date()
     };
 
-    Object.keys(filteredUpdate).forEach(key => filteredUpdate[key] === undefined && delete filteredUpdate[key]);
-    await prisma.project.update({ where: { id }, data: filteredUpdate });
+    const result = await (prisma.project as any).update({ 
+      where: { id }, 
+      data: dbUpdates 
+    });
+    
     revalidatePath('/');
     return mergedData;
-  } catch (e) {
+  } catch (e: any) {
+    console.error("Critical update error:", e.message || e);
+    
+    // Fallback: If regular update fails, try direct SQL for status at least
     try {
-       const p = await prisma.project.findUnique({ where: { id } });
-       let currentData = {};
-       if (p?.projectName?.includes('S:[')) {
-         currentData = JSON.parse(p.projectName.split('S:')[1]);
-       }
-       const mergedData = { ...currentData, ...updates };
-       const compositeName = `S:${JSON.stringify(mergedData)}`;
-
-       await prisma.$executeRawUnsafe(
-         `UPDATE "Project" SET "projectName" = $1, "clientName" = $2, status = $3, updatedAt = NOW() WHERE id = $4`,
-         compositeName, mergedData.clientName, mergedData.status, id
-       );
-       revalidatePath('/');
-       return mergedData;
-    } catch (sqlE) { throw sqlE; }
+      if (updates.status) {
+        await prisma.$executeRawUnsafe(
+          `UPDATE "Project" SET status = $1, "updatedAt" = NOW() WHERE id = $2`,
+          updates.status, id
+        );
+        revalidatePath('/');
+        return { ...updates, id }; 
+      }
+    } catch (sqlE) {
+      console.error("SQL Fallback failed:", sqlE);
+    }
+    
+    throw e; // Throw so AppContext knows it failed
   }
 }
 
