@@ -215,14 +215,14 @@ export default function EmployeePortal() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                     <button 
                       onClick={() => handleBreak('in')}
-                      disabled={isProcessing || (!!todayRecord.breakIn && todayRecord.breakOut === '--')}
+                      disabled={isProcessing || !!(todayRecord.breakIn && todayRecord.breakOut === '--')}
                       style={{ background: 'var(--amber)', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!!todayRecord.breakIn && todayRecord.breakOut === '--') ? 0.5 : 1 }}
                     >
                       ☕ Break Start
                     </button>
                     <button 
                       onClick={() => handleBreak('out')}
-                      disabled={isProcessing || !todayRecord.breakIn || todayRecord.breakOut !== '--'}
+                      disabled={isProcessing || !!(!todayRecord.breakIn || todayRecord.breakOut !== '--')}
                       style={{ background: 'var(--blue)', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!todayRecord.breakIn || todayRecord.breakOut !== '--') ? 0.5 : 1 }}
                     >
                       🔄 Break End
@@ -244,7 +244,7 @@ export default function EmployeePortal() {
                     />
                     <button 
                       onClick={handleCheckOut} 
-                      disabled={isProcessing || (todayRecord.breakIn && todayRecord.breakOut === '--')}
+                      disabled={isProcessing || !!(todayRecord.breakIn && todayRecord.breakOut === '--')}
                       style={{ width: '100%', background: 'var(--red)', color: '#fff', border: 'none', borderRadius: '15px', padding: '18px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)', transition: '0.3s', opacity: (todayRecord.breakIn && todayRecord.breakOut === '--') ? 0.5 : 1 }}
                     >
                       {isProcessing ? 'Processing...' : '■ Duty Out'}

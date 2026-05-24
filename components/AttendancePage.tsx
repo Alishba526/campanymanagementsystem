@@ -69,7 +69,9 @@ export default function AttendancePage() {
       hours: Number(formData.hours) || 0,
       overtime: Number(formData.overtime) || 0,
       lateEntry: formData.lateEntry || '00:00',
-      earlyExit: formData.earlyExit || '00:00'
+      earlyExit: formData.earlyExit || '00:00',
+      breakIn: formData.breakIn || '',
+      breakOut: formData.breakOut || ''
     };
 
     if (editingRecord) {

@@ -40,18 +40,20 @@ export default function ExpensesPage() {
   };
 
   const handleSave = () => {
-    if (!formData.title || !formData.amount) {
-      Swal.fire('Error', 'Title and Amount are required!', 'error');
+    if (!formData.description || !formData.amount) {
+      Swal.fire('Error', 'Description and Amount are required!', 'error');
       return;
     }
 
     const newExpense: Expense = {
       id: `EXP${Date.now()}`,
-      title: formData.title,
+      description: formData.description,
       amount: formData.amount,
       category: formData.category || 'office',
       date: formData.date || getCurrentDate(),
-      description: formData.description || ''
+      status: 'approved',
+      approvedBy: currentUser.name,
+      submittedBy: currentUser.name
     };
 
     addExpense(newExpense);
@@ -78,7 +80,7 @@ export default function ExpensesPage() {
   const displayExpenses = expenses.filter(exp => {
     const searchLower = searchQuery.toLowerCase();
     const isSearchMatch = !searchQuery || 
-      exp.title.toLowerCase().includes(searchLower) || 
+      exp.description.toLowerCase().includes(searchLower) || 
       exp.category.toLowerCase().includes(searchLower);
 
     if (viewTab === 'active') {
@@ -115,7 +117,7 @@ export default function ExpensesPage() {
             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
             <input 
               type="text" 
-              placeholder="Search title or category..." 
+              placeholder="Search description or category..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 15px 12px 35px', color: 'var(--text)', outline: 'none', width: '250px', fontSize: '13px' }}
@@ -181,7 +183,7 @@ export default function ExpensesPage() {
               <thead>
                 <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
                   <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Date (DD/MM/YYYY)</th>
-                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Title</th>
+                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Description</th>
                   <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Category</th>
                   <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Amount (PKR Rs.)</th>
                   <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Actions</th>
@@ -191,7 +193,7 @@ export default function ExpensesPage() {
                 {displayExpenses.map(exp => (
                   <tr key={exp.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)', fontWeight: 'bold' }}>{formatDateShort(exp.date)}</td>
-                    <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)' }}>{exp.title}</td>
+                    <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)' }}>{exp.description}</td>
                     <td style={{ padding: '15px 20px' }}>
                       <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', background: 'var(--bg3)', color: 'var(--text2)', border: '1px solid var(--border)' }}>{exp.category.toUpperCase()}</span>
                     </td>
@@ -214,8 +216,8 @@ export default function ExpensesPage() {
             <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '25px', color: 'var(--text)' }}>Log New Expense</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
-                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Title</label>
-                <input type="text" value={formData.title || ''} onChange={(e) => setFormData({ ...formData, title: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Office Rent" />
+                <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Description</label>
+                <input type="text" value={formData.description || ''} onChange={(e) => setFormData({ ...formData, description: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Office Rent" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div>

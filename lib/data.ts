@@ -3,42 +3,49 @@ import { User, Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog } 
 // User credentials
 export const users: User[] = [
   {
+    id: 'ADMIN',
     email: 'admin@growzix.com',
     password: 'Admin@Growzix#2026',
     role: 'admin',
     name: 'Admin User'
   },
   {
+    id: 'ECOM_MGR',
     email: 'ecommerce@growzix.com',
     password: 'ECMgr_Secure*99',
     role: 'ecommerce',
     name: 'E-Commerce Manager'
   },
   {
+    id: 'MKT_MGR',
     email: 'marketing@growzix.com',
     password: 'MktMgr_Secure!88',
     role: 'marketing',
     name: 'Marketing Manager'
   },
   {
+    id: 'ARCH_MGR',
     email: 'architecture@growzix.com',
     password: 'ArchMgr_Secure$77',
     role: 'architecture',
     name: 'Architecture Manager'
   },
   {
+    id: 'REHMAN_SR',
     email: 'rehman.senior@growzix.com',
     password: 'Growzix@2026#',
     role: 'ecommerce',
     name: 'rehman'
   },
   {
+    id: 'REHMAN_MKT',
     email: 'rehman.marketing@growzix.com',
     password: 'Growzix@2026#',
     role: 'marketing',
     name: 'Rehman'
   },
   {
+    id: 'OWAIS',
     email: 'owais@growzix.com',
     password: 'Growzix@2026#',
     role: 'ecommerce',

@@ -307,7 +307,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const users = await actions.getUsers();
     const user = users.find((u: any) => u.email === email && u.password === password);
     if (user) {
-      const userData: User = { email: user.email, password: user.password, role: user.role as any, name: user.name };
+      const userData: User = { id: user.id, email: user.email, password: user.password, role: user.role as any, name: user.name };
       setCurrentUser(userData);
       localStorage.setItem('growzix-user', JSON.stringify(userData));
       await addAuditLog(`${user.name} logged in`);

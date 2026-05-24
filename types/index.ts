@@ -1,6 +1,7 @@
 export type UserRole = 'superadmin' | 'admin' | 'hrmanager' | 'teamleader' | 'employee' | 'viewer' | 'ecommerce' | 'marketing' | 'architecture';
 
 export interface User {
+  id: string;
   email: string;
   password: string;
   role: UserRole;
