@@ -222,7 +222,16 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
       zIndex: 50
     }}>
       {/* Logo */}
-      <div style={{ padding: '30px 24px 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div 
+        onClick={() => onNavigate('dashboard')}
+        style={{ 
+          padding: '30px 24px 20px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px',
+          cursor: 'pointer'
+        }}
+      >
         <div style={{ 
           width: '42px', 
           height: '42px', 

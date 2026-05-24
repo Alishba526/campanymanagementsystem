@@ -124,7 +124,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
       
-      {/* 0. HISTORICAL FILTER BAR */}
+      {/* 0. HISTORICAL FILTER BAR (ABSOLUTE TOP) */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 25px', boxShadow: 'var(--shadow)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '20px' }}>🔍</span>
@@ -149,7 +149,30 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
         )}
       </div>
 
-      {/* 1. EXECUTIVE HEADER (Managers Only) */}
+      {/* 1. QUICK ACTIONS (SINGLE COMPACT ROW) */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', boxShadow: 'var(--shadow)' }}>
+         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>⚡ {isAdmin ? 'Global Management' : 'Quick Controls'}</h3>
+         </div>
+         <div style={{ 
+           display: 'grid', 
+           gridTemplateColumns: 'repeat(8, 1fr)', 
+           gap: '12px',
+           overflowX: 'auto',
+           paddingBottom: '5px'
+         }} className="custom-scrollbar">
+            <ActionCard icon="👥" label="Staff" onClick={() => onNavigate?.('employees')} />
+            <ActionCard icon="⏰" label="Attend" onClick={() => onNavigate?.('attendance')} />
+            {isAdmin && <ActionCard icon="💸" label="Expense" onClick={() => onNavigate?.('expenses')} />}
+            {isAdmin && <ActionCard icon="💰" label="Income" onClick={() => onNavigate?.('finance')} />}
+            <ActionCard icon="📊" label="Reports" onClick={() => onNavigate?.('reports')} />
+            <ActionCard icon="🏖️" label="Leaves" onClick={() => onNavigate?.('leaves')} />
+            <ActionCard icon="🚀" label="Project" onClick={() => onNavigate?.('projects')} />
+            <ActionCard icon="📅" label="Schedule" onClick={() => onNavigate?.('schedule')} />
+         </div>
+      </div>
+
+      {/* 2. EXECUTIVE HEADER (Managers Only) */}
       {!isAdmin && (
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -231,12 +254,11 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
   );
 }
 
-function ActionCard({ icon, label, desc, onClick }: any) {
+function ActionCard({ icon, label, onClick }: any) {
   return (
-    <button onClick={onClick} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '18px', padding: '15px', textAlign: 'left', cursor: 'pointer', transition: '0.2s', display: 'flex', flexDirection: 'column', gap: '5px' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
-       <div style={{ fontSize: '20px', marginBottom: '5px' }}>{icon}</div>
-       <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text)' }}>{label}</div>
-       <div style={{ fontSize: '11px', color: 'var(--text2)', lineHeight: '1.3', fontWeight: '600' }}>{desc}</div>
+    <button onClick={onClick} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '14px', padding: '10px 5px', textAlign: 'center', cursor: 'pointer', transition: '0.2s', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+       <div style={{ fontSize: '18px' }}>{icon}</div>
+       <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text)', textTransform: 'uppercase' }}>{label}</div>
     </button>
   );
 }
