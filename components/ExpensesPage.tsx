@@ -209,8 +209,8 @@ export default function ExpensesPage() {
               </table>
             </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       {/* Expense Modal remains same but with compact styles */}
       {showModal && (
