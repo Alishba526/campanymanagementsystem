@@ -26,7 +26,7 @@ export default function AttendancePage() {
   const currentMonthPrefix = getCurrentDate().substring(0, 7);
   const archiveGroups = attendance.reduce((groups: Record<string, AttendanceRecord[]>, a) => {
     const month = a.date.substring(0, 7);
-    if (month === currentMonthPrefix) return groups; // Don't archive current month yet
+    if (month === currentMonthPrefix) return groups;
     if (!groups[month]) groups[month] = [];
     groups[month].push(a);
     return groups;
@@ -110,12 +110,10 @@ export default function AttendancePage() {
     const isDeptMatch = isAdmin || employees.find(e => e.id === a.employeeId)?.department === currentUser.role;
 
     if (viewTab === 'active') {
-      // Active shows current month or specific filtered date
       const isCurrentMonth = a.date.startsWith(currentMonthPrefix);
       const isSpecificDate = a.date === filterDate;
       return isDeptMatch && (isSpecificDate || isCurrentMonth) && isSearchMatch;
     } else {
-      // Archive view
       if (selectedArchiveMonth) {
         return isDeptMatch && a.date.startsWith(selectedArchiveMonth) && isSearchMatch;
       }
@@ -125,11 +123,11 @@ export default function AttendancePage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'present': return 'var(--green)';
-      case 'late': return 'var(--amber)';
-      case 'absent': return 'var(--red)';
-      case 'half-day': return 'var(--blue)';
-      case 'leave': return 'var(--purple)';
+      case 'present': return '#059669';
+      case 'late': return '#d97706';
+      case 'absent': return '#dc2626';
+      case 'half-day': return '#2563eb';
+      case 'leave': return '#7c3aed';
       default: return 'var(--text2)';
     }
   };
@@ -147,158 +145,130 @@ export default function AttendancePage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
       
       {/* Search Engine Header */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '14px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>⏰</div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>⏰</div>
           <div>
-            <h2 style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text)' }}>Attendance Search Engine</h2>
-            <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: '700' }}>Tracking {displayAttendance.length} records in current view</div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Attendance Search Engine</h2>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Live Tracking: {displayAttendance.length} records found</div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>👤</span>
+            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
             <input 
               type="text" 
-              placeholder="Search staff or status..." 
+              placeholder="Search staff..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 15px 12px 35px', color: 'var(--text)', outline: 'none', width: '220px', fontSize: '13px' }}
+              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', width: '180px', fontSize: '12px' }}
             />
           </div>
           {viewTab === 'active' && (
-            <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '10px', color: 'var(--text)', outline: 'none', fontSize: '13px', fontWeight: 'bold' }} />
+            <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px', color: 'var(--text)', outline: 'none', fontSize: '12px', fontWeight: 'bold' }} />
           )}
         </div>
       </div>
 
-      {/* View Toggles */}
-      <div style={{ display: 'flex', gap: '10px', padding: '5px', background: 'var(--bg2)', borderRadius: '15px', border: '1px solid var(--border)', width: 'fit-content' }}>
-        <button 
-          onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
-          style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
-        >⚡ Current Month</button>
-        <button 
-          onClick={() => setViewTab('archives')}
-          style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
-        >📁 Past Archives</button>
-      </div>
-
-      {viewTab === 'archives' && !selectedArchiveMonth && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
-          {sortedArchiveMonths.map(month => {
-            const monthRecords = archiveGroups[month];
-            const present = monthRecords.filter(r => r.status === 'present' || r.status === 'late').length;
-            const rate = Math.round((present / monthRecords.length) * 100) || 0;
-            
-            return (
-              <div 
-                key={month} 
-                onClick={() => setSelectedArchiveMonth(month)}
-                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-              >
-                <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
-                <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>📊 {monthRecords.length} TOTAL LOGS</div>
-                  <div style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 'bold' }}>📈 {rate}% ATTENDANCE RATE</div>
-                </div>
-              </div>
-            );
-          })}
-          {sortedArchiveMonths.length === 0 && (
-             <div style={{ gridColumn: '1/-1', padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No completed months to archive yet.</div>
-          )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {/* View Toggles - Tighter */}
+        <div style={{ display: 'flex', gap: '8px', padding: '4px', background: 'var(--bg2)', borderRadius: '12px', border: '1px solid var(--border)', width: 'fit-content' }}>
+          <button 
+            onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
+            style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+          >Current Month</button>
+          <button 
+            onClick={() => setViewTab('archives')}
+            style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+          >Past Archives</button>
         </div>
-      )}
 
-      {(viewTab === 'active' || (viewTab === 'archives' && selectedArchiveMonth)) && (
-        <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            {selectedArchiveMonth ? (
-               <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '8px 15px', borderRadius: '10px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold' }}>← Back to Archives</button>
-            ) : <div />}
-            {viewTab === 'active' && isAdmin && (
-              <button onClick={handleMarkAttendance} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>+ Manual Entry</button>
-            )}
-          </div>
+        {(viewTab === 'active' || (viewTab === 'archives' && selectedArchiveMonth)) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {selectedArchiveMonth ? (
+                 <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', fontSize: '11px' }}>← Back to Archives</button>
+              ) : <div />}
+              {viewTab === 'active' && isAdmin && (
+                <button onClick={handleMarkAttendance} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ Manual Entry</button>
+              )}
+            </div>
 
-          {departments.map(dept => {
-            if (!isAdmin && currentUser.role !== dept.id) return null;
-            const deptAttendance = displayAttendance.filter(a => employees.find(e => e.id === a.employeeId)?.department === dept.id);
+            {departments.map(dept => {
+              if (!isAdmin && currentUser.role !== dept.id) return null;
+              const deptAttendance = displayAttendance.filter(a => employees.find(e => e.id === a.employeeId)?.department === dept.id);
 
-            return (
-              <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)' }}>
-                <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'Active Records' : 'Archive'}
+              return (
+                <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
+                  <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'Records' : 'Archive'}
                     </h3>
                   </div>
-                </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
-                    <thead>
-                      <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Date (DD/MM/YYYY)</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Employee</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Timings (AM/PM)</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Status</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Hours</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Late/Early</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {deptAttendance.map(rec => (
-                        <tr key={rec.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'bold' }}>{formatDateShort(rec.date)}</td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text)' }}>{rec.employeeName}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text3)' }}>{rec.employeeId}</div>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                             <div style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 'bold' }}>In: {formatTimeAMPM(rec.checkIn)}</div>
-                             <div style={{ fontSize: '12px', color: 'var(--red)', fontWeight: 'bold' }}>Out: {formatTimeAMPM(rec.checkOut)}</div>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', background: `${getStatusColor(rec.status)}15`, color: getStatusColor(rec.status), border: `1px solid ${getStatusColor(rec.status)}33` }}>
-                              {rec.status}
-                            </span>
-                          </td>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--text)' }}>{rec.hours?.toFixed(2)}h</td>
-                          <td style={{ padding: '14px 16px' }}>
-                             <div style={{ fontSize: '11px', color: 'var(--amber)', fontWeight: 'bold' }}>Late: {rec.lateEntry}</div>
-                             <div style={{ fontSize: '11px', color: 'var(--text3)' }}>Early: {rec.earlyExit}</div>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                              <button onClick={() => handleEdit(rec)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
-                              {isAdmin && <button onClick={() => handleDelete(rec.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>🗑️</button>}
-                            </div>
-                          </td>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Date</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Staff Member</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Timings (AM/PM)</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Status</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Hours</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Late/Early</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Actions</th>
                         </tr>
-                      ))}
-                      {deptAttendance.length === 0 && (
-                        <tr><td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)' }}>No records found in this view.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {deptAttendance.map(rec => (
+                          <tr key={rec.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.1s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                            <td style={{ padding: '12px 10px', fontSize: '12px', color: 'var(--text)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{formatDateShort(rec.date)}</td>
+                            <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '13px', fontWeight: '800', color: '#4338ca', background: 'var(--accentbg)', padding: '3px 8px', borderRadius: '4px', display: 'inline-block' }}>{rec.employeeName}</div>
+                              <span style={{ fontSize: '11px', color: 'var(--text3)', marginLeft: '8px', fontWeight: 'bold' }}>{rec.employeeId}</span>
+                            </td>
+                            <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
+                               <span style={{ fontSize: '12px', color: '#059669', fontWeight: '900', background: '#ecfdf5', padding: '4px 8px', borderRadius: '6px', border: '1px solid #10b98133' }}>In: {formatTimeAMPM(rec.checkIn)}</span>
+                               <span style={{ margin: '0 8px', color: 'var(--border)', fontWeight: 'normal' }}>—</span>
+                               <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: '900', background: '#fef2f2', padding: '4px 8px', borderRadius: '6px', border: '1px solid #ef444433' }}>Out: {formatTimeAMPM(rec.checkOut)}</span>
+                            </td>
+                            <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
+                              <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', background: `${getStatusColor(rec.status)}15`, color: getStatusColor(rec.status), border: `1px solid ${getStatusColor(rec.status)}33`, letterSpacing: '0.5px' }}>
+                                {rec.status}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 10px', fontSize: '13px', color: 'var(--text)', fontWeight: '900', whiteSpace: 'nowrap' }}>{rec.hours?.toFixed(2)}h</td>
+                            <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
+                               <span style={{ fontSize: '11px', color: '#d97706', fontWeight: '900', background: '#fff7ed', padding: '4px 8px', borderRadius: '6px' }}>L: {rec.lateEntry}</span>
+                               <span style={{ margin: '0 5px', color: 'var(--border)' }}>/</span>
+                               <span style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '900', background: 'var(--bg3)', padding: '4px 8px', borderRadius: '6px' }}>E: {rec.earlyExit}</span>
+                            </td>
+                            <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', gap: '12px' }}>
+                                <button onClick={() => handleEdit(rec)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
+                                {isAdmin && <button onClick={() => handleDelete(rec.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>🗑️</button>}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {deptAttendance.length === 0 && (
+                          <tr><td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: 'var(--text3)', fontSize: '12px' }}>No records found in this view.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-      {/* Attendance Modal */}
+      {/* Modal remains the same but with compact styles */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: '30px' }}>
