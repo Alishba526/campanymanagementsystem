@@ -12,6 +12,9 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState<Partial<Employee>>({});
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDate, setFilterDate] = useState(getCurrentDate());
 
   if (!currentUser) return null;
 
@@ -201,56 +204,81 @@ export default function EmployeesPage() {
     { id: 'architecture', label: 'Architecture', tagline: 'System design & infrastructure' }
   ];
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+  const filteredEmployees = employees.filter(emp => {
+    const searchLower = searchQuery.toLowerCase();
+    const isSearchMatch = !searchQuery || 
+      emp.name.toLowerCase().includes(searchLower) ||
+      emp.id.toLowerCase().includes(searchLower) ||
+      emp.position?.toLowerCase().includes(searchLower);
       
-      {/* Top Header Bar */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)' }}>
+    const isDateMatch = !filterDate || emp.joinDate === filterDate;
+    return isSearchMatch && isDateMatch;
+  });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      
+      {/* Search Engine Header (Standardized) */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>👥</div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>👥</div>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text)' }}>Employee Management</h2>
-            <div style={{ fontSize: '13px', color: 'var(--text2)' }}>{employees.length} total employees registered</div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Employee Search Engine</h2>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Live Tracking: {filteredEmployees.length} profiles listed</div>
           </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search staff..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', width: '180px', fontSize: '12px' }}
+            />
+          </div>
+          <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px', color: 'var(--text)', outline: 'none', fontSize: '12px', fontWeight: 'bold' }} />
         </div>
       </div>
 
       {/* 3 Department Portions */}
       {departments.map(dept => {
         if (!isAdmin && currentUser.role !== dept.id) return null;
-        const deptEmps = employees.filter(e => e.department === dept.id);
+        const deptEmps = filteredEmployees.filter(e => e.department === dept.id);
 
         return (
-          <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '25px', boxShadow: 'var(--shadow)' }}>
-            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>
+          <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
+            <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} Department
                 </h3>
               </div>
               {(isAdmin || currentUser.role === dept.id) && (
-                <button onClick={() => handleAdd(dept.id)} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>+ Add Employee</button>
+                <button onClick={() => handleAdd(dept.id)} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ Add Employee</button>
               )}
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1100px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>ID</th>
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Name</th>
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Father</th>
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Phone</th>
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Position</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>ID</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Name</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Father</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Phone</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Position</th>
                     {isAdmin && (
-                      <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Portal ID</th>
+                      <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Portal ID</th>
                     )}
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Address</th>
-                    {isAdmin && <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Salary</th>}
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Join Date</th>
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Status</th>
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Perf.</th>
-                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Actions</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Address</th>
+                    {isAdmin && <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Salary</th>}
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Join Date</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Status</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Perf.</th>
+                    <th style={{ padding: '10px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -258,13 +286,13 @@ export default function EmployeesPage() {
                     const user = users.find(u => u.email === emp.id || u.email === emp.email);
                     return (
                       <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                        <td style={{ padding: '10px 10px', fontSize: '11px', fontWeight: 'bold', color: 'var(--accent)', whiteSpace: 'nowrap' }}>{emp.id}</td>
-                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
-                          <div style={{ fontSize: '12px', fontWeight: '800', color: '#4338ca', background: 'var(--accentbg)', padding: '3px 8px', borderRadius: '4px', display: 'inline-block' }}>{emp.name}</div>
+                        <td style={{ padding: '8px 10px', fontSize: '11px', fontWeight: 'bold', color: 'var(--accent)', whiteSpace: 'nowrap' }}>{emp.id}</td>
+                        <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: '12px', fontWeight: '800', color: '#4338ca', background: 'var(--accentbg)', padding: '2px 8px', borderRadius: '4px', display: 'inline-block' }}>{emp.name}</div>
                         </td>
-                        <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{emp.fatherName || '--'}</td>
-                        <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{emp.phone || '--'}</td>
-                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{emp.fatherName || '--'}</td>
+                        <td style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{emp.phone || '--'}</td>
+                        <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
                           <div style={{ 
                             fontSize: '10px', 
                             fontWeight: '900', 
@@ -277,18 +305,18 @@ export default function EmployeesPage() {
                           }}>{emp.position}</div>
                         </td>
                         {isAdmin && (
-                          <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{user?.email || '—'}</td>
+                          <td style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{user?.email || '—'}</td>
                         )}
-                        <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text2)', fontWeight: '600', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={emp.address}>{emp.address || '--'}</td>
-                        {isAdmin && <td style={{ padding: '10px 10px', fontSize: '11px', color: '#059669', fontWeight: '900', whiteSpace: 'nowrap' }}>Rs. {(emp.salary || 0).toLocaleString()}</td>}
-                        <td style={{ padding: '10px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{formatDateShort(emp.joinDate)}</td>
-                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text2)', fontWeight: '600', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={emp.address}>{emp.address || '--'}</td>
+                        {isAdmin && <td style={{ padding: '8px 10px', fontSize: '11px', color: '#059669', fontWeight: '900', whiteSpace: 'nowrap' }}>Rs. {(emp.salary || 0).toLocaleString()}</td>}
+                        <td style={{ padding: '8px 10px', fontSize: '11px', color: 'var(--text)', fontWeight: '700', whiteSpace: 'nowrap' }}>{formatDateShort(emp.joinDate)}</td>
+                        <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
                           <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '6px', background: emp.status === 'active' ? '#ecfdf5' : '#fef2f2', color: emp.status === 'active' ? '#059669' : '#dc2626', fontWeight: '900', textTransform: 'uppercase', border: `1px solid ${emp.status === 'active' ? '#10b981' : '#ef4444'}44` }}>{emp.status}</span>
                         </td>
-                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
                           <div style={{ fontSize: '11px', fontWeight: '900', color: getAvgScore(emp.id) >= 80 ? '#059669' : getAvgScore(emp.id) >= 50 ? '#d97706' : '#dc2626' }}>{getAvgScore(emp.id)}%</div>
                         </td>
-                        <td style={{ padding: '10px 10px', whiteSpace: 'nowrap' }}>
+                        <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                              <button onClick={() => handleEdit(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
                              {isAdmin && <button onClick={() => handleManageAccessActual(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🔑</button>}
@@ -300,7 +328,7 @@ export default function EmployeesPage() {
                     );
                   })}
                   {deptEmps.length === 0 && (
-                    <tr><td colSpan={12} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)', fontSize: '12px' }}>No employees found.</td></tr>
+                    <tr><td colSpan={12} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)', fontSize: '12px' }}>No employees found in this view.</td></tr>
                   )}
                 </tbody>
               </table>

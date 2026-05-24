@@ -13,6 +13,7 @@ export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<'active' | 'archives'>('active');
   const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string | null>(null);
+  const [filterDate, setFilterDate] = useState(getCurrentDate());
   
   const [formData, setFormData] = useState<Partial<Project>>({
     status: 'Working on',
@@ -128,16 +129,16 @@ export default function ProjectsPage() {
       p.clientName.toLowerCase().includes(searchLower) ||
       p.projectNo.toLowerCase().includes(searchLower);
 
+    const isDateMatch = !filterDate || p.startDate === filterDate;
+
     if (viewTab === 'active') {
-      // REQUIREMENT: Show all 'Working on' and 'Submited' projects, no matter how old they are
       const isActiveStatus = ['Working on', 'Submited'].includes(p.status);
-      return isDeptMatch && isActiveStatus && isSearchMatch;
+      return isDeptMatch && isActiveStatus && isSearchMatch && isDateMatch;
     } else {
-      // ARCHIVES view
       if (selectedArchiveMonth) {
         return isDeptMatch && p.startDate.startsWith(selectedArchiveMonth) && isSearchMatch;
       }
-      return false; // Will show the folder grid
+      return false;
     }
   });
 
@@ -158,220 +159,196 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Header Section */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)' }}>
+      {/* Standardized Header */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ width: '45px', height: '45px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>📁</div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>📁</div>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text)' }}>Project Management</h2>
-            <div style={{ fontSize: '13px', color: 'var(--text2)' }}>{displayProjects.length} projects in view</div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Project Search Engine</h2>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Active Ledger: {displayProjects.length} tracking records</div>
           </div>
         </div>
 
-        {/* Real-time USD Summary */}
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '10px 18px', textAlign: 'center', minWidth: '140px' }}>
-            <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 'bold', textTransform: 'uppercase' }}>Total Budget</div>
-            <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text)' }}>$ {totalUSDBudget.toLocaleString()}</div>
+        {/* Real-time USD Summary (In-Header) */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '5px 12px', textAlign: 'center' }}>
+            <div style={{ fontSize: '9px', color: 'var(--text3)', fontWeight: 'bold' }}>BUDGET</div>
+            <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--text)' }}>$ {totalUSDBudget.toLocaleString()}</div>
           </div>
-          <div style={{ background: 'var(--greenbg)', border: '1px solid var(--green)44', borderRadius: '12px', padding: '10px 18px', textAlign: 'center', minWidth: '140px' }}>
-            <div style={{ fontSize: '10px', color: 'var(--green)', fontWeight: 'bold', textTransform: 'uppercase' }}>Total Received</div>
-            <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--green)' }}>$ {totalUSDReceived.toLocaleString()}</div>
+          <div style={{ background: 'var(--greenbg)', border: '1px solid var(--green)33', borderRadius: '10px', padding: '5px 12px', textAlign: 'center' }}>
+            <div style={{ fontSize: '9px', color: 'var(--green)', fontWeight: 'bold' }}>RECEIVED</div>
+            <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--green)' }}>$ {totalUSDReceived.toLocaleString()}</div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-             <span style={{ position: 'absolute', left: '12px', fontSize: '14px', opacity: 0.6 }}>🔍</span>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+           <div style={{ position: 'relative' }}>
+             <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
              <input 
                type="text" 
-               placeholder="Search ledger..." 
+               placeholder="Search projects..." 
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
-               style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '10px 15px 10px 35px', color: 'var(--text)', outline: 'none', fontSize: '13px', width: '220px' }}
+               style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', fontSize: '12px', width: '180px' }}
              />
            </div>
+           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px', color: 'var(--text)', outline: 'none', fontSize: '12px', fontWeight: 'bold' }} />
         </div>
       </div>
 
-      {/* View Toggles */}
-      <div style={{ display: 'flex', gap: '10px', padding: '5px', background: 'var(--bg2)', borderRadius: '15px', border: '1px solid var(--border)', width: 'fit-content' }}>
-        <button 
-          onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
-          style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: '0.2s' }}
-        >🚀 Active Ledger</button>
-        <button 
-          onClick={() => setViewTab('archives')}
-          style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: '0.2s' }}
-        >📁 Monthly Archives</button>
-      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* View Toggles */}
+        <div style={{ display: 'flex', gap: '8px', padding: '4px', background: 'var(--bg2)', borderRadius: '12px', border: '1px solid var(--border)', width: 'fit-content' }}>
+          <button 
+            onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
+            style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+          >Active Ledger</button>
+          <button 
+            onClick={() => setViewTab('archives')}
+            style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+          >Past Archives</button>
+        </div>
 
-      {viewTab === 'archives' && !selectedArchiveMonth && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
-          {sortedArchiveMonths.map(month => {
-            const monthProjects = projects.filter(p => p.startDate.startsWith(month));
-            const approved = monthProjects.filter(p => p.status === 'Submited').length;
-            const revenue = monthProjects.reduce((sum, p) => sum + (p.amountReceived || 0), 0);
-            
-            return (
-              <div 
-                key={month} 
-                onClick={() => setSelectedArchiveMonth(month)}
-                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s', position: 'relative', overflow: 'hidden' }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-              >
-                <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
-                <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>📊 {monthProjects.length} TOTAL PROJECTS</div>
-                  <div style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 'bold' }}>✅ {approved} SUBMISSIONS</div>
-                  <div style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '900', marginTop: '5px' }}>💰 REVENUE: $ {revenue.toLocaleString()}</div>
+        {viewTab === 'archives' && !selectedArchiveMonth && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', marginTop: '10px' }}>
+            {sortedArchiveMonths.map(month => {
+              const monthProjects = projects.filter(p => p.startDate.startsWith(month));
+              const approved = monthProjects.filter(p => p.status === 'Submited').length;
+              const revenue = monthProjects.reduce((sum, p) => sum + (p.amountReceived || 0), 0);
+              
+              return (
+                <div 
+                  key={month} 
+                  onClick={() => setSelectedArchiveMonth(month)}
+                  style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s', position: 'relative', overflow: 'hidden' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+                >
+                  <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
+                  <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>📊 {monthProjects.length} TOTAL PROJECTS</div>
+                    <div style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 'bold' }}>✅ {approved} SUBMISSIONS</div>
+                    <div style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '900', marginTop: '5px' }}>💰 REVENUE: $ {revenue.toLocaleString()}</div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
 
-      {(viewTab === 'active' || (viewTab === 'archives' && selectedArchiveMonth)) && (
-        <>
-          {selectedArchiveMonth && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '-10px' }}>
-              <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '5px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold' }}>← Back to Folders</button>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)' }}>Archive: {getMonthName(selectedArchiveMonth)}</div>
+        {(viewTab === 'active' || (viewTab === 'archives' && selectedArchiveMonth)) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {selectedArchiveMonth ? (
+                 <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', fontSize: '11px' }}>← Back to Archives</button>
+              ) : <div />}
+              {viewTab === 'active' && (isAdmin || isManager) && (
+                <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ New Project</button>
+              )}
             </div>
-          )}
 
-          {/* 3 Department Portions */}
-          {departments.map(dept => {
-            if (!isAdmin && currentUser.role !== dept.id) return null;
-            const deptProjects = displayProjects.filter(p => p.department === dept.id);
-            if (viewTab === 'archives' && deptProjects.length === 0) return null;
+            {departments.map(dept => {
+              if (!isAdmin && currentUser.role !== dept.id) return null;
+              const deptProjects = displayProjects.filter(p => p.department === dept.id);
+              if (viewTab === 'archives' && deptProjects.length === 0) return null;
 
-            return (
-              <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '25px', boxShadow: 'var(--shadow)' }}>
-                <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '15px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              return (
+                <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
+                  <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'Active Projects' : 'Archive'}
                     </h3>
                   </div>
-                  {viewTab === 'active' && (isAdmin || currentUser.role === dept.id) && (
-                    <button onClick={() => { 
-                      setFormData({ ...formData, department: dept.id });
-                      handleAdd(); 
-                    }} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>+ New Project</button>
-                  )}
-                </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
-                    <thead>
-                      <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>No</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Project Details</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Client</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Financials</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Timeline (DD/MM/YYYY)</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Manager</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Status</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', color: 'var(--text2)', textTransform: 'uppercase' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {deptProjects.map(p => (
-                        <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', fontWeight: 'bold', color: 'var(--accent)' }}>{p.projectNo || '—'}</td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ fontSize: '14px', fontWeight: '900', color: '#4338ca', background: '#eef2ff', padding: '4px 10px', borderRadius: '6px', display: 'inline-block', border: '1px solid #c7d2fe' }}>{p.projectName}</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text2)', marginTop: '6px', fontWeight: '500' }}>{p.scope || 'No scope specified'}</div>
-                            <div style={{ fontSize: '11px', color: '#4338ca', fontWeight: '800', marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Staff: {p.employeeName || '—'}</div>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ fontSize: '13px', fontWeight: '900', color: '#7c3aed', background: '#f5f3ff', padding: '4px 10px', borderRadius: '6px', display: 'inline-block', border: '1px solid #ddd6fe' }}>{p.clientName}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text3)', marginTop: '4px' }}>{p.clientEmail || 'No email'}</div>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ fontSize: '15px', fontWeight: '900', color: '#059669', marginBottom: '4px' }}>{formatCurrency(p.cost || p.totalBudget)}</div>
-                            <div style={{ fontSize: '10px', color: '#4f46e5', fontWeight: '900', textTransform: 'uppercase' }}>
-                              {p.paymentStatus === 'upfront_50' ? '50% Upfront' : 
-                               p.paymentStatus === 'remaining_50' ? '50% Remaining' : 
-                               '100% Paid'}
-                            </div>
-                            <div style={{ fontSize: '10px', color: 'var(--text3)', marginTop: '2px' }}>via {p.paymentMethod || '—'}</div>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: '600' }}>Start: {formatDateShort(p.startDate)}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text3)', marginTop: '2px' }}>Duration: {p.workingDays} days</div>
-                            <div style={{ fontSize: '11px', color: '#dc2626', fontWeight: '900', background: '#fef2f2', padding: '4px 8px', borderRadius: '6px', display: 'inline-block', marginTop: '8px', border: '1px solid #fecaca' }}>Due: {formatDateShort(p.deadline)}</div>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ fontSize: '13px', color: '#4338ca', fontWeight: '900' }}>{p.managerName}</div>
-                            <div style={{ fontSize: '10px', color: '#4f46e5', textTransform: 'uppercase', fontWeight: '900', marginTop: '4px' }}>{p.department}</div>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <select 
-                              value={p.status} 
-                              onChange={(e) => updateProject(p.id, { status: e.target.value as any })}
-                              style={{ 
-                                fontSize: '10px', 
-                                padding: '5px 8px', 
-                                borderRadius: '12px', 
-                                background: p.status === 'Submited' ? '#ecfdf5' : 
-                                           p.status === 'Working on' ? '#eff6ff' :
-                                           p.status === 'on hold' ? '#fff7ed' : 
-                                           p.status === 'Close' ? '#f3f4f6' : '#fef3c7', 
-                                color: p.status === 'Submited' ? '#059669' : 
-                                       p.status === 'Working on' ? '#2563eb' :
-                                       p.status === 'on hold' ? '#ea580c' :
-                                       p.status === 'Close' ? '#4b5563' : '#d97706', 
-                                fontWeight: '900', 
-                                textTransform: 'uppercase', 
-                                border: `2px solid ${
-                                        p.status === 'Submited' ? '#10b981' : 
-                                        p.status === 'Working on' ? '#3b82f6' :
-                                        p.status === 'on hold' ? '#f97316' :
-                                        p.status === 'Close' ? '#6b7280' : '#f59e0b'
-                                      }44`,
-                                cursor: 'pointer',
-                                outline: 'none',
-                                appearance: 'none',
-                                textAlign: 'center',
-                                width: 'auto'
-                              }}
-                            >
-                              <option value="Working on">Working on</option>
-                              <option value="Submited">Submited</option>
-                              <option value="Close">Close</option>
-                              <option value="on hold">on hold</option>
-                            </select>
-                          </td>
-                          <td style={{ padding: '14px 16px' }}>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                              <button onClick={() => handleEdit(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
-                              {(isAdmin || p.managerEmail === currentUser.email) && (
-                                <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--red)' }}>🗑️</button>
-                              )}
-                            </div>
-                          </td>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>No</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Project Details</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Client</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Financials</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Timeline</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Manager</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Status</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Actions</th>
                         </tr>
-                      ))}
-                      {deptProjects.length === 0 && (
-                        <tr>
-                          <td colSpan={8} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)', fontSize: '13px' }}>No projects in this view.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {deptProjects.map(p => (
+                          <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.1s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                            <td style={{ padding: '6px 10px', fontSize: '12px', fontWeight: 'bold', color: 'var(--accent)', whiteSpace: 'nowrap' }}>{p.projectNo || '—'}</td>
+                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '12px', fontWeight: '800', color: '#4338ca', background: '#eef2ff', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', border: '1px solid #c7d2fe' }}>{p.projectName}</div>
+                              <div style={{ fontSize: '10px', color: '#4338ca', fontWeight: '800', marginTop: '4px', textTransform: 'uppercase' }}>Staff: {p.employeeName || '—'}</div>
+                            </td>
+                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '12px', fontWeight: '800', color: '#7c3aed', background: '#f5f3ff', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', border: '1px solid #ddd6fe' }}>{p.clientName}</div>
+                            </td>
+                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '13px', fontWeight: '900', color: '#059669' }}>{formatCurrency(p.cost || p.totalBudget)}</div>
+                              <div style={{ fontSize: '9px', color: '#4f46e5', fontWeight: '900', textTransform: 'uppercase' }}>
+                                {p.paymentStatus === 'upfront_50' ? '50% Upfront' : 
+                                 p.paymentStatus === 'remaining_50' ? '50% Remaining' : 
+                                 '100% Paid'}
+                              </div>
+                            </td>
+                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: '600' }}>S: {formatDateShort(p.startDate)}</div>
+                              <div style={{ fontSize: '11px', color: '#dc2626', fontWeight: '900' }}>D: {formatDateShort(p.deadline)}</div>
+                            </td>
+                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '12px', color: '#4338ca', fontWeight: '900' }}>{p.managerName}</div>
+                              <div style={{ fontSize: '9px', color: '#4f46e5', textTransform: 'uppercase', fontWeight: '900' }}>{p.department}</div>
+                            </td>
+                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                              <select 
+                                value={p.status} 
+                                onChange={(e) => updateProject(p.id, { status: e.target.value as any })}
+                                style={{ 
+                                  fontSize: '9px', 
+                                  padding: '4px 8px', 
+                                  borderRadius: '10px', 
+                                  background: p.status === 'Submited' ? '#ecfdf5' : 
+                                             p.status === 'Working on' ? '#eff6ff' :
+                                             p.status === 'on hold' ? '#fff7ed' : '#f3f4f6', 
+                                  color: p.status === 'Submited' ? '#059669' : 
+                                         p.status === 'Working on' ? '#2563eb' :
+                                         p.status === 'on hold' ? '#ea580c' : '#4b5563', 
+                                  fontWeight: '900', 
+                                  textTransform: 'uppercase', 
+                                  border: '1px solid currentColor',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <option value="Working on">Working on</option>
+                                <option value="Submited">Submited</option>
+                                <option value="Close">Close</option>
+                                <option value="on hold">on hold</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button onClick={() => handleEdit(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
+                                {(isAdmin || p.managerEmail === currentUser.email) && (
+                                  <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Project Modal */}
       {showModal && (

@@ -11,6 +11,8 @@ export default function BroadcastPage() {
   const [showModal, setShowModal] = useState(false);
   const [viewTab, setViewTab] = useState<'active' | 'archives'>('active');
   const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDate, setFilterDate] = useState(getCurrentDate());
   
   const [formData, setFormData] = useState<Partial<Announcement>>({
     priority: 'normal'
@@ -39,12 +41,24 @@ export default function BroadcastPage() {
   };
 
   const displayAnnouncements = announcements.filter(ann => {
-    const month = new Date(ann.createdAt).toISOString().substring(0, 7);
-    if (viewTab === 'active') return month === currentMonthPrefix;
-    return month === selectedArchiveMonth;
+    const annMonth = new Date(ann.createdAt).toISOString().substring(0, 7);
+    const annDate = new Date(ann.createdAt).toISOString().substring(0, 10);
+    
+    const searchLower = searchQuery.toLowerCase();
+    const isSearchMatch = !searchQuery || 
+      ann.title.toLowerCase().includes(searchLower) || 
+      ann.content.toLowerCase().includes(searchLower);
+
+    const isDateMatch = !filterDate || annDate === filterDate;
+
+    if (viewTab === 'active') {
+      return annMonth === currentMonthPrefix && isSearchMatch && isDateMatch;
+    } else {
+      return annMonth === selectedArchiveMonth && isSearchMatch;
+    }
   });
 
-  // Auto-mark as read for managers when they see this page
+  // Auto-mark as read for managers
   useEffect(() => {
     if (!isAdmin && announcements.length > 0) {
       markCategoryNotificationsAsRead('broadcast');
@@ -90,126 +104,113 @@ export default function BroadcastPage() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg2)', padding: '25px', borderRadius: '24px', border: '1px solid var(--border)', boxShadow: 'var(--shadow)' }}>
+      {/* Standardized Header */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '14px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>📢</div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>📢</div>
           <div>
-            <h2 style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text)' }}>Announcement Engine</h2>
-            <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: '700' }}>{announcements.length} official notices broadcasted</div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Announcement Engine</h2>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Active Broadcasts: {displayAnnouncements.length} updates found</div>
           </div>
         </div>
-        {isAdmin && (
-          <button onClick={() => setShowModal(true)} style={{ background: 'var(--accent)', color: '#fff', padding: '12px 30px', borderRadius: '12px', border: 'none', fontWeight: '900', cursor: 'pointer', boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)' }}>+ New Broadcast</button>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search notices..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', width: '180px', fontSize: '12px' }}
+            />
+          </div>
+          <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px', color: 'var(--text)', outline: 'none', fontSize: '12px', fontWeight: 'bold' }} />
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* View Toggles */}
+        <div style={{ display: 'flex', gap: '8px', padding: '4px', background: 'var(--bg2)', borderRadius: '12px', border: '1px solid var(--border)', width: 'fit-content' }}>
+          <button 
+            onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
+            style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+          >🔔 Latest Posts</button>
+          <button 
+            onClick={() => setViewTab('archives')}
+            style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+          >📁 Past Archives</button>
+        </div>
+
+        {viewTab === 'archives' && !selectedArchiveMonth && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', marginTop: '10px' }}>
+            {sortedArchiveMonths.map(month => (
+              <div 
+                key={month} 
+                onClick={() => setSelectedArchiveMonth(month)}
+                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+              >
+                <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>📢 {archiveGroups[month].length} ANNOUNCEMENTS</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(viewTab === 'active' || selectedArchiveMonth) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {selectedArchiveMonth ? (
+                 <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', fontSize: '11px' }}>← Back to Archives</button>
+              ) : <div />}
+              {viewTab === 'active' && isAdmin && (
+                <button onClick={() => setShowModal(true)} style={{ background: 'var(--accent)', color: '#fff', padding: '10px 25px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>+ New Broadcast</button>
+              )}
+            </div>
+
+            {displayAnnouncements.map(ann => (
+              <div key={ann.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px', position: 'relative', borderLeft: `6px solid ${ann.priority === 'high' ? '#ef4444' : 'var(--accent)'}`, boxShadow: 'var(--shadow)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                      <span style={{ background: ann.priority === 'high' ? '#fee2e2' : '#eef2ff', color: ann.priority === 'high' ? '#dc2626' : '#4338ca', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '20px' }}>{ann.priority}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: '600' }}>By <strong style={{ color: 'var(--accent)' }}>{ann.author}</strong> • {new Date(ann.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)' }}>{ann.title}</h3>
+                  </div>
+                  {isAdmin && (
+                    <button onClick={() => handleDelete(ann.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--text3)' }}>🗑️</button>
+                  )}
+                </div>
+                <p style={{ fontSize: '13px', color: 'var(--text2)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{ann.content}</p>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* View Toggles */}
-      <div style={{ display: 'flex', gap: '10px', padding: '5px', background: 'var(--bg2)', borderRadius: '15px', border: '1px solid var(--border)', width: 'fit-content' }}>
-        <button 
-          onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
-          style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
-        >🔔 Latest Posts</button>
-        <button 
-          onClick={() => setViewTab('archives')}
-          style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
-        >📁 Post Archives</button>
-      </div>
-
-      {viewTab === 'archives' && !selectedArchiveMonth && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
-          {sortedArchiveMonths.map(month => (
-            <div 
-              key={month} 
-              onClick={() => setSelectedArchiveMonth(month)}
-              style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s' }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-            >
-              <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
-              <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>📢 {archiveGroups[month].length} ANNOUNCEMENTS</div>
-            </div>
-          ))}
-          {sortedArchiveMonths.length === 0 && (
-            <div style={{ gridColumn: '1/-1', padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No previous months to archive yet.</div>
-          )}
-        </div>
-      )}
-
-      {(viewTab === 'active' || selectedArchiveMonth) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {selectedArchiveMonth && (
-            <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '8px 15px', borderRadius: '10px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', width: 'fit-content' }}>← Back to Archives</button>
-          )}
-
-          {displayAnnouncements.map(ann => (
-            <div key={ann.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', position: 'relative', borderLeft: `6px solid ${ann.priority === 'high' ? '#ef4444' : 'var(--accent)'}`, boxShadow: 'var(--shadow)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <span style={{ background: ann.priority === 'high' ? '#fee2e2' : '#eef2ff', color: ann.priority === 'high' ? '#dc2626' : '#4338ca', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '20px' }}>{ann.priority}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: '500' }}>Posted by <strong style={{ color: 'var(--accent)' }}>{ann.author}</strong></span>
-                  </div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text)' }}>{ann.title}</h3>
-                </div>
-                {isAdmin && (
-                  <button onClick={() => handleDelete(ann.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text3)' }}>🗑️</button>
-                )}
-              </div>
-              <p style={{ fontSize: '14px', color: 'var(--text2)', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>{ann.content}</p>
-              
-              {isAdmin && ann.seenBy && (
-                <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>👁️ VIEWED BY DEPARTMENTS:</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px' }}>
-                    {ann.seenBy.split('\n').map((receipt, i) => (
-                      <div key={i} style={{ fontSize: '12px', color: '#059669', fontWeight: 'bold', background: '#ecfdf5', padding: '8px 12px', borderRadius: '10px', border: '1px solid #10b98133', display: 'flex', alignItems: 'center', gap: '8px' }}>✅ {receipt}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {displayAnnouncements.length === 0 && (
-            <div style={{ padding: '80px 20px', textAlign: 'center', background: 'var(--bg2)', borderRadius: '24px', border: '2px dashed var(--border)' }}>
-              <div style={{ fontSize: '50px', marginBottom: '15px' }}>📭</div>
-              <h3 style={{ color: 'var(--text2)', fontWeight: 'bold' }}>No Broadcasts Found</h3>
-              <p style={{ color: 'var(--text3)', fontSize: '14px' }}>Important updates will appear here when posted by Admin.</p>
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* Modal remains same but updated with standard UI */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg2)', borderRadius: '24px', width: '90%', maxWidth: '550px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
-            <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg3)' }}>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text)' }}>Create Broadcast Message</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '24px' }}>✕</button>
-            </div>
-            <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ background: 'var(--bg2)', borderRadius: '24px', width: '90%', maxWidth: '550px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', padding: '30px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '25px', color: 'var(--text)' }}>Create Broadcast Message</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>SUBJECT / TITLE</label>
-                <input type="text" value={formData.title || ''} onChange={(e) => setFormData({ ...formData, title: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Company Meeting Tomorrow" />
+                <input type="text" value={formData.title || ''} onChange={(e) => setFormData({ ...formData, title: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="e.g. Company Meeting" />
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>MESSAGE DETAILS</label>
-                <textarea value={formData.content || ''} onChange={(e) => setFormData({ ...formData, content: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'var(--text)', outline: 'none', height: '150px', resize: 'none', lineHeight: '1.6' }} placeholder="Enter your message here..." />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>PRIORITY LEVEL</label>
-                <select value={formData.priority} onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'var(--text)', outline: 'none' }}>
-                  <option value="normal">Normal Priority</option>
-                  <option value="high">High / Urgent Notice</option>
-                </select>
+                <textarea value={formData.content || ''} onChange={(e) => setFormData({ ...formData, content: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'var(--text)', outline: 'none', height: '120px', resize: 'none' }} placeholder="Enter message..." />
               </div>
               <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text)', fontWeight: 'bold' }}>Cancel</button>
-                <button onClick={handleSave} style={{ flex: 2, background: 'var(--accent)', color: '#fff', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', border: 'none', boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)' }}>📢 Broadcast to All Managers</button>
+                <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text)', fontWeight: 'bold' }}>Cancel</button>
+                <button onClick={handleSave} style={{ flex: 2, background: 'var(--accent)', color: '#fff', padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}>📢 Send Broadcast</button>
               </div>
             </div>
           </div>

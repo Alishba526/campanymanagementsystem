@@ -22,9 +22,11 @@ export default function SchedulePage() {
   const [editingSchedule, setEditingSchedule] = useState<MonthlySchedule | null>(null);
   const [viewTab, setViewTab] = useState<'active' | 'archives'>('active');
   const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDate, setFilterDate] = useState(getCurrentDate());
   
   const [formData, setFormData] = useState<Partial<MonthlySchedule>>({
-    month: new Date().toISOString().slice(0, 7),
+    month: getCurrentDate().substring(0, 7),
     startTime: '09:00',
     endTime: '18:00',
     totalHours: 176
@@ -34,7 +36,7 @@ export default function SchedulePage() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
         <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
-        <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
         <p>Only Admin can manage monthly schedules.</p>
       </div>
     );
@@ -126,106 +128,133 @@ export default function SchedulePage() {
   };
 
   const displaySchedules = schedules.filter(sch => {
-    if (viewTab === 'active') return sch.month === currentMonthPrefix;
-    return sch.month === selectedArchiveMonth;
+    const searchLower = searchQuery.toLowerCase();
+    const isSearchMatch = !searchQuery || 
+      sch.employeeName.toLowerCase().includes(searchLower) ||
+      sch.employeeId.toLowerCase().includes(searchLower);
+
+    if (viewTab === 'active') {
+      return sch.month === currentMonthPrefix && isSearchMatch;
+    } else {
+      return sch.month === selectedArchiveMonth && isSearchMatch;
+    }
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Header */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)' }}>
+      {/* Standardized Header */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '14px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>📅</div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>📅</div>
           <div>
-            <h2 style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text)' }}>Shift Planning Engine</h2>
-            <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: '700' }}>Organizing {schedules.length} monthly schedules</div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Shift Search Engine</h2>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Planning {schedules.length} employee cycles</div>
           </div>
         </div>
-        <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', padding: '12px 30px', borderRadius: '12px', border: 'none', fontWeight: '900', cursor: 'pointer', boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)' }}>+ Create Schedule</button>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search employee..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', width: '180px', fontSize: '12px' }}
+            />
+          </div>
+          <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px', color: 'var(--text)', outline: 'none', fontSize: '12px', fontWeight: 'bold' }} />
+        </div>
       </div>
 
-      {/* View Toggles */}
-      <div style={{ display: 'flex', gap: '10px', padding: '5px', background: 'var(--bg2)', borderRadius: '15px', border: '1px solid var(--border)', width: 'fit-content' }}>
-        <button 
-          onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
-          style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
-        >⚡ Current Month</button>
-        <button 
-          onClick={() => setViewTab('archives')}
-          style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
-        >📁 Past Archives</button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* View Toggles */}
+        <div style={{ display: 'flex', gap: '8px', padding: '4px', background: 'var(--bg2)', borderRadius: '12px', border: '1px solid var(--border)', width: 'fit-content' }}>
+          <button 
+            onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
+            style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+          >⚡ Current Month</button>
+          <button 
+            onClick={() => setViewTab('archives')}
+            style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+          >📁 Past Archives</button>
+        </div>
+
+        {viewTab === 'archives' && !selectedArchiveMonth && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', marginTop: '10px' }}>
+            {sortedArchiveMonths.map(month => (
+              <div 
+                key={month} 
+                onClick={() => setSelectedArchiveMonth(month)}
+                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+              >
+                <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>🗓️ {archiveGroups[month].length} SHIFT RECORDS</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(viewTab === 'active' || selectedArchiveMonth) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {selectedArchiveMonth ? (
+                 <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', fontSize: '11px' }}>← Back to Archives</button>
+              ) : <div />}
+              <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', padding: '10px 25px', borderRadius: '10px', border: 'none', fontWeight: 'bold', fontSize: '12px' }}>+ Create Schedule</button>
+            </div>
+
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
+              <div style={{ padding: '15px 25px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)' }}>
+                <div style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)' }}>
+                  {viewTab === 'active' ? `⚡ Active Schedules: ${getMonthName(currentMonthPrefix)}` : `🗓️ Shift Log: ${getMonthName(selectedArchiveMonth!)}`}
+                </div>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Employee</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Work Hours (AM/PM)</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Target Hours</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Weekly Offs</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displaySchedules.map(sch => (
+                      <tr key={sch.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.1s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                        <td style={{ padding: '6px 15px', fontSize: '13px', color: 'var(--text)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{sch.employeeName}</td>
+                        <td style={{ padding: '6px 15px', fontSize: '12px', color: 'var(--text)' }}>
+                          <span style={{ fontWeight: '900', color: '#059669' }}>{formatTimeAMPM(sch.startTime)}</span> 
+                          <span style={{ margin: '0 6px', color: 'var(--border)' }}>—</span> 
+                          <span style={{ fontWeight: '900', color: '#dc2626' }}>{formatTimeAMPM(sch.endTime)}</span>
+                        </td>
+                        <td style={{ padding: '6px 15px', fontSize: '12px', color: 'var(--text)', fontWeight: '900' }}>{sch.totalHours}h</td>
+                        <td style={{ padding: '6px 15px' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: '15px', fontSize: '10px', fontWeight: 'bold', background: 'var(--bluebg)', color: 'var(--blue)', border: '1px solid var(--blue)44' }}>{sch.weeklyOffs || 'Sunday'}</span>
+                        </td>
+                        <td style={{ padding: '6px 15px' }}>
+                          <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={() => handleEdit(sch)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
+                            <button onClick={() => handleDelete(sch.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {viewTab === 'archives' && !selectedArchiveMonth && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
-          {sortedArchiveMonths.map(month => (
-            <div 
-              key={month} 
-              onClick={() => setSelectedArchiveMonth(month)}
-              style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s' }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-            >
-              <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
-              <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{getMonthName(month)}</div>
-              <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold' }}>🗓️ {archiveGroups[month].length} SHIFT RECORDS</div>
-            </div>
-          ))}
-          {sortedArchiveMonths.length === 0 && (
-            <div style={{ gridColumn: '1/-1', padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No previous months to archive yet.</div>
-          )}
-        </div>
-      )}
-
-      {(viewTab === 'active' || selectedArchiveMonth) && (
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
-          <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg3)' }}>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)' }}>
-              {viewTab === 'active' ? `⚡ Active Schedules: ${getMonthName(currentMonthPrefix)}` : `🗓️ Shift Log: ${getMonthName(selectedArchiveMonth!)}`}
-            </div>
-            {selectedArchiveMonth && (
-              <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold' }}>✕ Close Archive</button>
-            )}
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Employee</th>
-                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Work Hours (AM/PM)</th>
-                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Target Hours</th>
-                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Weekly Offs</th>
-                  <th style={{ padding: '15px 20px', textAlign: 'left', fontSize: '12px', color: 'var(--text2)', textTransform: 'uppercase' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displaySchedules.map(sch => (
-                  <tr key={sch.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)', fontWeight: 'bold' }}>{sch.employeeName}</td>
-                    <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--text)' }}>{formatTimeAMPM(sch.startTime)} - {formatTimeAMPM(sch.endTime)}</td>
-                    <td style={{ padding: '15px 20px', fontSize: '14px', color: 'var(--green)', fontWeight: 'bold' }}>{sch.totalHours}h</td>
-                    <td style={{ padding: '15px 20px' }}>
-                      <span style={{ padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', background: 'var(--bluebg)', color: 'var(--blue)', border: '1px solid var(--blue)44' }}>{sch.weeklyOffs || 'Sunday'}</span>
-                    </td>
-                    <td style={{ padding: '15px 20px' }}>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={() => handleEdit(sch)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
-                        <button onClick={() => handleDelete(sch.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--red)' }}>🗑️</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {displaySchedules.length === 0 && (
-                  <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No schedules found for this period.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Modal code remains largely same but updated with standard UI */}
+      {/* Modal remains same but updated with standard UI */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', width: '90%', maxWidth: '550px', padding: '30px' }}>
@@ -265,7 +294,7 @@ export default function SchedulePage() {
                 </div>
                 <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
                    <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text)', fontWeight: 'bold' }}>Cancel</button>
-                   <button onClick={handleSave} style={{ flex: 2, background: 'var(--accent)', color: '#fff', padding: '14px', borderRadius: '12px', fontSize: '15px', fontWeight: 'bold', cursor: 'pointer', border: 'none', boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)' }}>💾 Save Shift Schedule</button>
+                   <button onClick={handleSave} style={{ flex: 2, background: 'var(--accent)', color: '#fff', padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}>💾 Save Schedule</button>
                 </div>
              </div>
           </div>
