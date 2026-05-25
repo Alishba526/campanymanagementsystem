@@ -172,7 +172,7 @@ export interface Project {
   managerName: string;
   managerEmail: string;
   department: string;
-  status: 'active' | 'completed' | 'on-hold' | 'pending' | 'approved' | 'rejected' | 'Working on' | 'Submited' | 'Close' | 'on hold';
+  status: 'active' | 'completed' | 'on-hold' | 'pending' | 'approved' | 'rejected' | 'Working on' | 'Submited' | 'Close' | 'on hold' | 'New Project';
 }
 
 export interface MonthlySchedule {

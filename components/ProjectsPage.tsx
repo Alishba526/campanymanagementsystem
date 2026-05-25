@@ -137,9 +137,9 @@ export default function ProjectsPage() {
     const isDateMatch = !filterDate || p.startDate === filterDate;
 
     if (viewTab === 'active') {
-      const isActiveStatus = ['Working on', 'Submited', 'on hold'].includes(p.status);
-      // Working on projects ignore the date filter so they stay visible
-      const matchesDateOrStatus = p.status === 'Working on' || isDateMatch;
+      const isActiveStatus = ['Working on', 'Submited', 'on hold', 'New Project'].includes(p.status);
+      // Working on & New Projects ignore the date filter so they stay visible
+      const matchesDateOrStatus = ['Working on', 'New Project'].includes(p.status) || isDateMatch;
       return isActiveStatus && matchesDateOrStatus;
     } else {
       if (selectedArchiveMonth) {
@@ -351,9 +351,11 @@ export default function ProjectsPage() {
                                   borderRadius: '10px', 
                                   background: p.status === 'Submited' ? '#ecfdf5' : 
                                              p.status === 'Working on' ? '#eff6ff' :
+                                             p.status === 'New Project' ? '#f5f3ff' :
                                              p.status === 'on hold' ? '#fff7ed' : '#f3f4f6', 
                                   color: p.status === 'Submited' ? '#059669' : 
                                          p.status === 'Working on' ? '#2563eb' :
+                                         p.status === 'New Project' ? '#7c3aed' :
                                          p.status === 'on hold' ? '#ea580c' : '#4b5563', 
                                   fontWeight: '900', 
                                   textTransform: 'uppercase', 
@@ -362,6 +364,7 @@ export default function ProjectsPage() {
                                 }}
                               >
                                 <option value="Working on">Working on</option>
+                                <option value="New Project">New Project</option>
                                 <option value="Submited">Submited</option>
                                 <option value="Close">Close</option>
                                 <option value="on hold">on hold</option>
@@ -459,6 +462,7 @@ export default function ProjectsPage() {
                   <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Project Status</label>
                   <select value={formData.status || 'Working on'} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }}>
                     <option value="Working on">Working on</option>
+                    <option value="New Project">New Project</option>
                     <option value="Submited">Submited</option>
                     <option value="Close">Close</option>
                     <option value="on hold">on hold</option>
