@@ -132,8 +132,10 @@ export default function ProjectsPage() {
     const isDateMatch = !filterDate || p.startDate === filterDate;
 
     if (viewTab === 'active') {
-      const isActiveStatus = ['Working on', 'Submited'].includes(p.status);
-      return isDeptMatch && isActiveStatus && isSearchMatch && isDateMatch;
+      const isActiveStatus = ['Working on', 'Submited', 'on hold'].includes(p.status);
+      // Working on projects ignore the date filter so they stay visible
+      const matchesDateOrStatus = p.status === 'Working on' || isDateMatch;
+      return isDeptMatch && isActiveStatus && isSearchMatch && matchesDateOrStatus;
     } else {
       if (selectedArchiveMonth) {
         return isDeptMatch && p.startDate.startsWith(selectedArchiveMonth) && isSearchMatch;
@@ -250,6 +252,35 @@ export default function ProjectsPage() {
               )}
             </div>
 
+            {/* Special Section: Working Folder (Pinned at top of Active Ledger) */}
+            {viewTab === 'active' && !searchQuery && (
+              <div style={{ background: 'var(--bg2)', border: '2px dashed var(--accent)', borderRadius: '24px', padding: '20px', boxShadow: 'var(--shadow)', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                  <div style={{ fontSize: '24px' }}>📂</div>
+                  <h3 style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text)' }}>Working Folder (Current Projects)</h3>
+                  <div style={{ marginLeft: 'auto', background: 'var(--accent)', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold' }}>
+                    {projects.filter(p => p.status === 'Working on').length} ACTIVE
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
+                  {projects.filter(p => p.status === 'Working on').map(p => (
+                    <div key={p.id} onClick={() => handleEdit(p)} style={{ minWidth: '220px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '15px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'} onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}>
+                      <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent)', marginBottom: '5px' }}>#{p.projectNo}</div>
+                      <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--text)', marginBottom: '5px' }}>{p.projectName}</div>
+                      <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 'bold' }}>👤 {p.clientName}</div>
+                      <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                         <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--green)' }}>{formatCurrency(p.cost)}</span>
+                         <span style={{ fontSize: '9px', background: '#eff6ff', color: '#2563eb', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>WORKING</span>
+                      </div>
+                    </div>
+                  ))}
+                  {projects.filter(p => p.status === 'Working on').length === 0 && (
+                    <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '12px', fontStyle: 'italic' }}>No projects currently in "Working on" status.</div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {departments.map(dept => {
               if (!isAdmin && currentUser.role !== dept.id) return null;
               const deptProjects = displayProjects.filter(p => p.department === dept.id);
@@ -259,7 +290,7 @@ export default function ProjectsPage() {
                 <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
                   <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
                     <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'Active Projects' : 'Archive'}
+                      <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'All Ongoing Work' : 'Archive'}
                     </h3>
                   </div>
 
