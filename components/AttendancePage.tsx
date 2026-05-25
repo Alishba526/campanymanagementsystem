@@ -217,6 +217,7 @@ export default function AttendancePage() {
                           <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Date</th>
                           <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Staff Member</th>
                           <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Timings (AM/PM)</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Break Timings</th>
                           <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Status</th>
                           <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Hours</th>
                           <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Late/Early</th>
@@ -235,6 +236,12 @@ export default function AttendancePage() {
                                <span style={{ fontSize: '12px', color: '#059669', fontWeight: '900', background: '#ecfdf5', padding: '4px 8px', borderRadius: '6px', border: '1px solid #10b98133' }}>In: {formatTimeAMPM(rec.checkIn)}</span>
                                <span style={{ margin: '0 8px', color: 'var(--border)', fontWeight: 'normal' }}>—</span>
                                <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: '900', background: '#fef2f2', padding: '4px 8px', borderRadius: '6px', border: '1px solid #ef444433' }}>Out: {formatTimeAMPM(rec.checkOut)}</span>
+                            </td>
+                            <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
+                               <span style={{ fontSize: '11px', color: '#f59e0b', fontWeight: '900', background: '#fffbeb', padding: '4px 8px', borderRadius: '6px', border: '1px solid #f59e0b33' }}>
+                                 {rec.breakIn ? `☕ ${formatTimeAMPM(rec.breakIn)}` : '—'} 
+                                 {rec.breakOut && rec.breakOut !== '--' ? ` 🔄 ${formatTimeAMPM(rec.breakOut)}` : ''}
+                               </span>
                             </td>
                             <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
                               <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', background: `${getStatusColor(rec.status)}15`, color: getStatusColor(rec.status), border: `1px solid ${getStatusColor(rec.status)}33`, letterSpacing: '0.5px' }}>
