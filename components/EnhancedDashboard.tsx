@@ -179,11 +179,13 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
           <div style={{ fontSize: '24px' }}>🚀</div>
           <h3 style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Project Monitor</h3>
           <div style={{ marginLeft: 'auto', background: 'var(--accent)', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold' }}>
-            {projects.filter(p => (isAdmin || p.department === currentUser.role) && (p.status === 'Working on' || p.status === 'New Project')).length} ONGOING
+            {projects.filter(p => (isAdmin || p.department === currentUser.role) && (['Working on', 'New Project'].includes(p.status))).length} ONGOING
           </div>
         </div>
         <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '10px' }} className="custom-scrollbar">
-          {projects.filter(p => (isAdmin || p.department === currentUser.role) && (p.status === 'Working on' || p.status === 'New Project')).map(p => (
+          {projects
+            .filter(p => (isAdmin || p.department === currentUser.role) && (['Working on', 'New Project'].includes(p.status)))
+            .map(p => (
             <div key={p.id} onClick={() => onNavigate?.('projects')} style={{ minWidth: '240px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '18px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent)' }}>#{p.projectNo}</span>
@@ -197,7 +199,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
               </div>
             </div>
           ))}
-          {projects.filter(p => (isAdmin || p.department === currentUser.role) && (p.status === 'Working on' || p.status === 'New Project')).length === 0 && (
+          {projects.filter(p => (isAdmin || p.department === currentUser.role) && (['Working on', 'New Project'].includes(p.status))).length === 0 && (
             <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '13px', fontStyle: 'italic', textAlign: 'center', width: '100%' }}>No projects currently active.</div>
           )}
         </div>
