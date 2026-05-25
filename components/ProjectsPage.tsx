@@ -123,11 +123,16 @@ export default function ProjectsPage() {
   // Filter projects based on the current view
   const displayProjects = projects.filter(p => {
     const isDeptMatch = isAdmin || p.department === currentUser.role;
+    if (!isDeptMatch) return false;
+
     const searchLower = searchQuery.toLowerCase();
     const isSearchMatch = !searchQuery || 
       p.projectName.toLowerCase().includes(searchLower) ||
       p.clientName.toLowerCase().includes(searchLower) ||
       p.projectNo.toLowerCase().includes(searchLower);
+
+    // If searching, we do an "Overall Search" (ignore date/tab)
+    if (searchQuery) return isSearchMatch;
 
     const isDateMatch = !filterDate || p.startDate === filterDate;
 
@@ -135,10 +140,10 @@ export default function ProjectsPage() {
       const isActiveStatus = ['Working on', 'Submited', 'on hold'].includes(p.status);
       // Working on projects ignore the date filter so they stay visible
       const matchesDateOrStatus = p.status === 'Working on' || isDateMatch;
-      return isDeptMatch && isActiveStatus && isSearchMatch && matchesDateOrStatus;
+      return isActiveStatus && matchesDateOrStatus;
     } else {
       if (selectedArchiveMonth) {
-        return isDeptMatch && p.startDate.startsWith(selectedArchiveMonth) && isSearchMatch;
+        return p.startDate.startsWith(selectedArchiveMonth);
       }
       return false;
     }
