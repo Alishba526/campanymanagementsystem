@@ -238,10 +238,17 @@ export default function AttendancePage() {
                                <span style={{ fontSize: '12px', color: '#dc2626', fontWeight: '900', background: '#fef2f2', padding: '4px 8px', borderRadius: '6px', border: '1px solid #ef444433' }}>Out: {formatTimeAMPM(rec.checkOut)}</span>
                             </td>
                             <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
-                               <span style={{ fontSize: '11px', color: '#f59e0b', fontWeight: '900', background: '#fffbeb', padding: '4px 8px', borderRadius: '6px', border: '1px solid #f59e0b33' }}>
-                                 {rec.breakIn ? `☕ ${formatTimeAMPM(rec.breakIn)}` : '—'} 
-                                 {rec.breakOut && rec.breakOut !== '--' ? ` 🔄 ${formatTimeAMPM(rec.breakOut)}` : ''}
-                               </span>
+                               {rec.breakIn ? (
+                                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                   <span style={{ fontSize: '11px', color: '#d97706', fontWeight: '900', background: '#fffbeb', padding: '3px 6px', borderRadius: '4px', border: '1px solid #f59e0b33' }}>In: {formatTimeAMPM(rec.breakIn)}</span>
+                                   {rec.breakOut && rec.breakOut !== '--' ? (
+                                     <>
+                                       <span style={{ color: 'var(--border)', fontWeight: 'bold' }}>—</span>
+                                       <span style={{ fontSize: '11px', color: '#b45309', fontWeight: '900', background: '#fff7ed', padding: '3px 6px', borderRadius: '4px', border: '1px solid #d9770633' }}>Out: {formatTimeAMPM(rec.breakOut)}</span>
+                                     </>
+                                   ) : null}
+                                 </div>
+                               ) : <span style={{ color: 'var(--text3)', fontSize: '11px', fontWeight: 'bold', opacity: 0.5 }}>— No Break —</span>}
                             </td>
                             <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
                               <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', background: `${getStatusColor(rec.status)}15`, color: getStatusColor(rec.status), border: `1px solid ${getStatusColor(rec.status)}33`, letterSpacing: '0.5px' }}>
