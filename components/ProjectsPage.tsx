@@ -214,7 +214,7 @@ export default function ProjectsPage() {
           >Active Ledger</button>
           <button 
             onClick={() => setViewTab('archives')}
-            style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
+            style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
           >Past Archives</button>
         </div>
 
@@ -253,7 +253,7 @@ export default function ProjectsPage() {
                  <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', fontSize: '11px' }}>← Back to Archives</button>
               ) : <div />}
               {viewTab === 'active' && (isAdmin || isManager) && (
-                <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ New Project</button>
+                <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ New Project</button>
               )}
             </div>
 
@@ -264,128 +264,56 @@ export default function ProjectsPage() {
                   <div style={{ fontSize: '24px' }}>📂</div>
                   <h3 style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text)' }}>Working Folder (Current Projects)</h3>
                   <div style={{ marginLeft: 'auto', background: 'var(--accent)', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold' }}>
-                    {projects.filter(p => p.status === 'Working on').length} ACTIVE
+                    {projects.filter(p => p.status === 'Working on' || p.status === 'New Project').length} ACTIVE
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
-                  {projects.filter(p => p.status === 'Working on').map(p => (
+                  {projects.filter(p => p.status === 'Working on' || p.status === 'New Project').map(p => (
                     <div key={p.id} onClick={() => handleEdit(p)} style={{ minWidth: '220px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '15px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'} onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}>
                       <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent)', marginBottom: '5px' }}>#{p.projectNo}</div>
                       <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--text)', marginBottom: '5px' }}>{p.projectName}</div>
                       <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 'bold' }}>👤 {p.clientName}</div>
                       <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                          <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--green)' }}>{formatCurrency(p.cost)}</span>
-                         <span style={{ fontSize: '9px', background: '#eff6ff', color: '#2563eb', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>WORKING</span>
+                         <span style={{ fontSize: '9px', background: p.status === 'New Project' ? '#f5f3ff' : '#eff6ff', color: p.status === 'New Project' ? '#7c3aed' : '#2563eb', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>{p.status.toUpperCase()}</span>
                       </div>
                     </div>
                   ))}
-                  {projects.filter(p => p.status === 'Working on').length === 0 && (
-                    <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '12px', fontStyle: 'italic' }}>No projects currently in "Working on" status.</div>
+                  {projects.filter(p => p.status === 'Working on' || p.status === 'New Project').length === 0 && (
+                    <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '12px', fontStyle: 'italic' }}>No projects currently in active status.</div>
                   )}
                 </div>
               </div>
             )}
 
-            {departments.map(dept => {
-              if (!isAdmin && currentUser.role !== dept.id) return null;
-              const deptProjects = displayProjects.filter(p => p.department === dept.id);
-              if (viewTab === 'archives' && deptProjects.length === 0) return null;
-
-              return (
-                <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
-                  <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'All Ongoing Work' : 'Archive'}
-                    </h3>
-                  </div>
-
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
-                      <thead>
-                        <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>No</th>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Project Details</th>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Client</th>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Financials</th>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Timeline</th>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Manager</th>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Status</th>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {deptProjects.map(p => (
-                          <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.1s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                            <td style={{ padding: '6px 10px', fontSize: '12px', fontWeight: 'bold', color: 'var(--accent)', whiteSpace: 'nowrap' }}>{p.projectNo || '—'}</td>
-                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                              <div style={{ fontSize: '12px', fontWeight: '800', color: '#4338ca', background: '#eef2ff', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', border: '1px solid #c7d2fe' }}>{p.projectName}</div>
-                              <div style={{ fontSize: '10px', color: '#4338ca', fontWeight: '800', marginTop: '4px', textTransform: 'uppercase' }}>Staff: {p.employeeName || '—'}</div>
-                            </td>
-                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                              <div style={{ fontSize: '12px', fontWeight: '800', color: '#7c3aed', background: '#f5f3ff', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', border: '1px solid #ddd6fe' }}>{p.clientName}</div>
-                            </td>
-                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                              <div style={{ fontSize: '13px', fontWeight: '900', color: '#059669' }}>{formatCurrency(p.cost || p.totalBudget)}</div>
-                              <div style={{ fontSize: '9px', color: p.paymentStatus === 'not_received' ? '#dc2626' : '#4f46e5', fontWeight: '900', textTransform: 'uppercase' }}>
-                                {p.paymentStatus === 'upfront_50' ? '50% Upfront' : 
-                                 p.paymentStatus === 'remaining_50' ? '50% Remaining' : 
-                                 p.paymentStatus === 'not_received' ? 'Not Received' :
-                                 '100% Paid'}
-                              </div>
-                            </td>
-                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                              <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: '600' }}>S: {formatDateShort(p.startDate)}</div>
-                              <div style={{ fontSize: '11px', color: '#dc2626', fontWeight: '900' }}>D: {formatDateShort(p.deadline)}</div>
-                            </td>
-                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                              <div style={{ fontSize: '12px', color: '#4338ca', fontWeight: '900' }}>{p.managerName}</div>
-                              <div style={{ fontSize: '9px', color: '#4f46e5', textTransform: 'uppercase', fontWeight: '900' }}>{p.department}</div>
-                            </td>
-                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                              <select 
-                                value={p.status} 
-                                onChange={(e) => updateProject(p.id, { status: e.target.value as any })}
-                                style={{ 
-                                  fontSize: '9px', 
-                                  padding: '4px 8px', 
-                                  borderRadius: '10px', 
-                                  background: p.status === 'Submited' ? '#ecfdf5' : 
-                                             p.status === 'Working on' ? '#eff6ff' :
-                                             p.status === 'New Project' ? '#f5f3ff' :
-                                             p.status === 'on hold' ? '#fff7ed' : '#f3f4f6', 
-                                  color: p.status === 'Submited' ? '#059669' : 
-                                         p.status === 'Working on' ? '#2563eb' :
-                                         p.status === 'New Project' ? '#7c3aed' :
-                                         p.status === 'on hold' ? '#ea580c' : '#4b5563', 
-                                  fontWeight: '900', 
-                                  textTransform: 'uppercase', 
-                                  border: '1px solid currentColor',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                <option value="Working on">Working on</option>
-                                <option value="New Project">New Project</option>
-                                <option value="Submited">Submited</option>
-                                <option value="Close">Close</option>
-                                <option value="on hold">on hold</option>
-                              </select>
-                            </td>
-                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => handleEdit(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
-                                {(isAdmin || p.managerEmail === currentUser.email) && (
-                                  <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+            {/* Unified Search View or Departmental View */}
+            {searchQuery ? (
+              <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
+                <div style={{ marginBottom: '15px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: 'var(--accent)' }}>🔍</span> Global Overall Search (Across All Sectors)
+                  </h3>
                 </div>
-              );
-            })}
+                <ProjectTable projects={displayProjects} formatCurrency={formatCurrency} formatDateShort={formatDateShort} updateProject={updateProject} handleEdit={handleEdit} handleDelete={handleDelete} isAdmin={isAdmin} currentUser={currentUser} />
+              </div>
+            ) : (
+              departments.map(dept => {
+                if (!isAdmin && currentUser.role !== dept.id) return null;
+                const deptProjects = displayProjects.filter(p => p.department === dept.id);
+                if (viewTab === 'archives' && deptProjects.length === 0) return null;
+
+                return (
+                  <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
+                    <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                      <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'Ongoing Work' : 'Archive'}
+                      </h3>
+                    </div>
+                    <ProjectTable projects={deptProjects} formatCurrency={formatCurrency} formatDateShort={formatDateShort} updateProject={updateProject} handleEdit={handleEdit} handleDelete={handleDelete} isAdmin={isAdmin} currentUser={currentUser} />
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
       </div>
@@ -504,6 +432,98 @@ export default function ProjectsPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ProjectTable({ projects, formatCurrency, formatDateShort, updateProject, handleEdit, handleDelete, isAdmin, currentUser }: any) {
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1000px' }}>
+        <thead>
+          <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+            <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>No</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Project Details</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Client</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Financials</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Timeline</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Manager</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Status</th>
+            <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {projects.map((p: Project) => (
+            <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.1s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+              <td style={{ padding: '6px 10px', fontSize: '12px', fontWeight: 'bold', color: 'var(--accent)', whiteSpace: 'nowrap' }}>{p.projectNo || '—'}</td>
+              <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '12px', fontWeight: '800', color: '#4338ca', background: '#eef2ff', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', border: '1px solid #c7d2fe' }}>{p.projectName}</div>
+                <div style={{ fontSize: '10px', color: '#4338ca', fontWeight: '800', marginTop: '4px', textTransform: 'uppercase' }}>Staff: {p.employeeName || '—'}</div>
+              </td>
+              <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '12px', fontWeight: '800', color: '#7c3aed', background: '#f5f3ff', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', border: '1px solid #ddd6fe' }}>{p.clientName}</div>
+              </td>
+              <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '13px', fontWeight: '900', color: '#059669' }}>{formatCurrency(p.cost || p.totalBudget)}</div>
+                <div style={{ fontSize: '9px', color: p.paymentStatus === 'not_received' ? '#dc2626' : '#4f46e5', fontWeight: '900', textTransform: 'uppercase' }}>
+                  {p.paymentStatus === 'upfront_50' ? '50% Upfront' : 
+                   p.paymentStatus === 'remaining_50' ? '50% Remaining' : 
+                   p.paymentStatus === 'not_received' ? 'Not Received' :
+                   '100% Paid'}
+                </div>
+              </td>
+              <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text2)', fontWeight: '600' }}>S: {formatDateShort(p.startDate)}</div>
+                <div style={{ fontSize: '11px', color: '#dc2626', fontWeight: '900' }}>D: {formatDateShort(p.deadline)}</div>
+              </td>
+              <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '12px', color: '#4338ca', fontWeight: '900' }}>{p.managerName}</div>
+                <div style={{ fontSize: '9px', color: '#4f46e5', textTransform: 'uppercase', fontWeight: '900' }}>{p.department}</div>
+              </td>
+              <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                <select 
+                  value={p.status} 
+                  onChange={(e) => updateProject(p.id, { status: e.target.value as any })}
+                  style={{ 
+                    fontSize: '9px', 
+                    padding: '4px 8px', 
+                    borderRadius: '10px', 
+                    background: p.status === 'Submited' ? '#ecfdf5' : 
+                               p.status === 'Working on' ? '#eff6ff' :
+                               p.status === 'New Project' ? '#f5f3ff' :
+                               p.status === 'on hold' ? '#fff7ed' : '#f3f4f6', 
+                    color: p.status === 'Submited' ? '#059669' : 
+                           p.status === 'Working on' ? '#2563eb' :
+                           p.status === 'New Project' ? '#7c3aed' :
+                           p.status === 'on hold' ? '#ea580c' : '#4b5563', 
+                    fontWeight: '900', 
+                    textTransform: 'uppercase', 
+                    border: '1px solid currentColor',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="Working on">Working on</option>
+                  <option value="New Project">New Project</option>
+                  <option value="Submited">Submited</option>
+                  <option value="Close">Close</option>
+                  <option value="on hold">on hold</option>
+                </select>
+              </td>
+              <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => handleEdit(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
+                  {(isAdmin || p.managerEmail === currentUser.email) && (
+                    <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+          {projects.length === 0 && (
+            <tr><td colSpan={8} style={{ padding: '20px', textAlign: 'center', color: 'var(--text3)', fontSize: '12px' }}>No matching records found.</td></tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
