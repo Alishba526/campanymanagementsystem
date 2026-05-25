@@ -3,30 +3,25 @@
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import jsPDF from 'jspdf';
+import { getCurrentDate } from '@/lib/dateUtils';
+import Swal from 'sweetalert2';
 
 export default function PayrollPage() {
   const { currentUser, employees, tasks, attendance } = useApp();
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   if (!currentUser || currentUser.role !== 'admin') {
     return (
-      <div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
-          <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
-          <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-          <p>Your role does not have permission to view this data.</p>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
+        <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
+        <p>Payroll management is reserved for System Admin only.</p>
       </div>
     );
   }
 
-  const totalPayroll = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
-  const avgSalary = employees.length > 0 ? Math.round(totalPayroll / employees.length) : 0;
-
-  const formatCurrency = (amount: number) => {
-    if (amount === undefined || amount === null) return 'Rs. 0';
-    return `Rs. ${amount.toLocaleString()}`;
-  };
+  const formatCurrency = (amount: number) => `Rs. ${(amount || 0).toLocaleString()}`;
 
   const getAvgScore = (empId: string) => {
     const empTasks = tasks.filter(t => t.employeeId === empId);
@@ -49,19 +44,25 @@ export default function PayrollPage() {
 
   const getLatePenalty = (empId: string, salary: number) => {
     const lateDays = attendance.filter(a => a.employeeId === empId && a.status === 'late').length;
-    // Penalty: Rs. 500 per late day
     return lateDays * 500;
   };
 
   const getOvertimePay = (empId: string, salary: number) => {
     const totalOvertime = attendance.filter(a => a.employeeId === empId).reduce((sum, a) => sum + (a.overtime || 0), 0);
-    // Overtime: (Salary / 176) * 1.5 per hour
     return Math.round((salary / 176) * 1.5 * totalOvertime);
   };
 
-  const viewPayslip = (empId: string) => {
-    setSelectedEmployee(empId);
-  };
+  // Universal Search Filter
+  const filteredEmployees = employees.filter(emp => {
+    const searchLower = searchQuery.toLowerCase();
+    return !searchQuery || 
+      emp.name.toLowerCase().includes(searchLower) ||
+      emp.id.toLowerCase().includes(searchLower) ||
+      emp.position?.toLowerCase().includes(searchLower);
+  });
+
+  const totalPayroll = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
+  const avgSalary = employees.length > 0 ? Math.round(totalPayroll / employees.length) : 0;
 
   const selectedEmp = employees.find(e => e.id === selectedEmployee);
   const selectedAvgScore = selectedEmp ? getAvgScore(selectedEmp.id) : 0;
@@ -72,146 +73,123 @@ export default function PayrollPage() {
   const selectedDeductions = selectedEmp ? getDeductions(selectedEmp.id, selectedEmp.salary) : 0;
   const selectedNetPay = selectedEmp ? selectedEmp.salary + selectedBonus + selectedOvertimePay - selectedDeductions - selectedLatePenalty : 0;
 
-  const scoreColor = (score: number) => {
-    if (score >= 80) return '#22c55e';
-    if (score >= 60) return '#f59e0b';
-    return '#ef4444';
-  };
-
   const downloadPayslipPDF = () => {
     if (!selectedEmp) return;
-    
     const doc = new jsPDF();
     doc.setFontSize(22);
     doc.setTextColor(124, 58, 237);
     doc.text('GROWZIX - Salary Slip', 105, 30, { align: 'center' });
-    
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text('Digital Marketing & Commerce Solutions', 105, 38, { align: 'center' });
-    
     doc.setDrawColor(200);
     doc.line(20, 45, 190, 45);
-    
     doc.setFontSize(12);
     doc.setTextColor(0);
     doc.text(`Employee Name: ${selectedEmp.name}`, 20, 60);
     doc.text(`Employee ID: ${selectedEmp.id}`, 20, 68);
     doc.text(`Designation: ${selectedEmp.position}`, 20, 76);
-    doc.text(`Month: May 2026`, 140, 60);
-    
+    doc.text(`Month: ${new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}`, 140, 60);
     doc.line(20, 85, 190, 85);
-    
     doc.text('Description', 20, 95);
     doc.text('Amount (PKR Rs.)', 140, 95);
-    
     doc.text('Basic Salary', 20, 110);
     doc.text(selectedEmp.salary.toLocaleString(), 140, 110);
-    
     doc.text('Performance Bonus', 20, 120);
     doc.text(selectedBonus.toLocaleString(), 140, 120);
-
     doc.text('Overtime Pay', 20, 130);
     doc.text(selectedOvertimePay.toLocaleString(), 140, 130);
-    
     doc.setTextColor(220, 0, 0);
     doc.text(`Deductions (${selectedAbsents} absents)`, 20, 140);
     doc.text(`- ${selectedDeductions.toLocaleString()}`, 140, 140);
-
     doc.text(`Late Penalty`, 20, 150);
     doc.text(`- ${selectedLatePenalty.toLocaleString()}`, 140, 150);
-    
     doc.line(20, 160, 190, 160);
     doc.setFontSize(14);
     doc.setTextColor(5, 150, 105);
     doc.text('Net Payable Salary', 20, 175);
     doc.text(selectedNetPay.toLocaleString(), 140, 175);
-    
     doc.setFontSize(10);
     doc.setTextColor(150);
     doc.text('This is a computer generated document and does not require a signature.', 105, 180, { align: 'center' });
-    
-    doc.save(`Payslip_${selectedEmp.name}_May2026.pdf`);
+    doc.save(`Payslip_${selectedEmp.name}.pdf`);
   };
 
   return (
-    <div>
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '22px' }}>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            💳
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      
+      {/* Premium Header */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>💳</div>
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Payroll Master Engine</h2>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Live Tracking: {filteredEmployees.length} staff on payroll</div>
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(totalPayroll)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Monthly Payroll</div>
         </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            👥
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search employee..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', width: '200px', fontSize: '12px' }}
+            />
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{employees.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Employees on Payroll</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            📊
+          <div style={{ padding: '8px 15px', background: 'var(--bg3)', borderRadius: '10px', fontSize: '12px', fontWeight: 'bold', border: '1px solid var(--border)' }}>
+             📅 {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(avgSalary)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Avg Salary</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--accentbg)', color: 'var(--accent)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            📄
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{employees.length}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Slips Ready</div>
         </div>
       </div>
 
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
+        <StatCard icon="💰" label="Total Payroll" value={formatCurrency(totalPayroll)} color="#10b981" />
+        <StatCard icon="👥" label="Staff Count" value={employees.length.toString()} color="#2563eb" />
+        <StatCard icon="📊" label="Avg Salary" value={formatCurrency(avgSalary)} color="#f59e0b" />
+        <StatCard icon="📄" label="Slips Active" value={employees.length.toString()} color="var(--accent)" />
+      </div>
+
       {/* Payroll Table */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
-            <span style={{ color: 'var(--accent)' }}>💳</span>
-            Payroll — May 2026
-          </div>
-        </div>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', marginBottom: '15px', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
+          📋 Monthly Salary Ledger
+        </h3>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Employee</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Position</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Base Salary</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Bonus</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Deductions</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Net Pay</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Slip</th>
+              <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Employee</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Position</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Base Salary</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Bonus</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Deductions</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Net Pay</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Slip</th>
               </tr>
             </thead>
             <tbody>
-              {employees.map(emp => {
+              {filteredEmployees.map(emp => {
                 const salary = emp.salary || 0;
                 const bonus = getBonus(emp.id, salary);
                 const deductions = getDeductions(emp.id, salary);
                 const netPay = salary + bonus - deductions;
                 return (
-                  <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)', fontWeight: 'normal' }}>{emp.name}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{emp.position}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text2)' }}>{formatCurrency(salary)}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--green)' }}>{bonus ? formatCurrency(bonus) : '—'}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--red)' }}>{deductions ? formatCurrency(deductions) : '—'}</td>
-                    <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--amber)', fontWeight: 'normal' }}>{formatCurrency(netPay)}</td>
-                    <td style={{ padding: '10px 16px' }}>
-                      <button
-                        onClick={() => viewPayslip(emp.id)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-                      >
-                        📄 View
-                      </button>
+                  <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.1s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                    <td style={{ padding: '10px 15px' }}>
+                       <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text)' }}>{emp.name}</div>
+                       <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 'bold' }}>{emp.id}</div>
+                    </td>
+                    <td style={{ padding: '10px 15px', fontSize: '12px', color: 'var(--text2)', fontWeight: '600' }}>{emp.position}</td>
+                    <td style={{ padding: '10px 15px', fontSize: '12px', color: '#059669', fontWeight: '900' }}>{formatCurrency(salary)}</td>
+                    <td style={{ padding: '10px 15px', fontSize: '12px', color: '#059669', fontWeight: '900' }}>{bonus ? `+ ${formatCurrency(bonus)}` : '—'}</td>
+                    <td style={{ padding: '10px 15px', fontSize: '12px', color: '#dc2626', fontWeight: '900' }}>{deductions ? `- ${formatCurrency(deductions)}` : '—'}</td>
+                    <td style={{ padding: '10px 15px', fontSize: '13px', color: 'var(--text)', fontWeight: '900' }}>{formatCurrency(netPay)}</td>
+                    <td style={{ padding: '10px 15px' }}>
+                      <button onClick={() => setSelectedEmployee(emp.id)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', padding: '5px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>📄 Slip</button>
                     </td>
                   </tr>
                 );
@@ -223,86 +201,59 @@ export default function PayrollPage() {
 
       {/* Payslip Modal */}
       {selectedEmployee && selectedEmp && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px' }}>
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'normal', color: '#000' }}>Salary Slip — {selectedEmp.name}</div>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', width: '90%', maxWidth: '500px', overflow: 'hidden' }}>
+            <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)' }}>Salary Slip — {selectedEmp.name}</div>
               <button onClick={() => setSelectedEmployee(null)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
             </div>
-            <div style={{ padding: '24px' }}>
-              <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '24px' }}>
-                <div style={{ textAlign: 'center', paddingBottom: '16px', marginBottom: '16px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--accent)' }}>🧠 GROWZIX</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text2)' }}>Digital Marketing & Commerce</div>
-                  <div style={{ fontSize: '13px', fontWeight: 'normal', marginTop: '8px', color: 'var(--text)' }}>SALARY SLIP — MAY 2026</div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Employee</span>
-                    <span style={{ color: 'var(--text)' }}>{selectedEmp.name}</span>
+            <div style={{ padding: '25px' }}>
+               <div style={{ background: 'var(--bg3)', padding: '25px', borderRadius: '20px', border: '1px solid var(--border)' }}>
+                  <div style={{ textAlign: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '15px', marginBottom: '15px' }}>
+                     <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--accent)' }}>🚀 GROWZIX PRO</div>
+                     <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold', textTransform: 'uppercase' }}>Salary Statement — May 2026</div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>ID</span>
-                    <span style={{ color: 'var(--text)' }}>{selectedEmp.id}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <PayslipRow label="Employee" value={selectedEmp.name} />
+                    <PayslipRow label="Designation" value={selectedEmp.position} />
+                    <PayslipRow label="Basic Salary" value={formatCurrency(selectedEmp.salary)} />
+                    <PayslipRow label="Performance Bonus" value={formatCurrency(selectedBonus)} color="#059669" />
+                    <PayslipRow label="Overtime Pay" value={formatCurrency(selectedOvertimePay)} color="#059669" />
+                    <PayslipRow label="Late Penalty" value={`- ${formatCurrency(selectedLatePenalty)}`} color="#dc2626" />
+                    <PayslipRow label="Absence Deductions" value={`- ${formatCurrency(selectedDeductions)}`} color="#dc2626" />
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '2px dashed var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                       <span style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)' }}>Net Payable</span>
+                       <span style={{ fontSize: '18px', fontWeight: '900', color: '#059669' }}>{formatCurrency(selectedNetPay)}</span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Designation</span>
-                    <span style={{ color: 'var(--text)' }}>{selectedEmp.position}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Department</span>
-                    <span style={{ color: 'var(--text)', textTransform: 'capitalize' }}>{selectedEmp.department}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Performance Score</span>
-                    <span style={{ color: scoreColor(selectedAvgScore) }}>{selectedAvgScore}/100</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Basic Salary</span>
-                    <span style={{ color: 'var(--text)' }}>{formatCurrency(selectedEmp.salary)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Performance Bonus</span>
-                    <span style={{ color: 'var(--green)' }}>{selectedBonus ? formatCurrency(selectedBonus) : 'NIL'}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Overtime Pay</span>
-                    <span style={{ color: 'var(--green)' }}>{selectedOvertimePay ? formatCurrency(selectedOvertimePay) : 'NIL'}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Absent Deductions ({selectedAbsents} days)</span>
-                    <span style={{ color: 'var(--red)' }}>{selectedDeductions ? formatCurrency(selectedDeductions) : 'NIL'}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '13px' }}>
-                    <span style={{ color: 'var(--text2)' }}>Late Penalty</span>
-                    <span style={{ color: 'var(--red)' }}>{selectedLatePenalty ? formatCurrency(selectedLatePenalty) : 'NIL'}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: '16px', fontWeight: 'normal' }}>
-                    <span style={{ color: 'var(--green)' }}>Net Pay</span>
-                    <span style={{ color: 'var(--green)' }}>{formatCurrency(selectedNetPay)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div style={{ padding: '16px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button
-                onClick={downloadPayslipPDF}
-                style={{ background: 'var(--green)', color: '#fff', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: 'none', transition: '.15s' }}
-              >
-                📥 Download PDF
-              </button>
-              <button
-                onClick={() => setSelectedEmployee(null)}
-                style={{ background: 'var(--accent)', color: '#fff', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: 'none', transition: '.15s' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
-              >
-                Close
-              </button>
+               </div>
+               <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                  <button onClick={downloadPayslipPDF} style={{ flex: 1, background: '#059669', color: '#fff', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>📥 Download PDF</button>
+                  <button onClick={() => setSelectedEmployee(null)} style={{ flex: 1, background: 'var(--bg3)', color: 'var(--text)', border: '1px solid var(--border)', padding: '12px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>Close</button>
+               </div>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, color }: any) {
+  return (
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px', boxShadow: 'var(--shadow)' }}>
+       <div style={{ width: '36px', height: '36px', background: `${color}15`, color: color, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '10px' }}>{icon}</div>
+       <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text)' }}>{value}</div>
+       <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold', textTransform: 'uppercase' }}>{label}</div>
+    </div>
+  );
+}
+
+function PayslipRow({ label, value, color }: any) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+      <span style={{ color: 'var(--text3)', fontWeight: 'bold' }}>{label}</span>
+      <span style={{ color: color || 'var(--text)', fontWeight: '900' }}>{value}</span>
     </div>
   );
 }
