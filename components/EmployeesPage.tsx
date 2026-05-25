@@ -132,13 +132,13 @@ export default function EmployeesPage() {
            role: 'employee'
          });
          
-         await fetchData(); // Sync global state
-         
          Swal.fire({
            title: 'Access Granted!',
            html: `Employee can now login using:<br><b>ID:</b> ${username}<br><b>Pass:</b> ${password}`,
            icon: 'success'
          });
+
+         fetchData(); // Sync in background
        }
      }
   };
