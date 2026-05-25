@@ -50,7 +50,14 @@ export default function EmployeesPage() {
            showCancelButton: true,
            confirmButtonColor: 'var(--accent)',
          });
+         
          if (newPassword) {
+           // Validation: Unique Password check for update
+           if (users.some((u: any) => u.id !== existingUser.id && u.password === newPassword)) {
+             Swal.fire('Error', 'This password is already in use by another user.', 'error');
+             return;
+           }
+
            await actions.updateUserAction(existingUser.id, { password: newPassword });
            await fetchData(); // Force refresh to sync global state
            Swal.fire('Updated', 'Password changed successfully', 'success');
@@ -100,8 +107,15 @@ export default function EmployeesPage() {
        if (formValues && formValues[0] && formValues[1]) {
          const [username, password] = formValues;
          
+         // Validation: Unique User ID
          if (users.some((u: any) => u.email === username)) {
            Swal.fire('Error', 'This User ID is already taken. Please use a unique ID.', 'error');
+           return;
+         }
+
+         // Validation: Unique Password (per user request)
+         if (users.some((u: any) => u.password === password)) {
+           Swal.fire('Error', 'This password is already in use by another user. Please choose a unique password.', 'error');
            return;
          }
 
