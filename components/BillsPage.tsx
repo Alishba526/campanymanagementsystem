@@ -7,7 +7,7 @@ import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
 import Swal from 'sweetalert2';
 
 export default function BillsPage() {
-  const { currentUser, bills, addBill, updateBill, deleteBill } = useApp();
+  const { currentUser, bills, addBill, updateBill, deleteBill, fetchData } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
   const [formData, setFormData] = useState<Partial<Bill>>({});
@@ -15,6 +15,7 @@ export default function BillsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewTab, setViewTab] = useState<'active' | 'archives'>('active');
   const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string | null>(null);
+  const [filterDate, setFilterDate] = useState(getCurrentDate());
 
   if (!currentUser || currentUser.role !== 'admin') {
     return (

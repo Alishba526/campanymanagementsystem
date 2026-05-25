@@ -7,7 +7,7 @@ import { formatDateShort, getCurrentDate, formatTimeAMPM } from '@/lib/dateUtils
 import Swal from 'sweetalert2';
 
 export default function AttendancePage() {
-  const { currentUser, employees, attendance, addAttendance, updateAttendance, deleteAttendance } = useApp();
+  const { currentUser, employees, attendance, addAttendance, updateAttendance, deleteAttendance, fetchData } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [formData, setFormData] = useState<Partial<AttendanceRecord>>({});
