@@ -49,12 +49,15 @@ export default function BroadcastPage() {
       ann.title.toLowerCase().includes(searchLower) || 
       ann.content.toLowerCase().includes(searchLower);
 
+    // If searching, do a Universal Search across all dates/archives
+    if (searchQuery) return isSearchMatch;
+
     const isDateMatch = !filterDate || annDate === filterDate;
 
     if (viewTab === 'active') {
-      return annMonth === currentMonthPrefix && isSearchMatch && isDateMatch;
+      return annMonth === currentMonthPrefix && isDateMatch;
     } else {
-      return annMonth === selectedArchiveMonth && isSearchMatch;
+      return annMonth === selectedArchiveMonth;
     }
   });
 

@@ -111,11 +111,16 @@ export default function BillsPage() {
       bill.billType.toLowerCase().includes(searchLower) || 
       bill.description.toLowerCase().includes(searchLower);
 
+    // If searching, do a Universal Search across all dates/archives
+    if (searchQuery) return isSearchMatch;
+
+    const isDateMatch = !filterDate || bill.date === filterDate;
+
     if (viewTab === 'active') {
-      return bill.date.startsWith(currentMonthPrefix) && isSearchMatch;
+      return bill.date.startsWith(currentMonthPrefix) && isDateMatch;
     } else {
       if (selectedArchiveMonth) {
-        return bill.date.startsWith(selectedArchiveMonth) && isSearchMatch;
+        return bill.date.startsWith(selectedArchiveMonth);
       }
       return false;
     }

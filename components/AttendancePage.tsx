@@ -101,21 +101,25 @@ export default function AttendancePage() {
 
   // Filter Attendance
   const displayAttendance = attendance.filter(a => {
+    const isDeptMatch = isAdmin || employees.find(e => e.id === a.employeeId)?.department === currentUser.role;
+    if (!isDeptMatch) return false;
+
     const searchLower = searchQuery.toLowerCase();
     const isSearchMatch = !searchQuery || 
       a.employeeName.toLowerCase().includes(searchLower) ||
       a.employeeId.toLowerCase().includes(searchLower) ||
       a.status.toLowerCase().includes(searchLower);
 
-    const isDeptMatch = isAdmin || employees.find(e => e.id === a.employeeId)?.department === currentUser.role;
+    // If searching, do a Universal Search across all dates/archives
+    if (searchQuery) return isSearchMatch;
 
     if (viewTab === 'active') {
       const isCurrentMonth = a.date.startsWith(currentMonthPrefix);
       const isSpecificDate = a.date === filterDate;
-      return isDeptMatch && (isSpecificDate || isCurrentMonth) && isSearchMatch;
+      return (isSpecificDate || isCurrentMonth);
     } else {
       if (selectedArchiveMonth) {
-        return isDeptMatch && a.date.startsWith(selectedArchiveMonth) && isSearchMatch;
+        return a.date.startsWith(selectedArchiveMonth);
       }
       return false;
     }

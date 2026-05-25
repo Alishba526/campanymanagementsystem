@@ -94,13 +94,16 @@ export default function ExpensesPage() {
       exp.description.toLowerCase().includes(searchLower) || 
       exp.category.toLowerCase().includes(searchLower);
 
+    // If searching, do a Universal Search across all dates/archives
+    if (searchQuery) return isSearchMatch;
+
     const isDateMatch = !filterDate || exp.date === filterDate;
 
     if (viewTab === 'active') {
-      return exp.date.startsWith(currentMonthPrefix) && isSearchMatch && isDateMatch;
+      return exp.date.startsWith(currentMonthPrefix) && isDateMatch;
     } else {
       if (selectedArchiveMonth) {
-        return exp.date.startsWith(selectedArchiveMonth) && isSearchMatch;
+        return exp.date.startsWith(selectedArchiveMonth);
       }
       return false;
     }

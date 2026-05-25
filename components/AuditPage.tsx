@@ -56,6 +56,9 @@ export default function AuditPage() {
       log.user.toLowerCase().includes(searchLower) || 
       log.action.toLowerCase().includes(searchLower);
 
+    // If searching, do a Universal Search across all dates/archives
+    if (searchQuery) return isSearchMatch;
+
     let logMonth = '';
     let logDate = '';
     if (log.timestamp.includes('/')) {
@@ -70,9 +73,9 @@ export default function AuditPage() {
     const isDateMatch = !filterDate || logDate === filterDate;
 
     if (viewTab === 'active') {
-      return logMonth === currentMonthPrefix && isSearchMatch && isDateMatch;
+      return logMonth === currentMonthPrefix && isDateMatch;
     } else {
-      return logMonth === selectedArchiveMonth && isSearchMatch;
+      return logMonth === selectedArchiveMonth;
     }
   });
 

@@ -92,13 +92,16 @@ export default function FinancePage() {
       inc.client.toLowerCase().includes(searchLower) || 
       inc.project.toLowerCase().includes(searchLower);
 
+    // If searching, do a Universal Search across all dates/archives
+    if (searchQuery) return isSearchMatch;
+
     const isDateMatch = !filterDate || inc.date === filterDate;
 
     if (viewTab === 'active') {
-      return inc.date.startsWith(currentMonthPrefix) && isSearchMatch && isDateMatch;
+      return inc.date.startsWith(currentMonthPrefix) && isDateMatch;
     } else {
       if (selectedArchiveMonth) {
-        return inc.date.startsWith(selectedArchiveMonth) && isSearchMatch;
+        return inc.date.startsWith(selectedArchiveMonth);
       }
       return false;
     }

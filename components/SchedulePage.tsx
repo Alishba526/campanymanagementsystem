@@ -144,16 +144,20 @@ export default function SchedulePage() {
   const displaySchedules = schedules.filter(sch => {
     const emp = employees.find(e => e.id === sch.employeeId);
     const isDeptMatch = isAdmin || emp?.department === currentUser.role;
+    if (!isDeptMatch) return false;
 
     const searchLower = searchQuery.toLowerCase();
     const isSearchMatch = !searchQuery || 
       sch.employeeName.toLowerCase().includes(searchLower) ||
       sch.employeeId.toLowerCase().includes(searchLower);
 
+    // If searching, do a Universal Search across all months/archives
+    if (searchQuery) return isSearchMatch;
+
     if (viewTab === 'active') {
-      return isDeptMatch && sch.month === currentMonthPrefix && isSearchMatch;
+      return sch.month === currentMonthPrefix;
     } else {
-      return isDeptMatch && sch.month === selectedArchiveMonth && isSearchMatch;
+      return sch.month === selectedArchiveMonth;
     }
   });
 
