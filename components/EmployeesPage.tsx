@@ -206,6 +206,11 @@ export default function EmployeesPage() {
 
     // @ts-ignore
     const { portalUsername, portalPassword, ...empData } = formData;
+    
+    // SECURITY: If not admin, ensure salary cannot be modified via this form
+    if (!isAdmin) {
+       delete empData.salary;
+    }
 
     try {
       if (editingEmployee) {
@@ -402,7 +407,7 @@ export default function EmployeesPage() {
                              {(isAdmin || (currentUser.role === emp.department)) && (
                                 <button onClick={() => handleManageAccessActual(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🔑</button>
                              )}
-                             {(isAdmin || (currentUser.role === emp.department)) && <button onClick={() => handleUpdateSalary(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>💰</button>}
+                             {isAdmin && <button onClick={() => handleUpdateSalary(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>💰</button>}
                              {(isAdmin || (currentUser.role === emp.department)) && <button onClick={() => handleDelete(emp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>}
                           </div>
                         </td>

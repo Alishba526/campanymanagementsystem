@@ -20,6 +20,16 @@ export default function ExpensesPage() {
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
 
+  if (!isAdmin) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
+        <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
+        <p>Expense tracking is secured for System Admin only.</p>
+      </div>
+    );
+  }
+
   // Archive Grouping
   const currentMonthPrefix = getCurrentDate().substring(0, 7);
   const archiveGroups = expenses.reduce((groups: Record<string, Expense[]>, exp) => {
