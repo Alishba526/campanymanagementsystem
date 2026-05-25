@@ -248,8 +248,20 @@ export default function EmployeePortal() {
                   {todayRecord.checkOut === '--' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                        <button onClick={() => handleBreak('in')} disabled={isProcessing || !!(todayRecord.breakIn && todayRecord.breakOut === '--')} style={{ background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!!todayRecord.breakIn && todayRecord.breakOut === '--') ? 0.5 : 1 }}>☕ Break Start</button>
-                        <button onClick={() => handleBreak('out')} disabled={isProcessing || !!(!todayRecord.breakIn || todayRecord.breakOut !== '--')} style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!todayRecord.breakIn || todayRecord.breakOut !== '--') ? 0.5 : 1 }}>🔄 Break End</button>
+                        <button 
+                          onClick={() => handleBreak('in')} 
+                          disabled={isProcessing || !!todayRecord.breakIn} 
+                          style={{ background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: !!todayRecord.breakIn ? 0.5 : 1 }}
+                        >
+                          ☕ Break Start
+                        </button>
+                        <button 
+                          onClick={() => handleBreak('out')} 
+                          disabled={isProcessing || !todayRecord.breakIn || (todayRecord.breakOut !== '' && todayRecord.breakOut !== '--')} 
+                          style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!todayRecord.breakIn || (todayRecord.breakOut !== '' && todayRecord.breakOut !== '--')) ? 0.5 : 1 }}
+                        >
+                          🔄 Break End
+                        </button>
                       </div>
                       {todayRecord.breakIn && todayRecord.breakOut === '--' && (
                         <div style={{ fontSize: '12px', color: '#f59e0b', fontWeight: '900', animation: 'pulse 2s infinite' }}>⚠️ Currently on Break</div>

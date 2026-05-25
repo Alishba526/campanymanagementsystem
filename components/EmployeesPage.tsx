@@ -24,6 +24,12 @@ export default function EmployeesPage() {
      // Find user by either email or a specific format like "EMP_ID"
      const existingUser = users.find((u: any) => u.email === emp.id || u.email === emp.email);
 
+     // Restriction: Managers' credentials only manageable by Admin
+     if (existingUser && existingUser.role !== 'employee' && !isAdmin) {
+        Swal.fire('Restricted', 'Manager credentials can only be updated by the System Admin.', 'warning');
+        return;
+     }
+
      if (existingUser) {
        const result = await Swal.fire({
          title: `Access Control: ${emp.name}`,
@@ -166,18 +172,29 @@ export default function EmployeesPage() {
       joinDate: getCurrentDate(),
       monthlyHours: 176,
       salary: 0,
-      department: deptId
+      department: deptId,
+      // @ts-ignore
+      portalUsername: '',
+      // @ts-ignore
+      portalPassword: ''
     });
     setShowModal(true);
   };
 
   const handleEdit = (emp: Employee) => {
+    const user = users.find(u => u.email === emp.id || u.email === emp.email);
     setEditingEmployee(emp);
-    setFormData(emp);
+    setFormData({
+      ...emp,
+      // @ts-ignore
+      portalUsername: user?.email || '',
+      // @ts-ignore
+      portalPassword: user?.password || ''
+    });
     setShowModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.id) {
       Swal.fire('Error', 'Name and Employee ID are required!', 'error');
       return;
@@ -187,14 +204,63 @@ export default function EmployeesPage() {
       return;
     }
 
-    if (editingEmployee) {
-      updateEmployee(editingEmployee.id, formData);
-      Swal.fire('Updated', 'Profile updated successfully', 'success');
-    } else {
-      addEmployee(formData as Employee);
-      Swal.fire('Added', 'Employee registered successfully', 'success');
+    // @ts-ignore
+    const { portalUsername, portalPassword, ...empData } = formData;
+
+    try {
+      if (editingEmployee) {
+        await updateEmployee(editingEmployee.id, empData);
+        
+        // Handle User Credential Update if provided
+        if (portalUsername && portalPassword) {
+          const existingUser = users.find(u => u.email === (editingEmployee.id || editingEmployee.email) || u.email === portalUsername);
+          
+          if (existingUser) {
+             // Restriction: Managers' credentials only manageable by Admin
+             if (existingUser.role !== 'employee' && !isAdmin) {
+                // Skip user update but save employee data
+             } else {
+                // Validation: Unique Password check for update (excluding self)
+                if (users.some((u: any) => u.id !== existingUser.id && u.password === portalPassword)) {
+                  Swal.fire('Error', 'This password is already in use by another user.', 'error');
+                  return;
+                }
+                await actions.updateUserAction(existingUser.id, { email: portalUsername, password: portalPassword });
+             }
+          } else {
+             // Create new user if didn't exist
+             if (users.some((u: any) => u.email === portalUsername)) {
+                Swal.fire('Error', 'This User ID is already taken.', 'error');
+                return;
+             }
+             if (users.some((u: any) => u.password === portalPassword)) {
+                Swal.fire('Error', 'This password is already in use.', 'error');
+                return;
+             }
+             await actions.addUserAction({ email: portalUsername, password: portalPassword, name: formData.name!, role: 'employee' });
+          }
+        }
+        Swal.fire('Updated', 'Profile updated successfully', 'success');
+      } else {
+        await addEmployee(empData as Employee);
+        
+        // Handle User Credential Creation if provided
+        if (portalUsername && portalPassword) {
+           if (users.some((u: any) => u.email === portalUsername)) {
+              Swal.fire('Error', 'User ID taken, but employee registered. Set credentials via Key icon.', 'warning');
+           } else if (users.some((u: any) => u.password === portalPassword)) {
+              Swal.fire('Error', 'Password taken, but employee registered. Set credentials via Key icon.', 'warning');
+           } else {
+              await actions.addUserAction({ email: portalUsername, password: portalPassword, name: formData.name!, role: 'employee' });
+           }
+        }
+        Swal.fire('Added', 'Employee registered successfully', 'success');
+      }
+      await fetchData(); // Refresh global state
+      setShowModal(false);
+    } catch (e) {
+      Swal.fire('Error', 'Failed to save record', 'error');
     }
-    setShowModal(false);
   };
 
   const handleDelete = (id: string) => {
@@ -333,7 +399,9 @@ export default function EmployeesPage() {
                         <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                              <button onClick={() => handleEdit(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
-                             {isAdmin && <button onClick={() => handleManageAccessActual(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🔑</button>}
+                             {(isAdmin || (currentUser.role === emp.department)) && (
+                                <button onClick={() => handleManageAccessActual(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🔑</button>
+                             )}
                              {isAdmin && <button onClick={() => handleUpdateSalary(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>💰</button>}
                              {isAdmin && <button onClick={() => handleDelete(emp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🗑️</button>}
                           </div>
@@ -406,7 +474,7 @@ export default function EmployeesPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Joining Date</label>
-                  <input type="date" value={formData.joinDate || ''} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
+                  <input type="date" value={formData.joinDate || ''} onChange={(e) => setFilterDate(e.target.value)} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Current Status</label>
@@ -420,6 +488,44 @@ export default function EmployeesPage() {
               <div style={{ marginBottom: '25px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Residential Address</label>
                 <input type="text" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} placeholder="Complete Address" />
+              </div>
+
+              {/* Portal Access Section */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginTop: '10px', marginBottom: '25px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent)', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <span>🔐</span> Portal Access Control
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Portal User ID (Username)</label>
+                    <input 
+                      type="text" 
+                      // @ts-ignore
+                      value={formData.portalUsername || ''} 
+                      // @ts-ignore
+                      onChange={(e) => setFormData({ ...formData, portalUsername: e.target.value })} 
+                      // Disable if editing a manager and current user is not admin
+                      disabled={editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin}
+                      style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none', opacity: (editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin) ? 0.7 : 1 }} 
+                      placeholder="e.g. EMP-001" 
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Portal Password</label>
+                    <input 
+                      type="text" 
+                      // @ts-ignore
+                      value={formData.portalPassword || ''} 
+                      // @ts-ignore
+                      onChange={(e) => setFormData({ ...formData, portalPassword: e.target.value })} 
+                      // Disable if editing a manager and current user is not admin
+                      disabled={editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin}
+                      style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none', opacity: (editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin) ? 0.7 : 1 }} 
+                      placeholder="Enter unique password" 
+                    />
+                  </div>
+                </div>
+                <p style={{ fontSize: '10px', color: 'var(--text3)', marginTop: '10px' }}>* Leave blank if you don't want to grant portal access yet.</p>
               </div>
 
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
