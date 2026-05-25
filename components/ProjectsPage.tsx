@@ -14,6 +14,7 @@ export default function ProjectsPage() {
   const [viewTab, setViewTab] = useState<'active' | 'archives'>('active');
   const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string | null>(null);
   const [filterDate, setFilterDate] = useState(getCurrentDate());
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   
   const [formData, setFormData] = useState<Partial<Project>>({
     status: 'Working on',
@@ -120,7 +121,7 @@ export default function ProjectsPage() {
     return `$ ${amount.toLocaleString()}`;
   };
 
-  // Filter projects based on the current view
+  // 📂 UNIVERSAL FILTERING LOGIC
   const displayProjects = projects.filter(p => {
     const isDeptMatch = isAdmin || p.department === currentUser.role;
     if (!isDeptMatch) return false;
@@ -131,23 +132,39 @@ export default function ProjectsPage() {
       p.clientName.toLowerCase().includes(searchLower) ||
       p.projectNo.toLowerCase().includes(searchLower);
 
-    // If searching, we do an "Overall Search" (ignore date/tab)
+    // 1. Overall Search (Bypasses everything)
     if (searchQuery) return isSearchMatch;
 
-    const isDateMatch = !filterDate || p.startDate === filterDate;
+    // 2. Archive View
+    if (viewTab === 'archives') {
+      return selectedArchiveMonth ? p.startDate.startsWith(selectedArchiveMonth) : false;
+    }
+
+    // 3. Active Ledger View
+    const isActiveStatus = ['Working on', 'Submited', 'on hold', 'New Project'].includes(p.status);
+    
+    // CONDITION: "Working on" and "New Project" are ALWAYS visible (Folder logic)
+    const isAlwaysVisible = ['Working on', 'New Project'].includes(p.status);
+    
+    // Status Filter (If user selected a specific status)
+    const matchesStatusFilter = statusFilter === 'all' || p.status === statusFilter;
 
     if (viewTab === 'active') {
-      const isActiveStatus = ['Working on', 'Submited', 'on hold', 'New Project'].includes(p.status);
-      // Working on & New Projects ignore the date filter so they stay visible
-      const matchesDateOrStatus = ['Working on', 'New Project'].includes(p.status) || isDateMatch;
-      return isActiveStatus && matchesDateOrStatus;
-    } else {
-      if (selectedArchiveMonth) {
-        return p.startDate.startsWith(selectedArchiveMonth);
-      }
-      return false;
+      // If we are looking for "Working Folder" items, they ignore date
+      if (isAlwaysVisible) return isActiveStatus && matchesStatusFilter;
+      
+      // Others must match the selected date
+      const isDateMatch = !filterDate || p.startDate === filterDate;
+      return isActiveStatus && matchesDateOrStatus(p, filterDate) && matchesStatusFilter;
     }
+    
+    return false;
   });
+
+  function matchesDateOrStatus(p: Project, fDate: string) {
+      if (['Working on', 'New Project'].includes(p.status)) return true;
+      return p.startDate === fDate;
+  }
 
   // REAL-TIME USD CALCULATIONS
   const totalUSDBudget = displayProjects.reduce((sum, p) => sum + (p.cost || 0), 0);
@@ -173,21 +190,16 @@ export default function ProjectsPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>📁</div>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Project Search Engine</h2>
-            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Active Ledger: {displayProjects.length} tracking records</div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Project Master Engine</h2>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Active Folder: {displayProjects.length} records found</div>
           </div>
         </div>
 
-        {/* Real-time USD Summary (In-Header) */}
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '5px 12px', textAlign: 'center' }}>
-            <div style={{ fontSize: '9px', color: 'var(--text3)', fontWeight: 'bold' }}>BUDGET</div>
-            <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--text)' }}>$ {totalUSDBudget.toLocaleString()}</div>
-          </div>
-          <div style={{ background: 'var(--greenbg)', border: '1px solid var(--green)33', borderRadius: '10px', padding: '5px 12px', textAlign: 'center' }}>
-            <div style={{ fontSize: '9px', color: 'var(--green)', fontWeight: 'bold' }}>RECEIVED</div>
-            <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--green)' }}>$ {totalUSDReceived.toLocaleString()}</div>
-          </div>
+        {/* Status Quick Filter (The "Folder" Filter) */}
+        <div style={{ display: 'flex', gap: '8px', background: 'var(--bg3)', padding: '5px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+           <StatusToggle label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} color="var(--accent)" />
+           <StatusToggle label="Working" active={statusFilter === 'Working on'} onClick={() => setStatusFilter('Working on')} color="#2563eb" />
+           <StatusToggle label="New" active={statusFilter === 'New Project'} onClick={() => setStatusFilter('New Project')} color="#7c3aed" />
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -195,10 +207,10 @@ export default function ProjectsPage() {
              <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
              <input 
                type="text" 
-               placeholder="Search projects..." 
+               placeholder="Overall search..." 
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
-               style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', fontSize: '12px', width: '180px' }}
+               style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', fontSize: '12px', width: '160px' }}
              />
            </div>
            <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px', color: 'var(--text)', outline: 'none', fontSize: '12px', fontWeight: 'bold' }} />
@@ -211,11 +223,11 @@ export default function ProjectsPage() {
           <button 
             onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }}
             style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
-          >Active Ledger</button>
+          >Current Ledger</button>
           <button 
             onClick={() => setViewTab('archives')}
             style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '10px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}
-          >Past Archives</button>
+          >History Archives</button>
         </div>
 
         {viewTab === 'archives' && !selectedArchiveMonth && (
@@ -250,39 +262,33 @@ export default function ProjectsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               {selectedArchiveMonth ? (
-                 <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', fontSize: '11px' }}>← Back to Archives</button>
+                 <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', fontSize: '11px' }}>← Back to History</button>
               ) : <div />}
               {viewTab === 'active' && (isAdmin || isManager) && (
                 <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ New Project</button>
               )}
             </div>
 
-            {/* Special Section: Working Folder (Pinned at top of Active Ledger) */}
-            {viewTab === 'active' && !searchQuery && (
-              <div style={{ background: 'var(--bg2)', border: '2px dashed var(--accent)', borderRadius: '24px', padding: '20px', boxShadow: 'var(--shadow)', marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                  <div style={{ fontSize: '24px' }}>📂</div>
-                  <h3 style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text)' }}>Working Folder (Current Projects)</h3>
-                  <div style={{ marginLeft: 'auto', background: 'var(--accent)', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold' }}>
-                    {projects.filter(p => p.status === 'Working on' || p.status === 'New Project').length} ACTIVE
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
-                  {projects.filter(p => p.status === 'Working on' || p.status === 'New Project').map(p => (
-                    <div key={p.id} onClick={() => handleEdit(p)} style={{ minWidth: '220px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '15px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'} onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}>
-                      <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent)', marginBottom: '5px' }}>#{p.projectNo}</div>
-                      <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--text)', marginBottom: '5px' }}>{p.projectName}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 'bold' }}>👤 {p.clientName}</div>
-                      <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                         <span style={{ fontSize: '11px', fontWeight: '900', color: 'var(--green)' }}>{formatCurrency(p.cost)}</span>
-                         <span style={{ fontSize: '9px', background: p.status === 'New Project' ? '#f5f3ff' : '#eff6ff', color: p.status === 'New Project' ? '#7c3aed' : '#2563eb', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>{p.status.toUpperCase()}</span>
-                      </div>
-                    </div>
-                  ))}
-                  {projects.filter(p => p.status === 'Working on' || p.status === 'New Project').length === 0 && (
-                    <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '12px', fontStyle: 'italic' }}>No projects currently in active status.</div>
-                  )}
-                </div>
+            {/* 📂 MASTER WORKING FOLDER - ALL ACTIVE PROJECTS REGARDLESS OF DATE */}
+            {viewTab === 'active' && !searchQuery && statusFilter === 'all' && (
+              <div style={{ background: 'var(--bg2)', border: '2px dashed var(--accent)', borderRadius: '24px', padding: '20px 25px', boxShadow: 'var(--shadow)', marginBottom: '20px' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                   <div style={{ fontSize: '22px' }}>📂</div>
+                   <h3 style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text)' }}>Master Working Folder (Ongoing Projects)</h3>
+                   <span style={{ fontSize: '10px', background: 'var(--accent)', color: '#fff', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold', marginLeft: 'auto' }}>
+                     {projects.filter(p => (isAdmin || p.department === currentUser.role) && (p.status === 'Working on' || p.status === 'New Project')).length} LIVE
+                   </span>
+                 </div>
+                 <ProjectTable 
+                    projects={projects.filter(p => (isAdmin || p.department === currentUser.role) && (p.status === 'Working on' || p.status === 'New Project'))} 
+                    formatCurrency={formatCurrency} 
+                    formatDateShort={formatDateShort} 
+                    updateProject={updateProject} 
+                    handleEdit={handleEdit} 
+                    handleDelete={handleDelete} 
+                    isAdmin={isAdmin} 
+                    currentUser={currentUser} 
+                  />
               </div>
             )}
 
@@ -306,7 +312,7 @@ export default function ProjectsPage() {
                   <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
                     <div style={{ marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
                       <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'Ongoing Work' : 'Archive'}
+                        <span style={{ color: 'var(--accent)' }}>🏢</span> {dept.label} {viewTab === 'active' ? 'Filtered Ledger' : 'Archive'}
                       </h3>
                     </div>
                     <ProjectTable projects={deptProjects} formatCurrency={formatCurrency} formatDateShort={formatDateShort} updateProject={updateProject} handleEdit={handleEdit} handleDelete={handleDelete} isAdmin={isAdmin} currentUser={currentUser} />
@@ -434,6 +440,25 @@ export default function ProjectsPage() {
       )}
     </div>
   );
+}
+
+function StatusToggle({ label, active, onClick, color }: any) {
+    return (
+        <button 
+          onClick={onClick}
+          style={{ 
+            background: active ? color : 'transparent', 
+            color: active ? '#fff' : 'var(--text2)', 
+            border: 'none', 
+            padding: '6px 15px', 
+            borderRadius: '8px', 
+            cursor: 'pointer', 
+            fontWeight: 'bold', 
+            fontSize: '11px',
+            transition: '0.2s'
+          }}
+        >{label}</button>
+    );
 }
 
 function ProjectTable({ projects, formatCurrency, formatDateShort, updateProject, handleEdit, handleDelete, isAdmin, currentUser }: any) {

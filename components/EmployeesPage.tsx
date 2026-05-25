@@ -296,6 +296,9 @@ export default function EmployeesPage() {
       emp.id.toLowerCase().includes(searchLower) ||
       emp.position?.toLowerCase().includes(searchLower);
       
+    // If searching, do a Universal Search (ignore date)
+    if (searchQuery) return isSearchMatch;
+
     const isDateMatch = !filterDate || emp.joinDate === filterDate;
     return isSearchMatch && isDateMatch;
   });
