@@ -76,11 +76,12 @@ export default function AttendancePage() {
 
     if (editingRecord) {
       updateAttendance(editingRecord.id, recordData);
-      Swal.fire({ title: 'Updated', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
+      Swal.fire({ title: 'Updated', icon: 'success', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
     } else {
       addAttendance(recordData);
-      Swal.fire({ title: 'Recorded', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
+      Swal.fire({ title: 'Recorded', icon: 'success', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
     }
+    fetchData(); // Sync in background
     setShowModal(false);
   };
 

@@ -65,8 +65,8 @@ export default function EmployeesPage() {
            }
 
            await actions.updateUserAction(existingUser.id, { password: newPassword });
-           await fetchData(); // Force refresh to sync global state
-           Swal.fire('Updated', 'Password changed successfully', 'success');
+           fetchData(); // Sync in background
+           Swal.fire({ title: 'Updated', text: 'Password changed successfully', icon: 'success', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
          }
        } else if (result.isDenied) {
          const confirm = await Swal.fire({
@@ -79,8 +79,8 @@ export default function EmployeesPage() {
          });
          if (confirm.isConfirmed) {
            await actions.deleteUserAction(existingUser.id);
-           await fetchData(); // Force refresh
-           Swal.fire('Revoked', 'Employee access has been removed.', 'success');
+           fetchData(); // Force refresh in background
+           Swal.fire({ title: 'Revoked', text: 'Employee access has been removed.', icon: 'success', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
          }
        }
      } else {

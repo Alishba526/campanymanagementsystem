@@ -107,6 +107,16 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
 
   const formatUSD = (val: number) => `$ ${val.toLocaleString()}`;
 
+  // Active Attendance Logic (On Duty staff within 12h)
+  const onDutyStaff = attendance.filter(a => {
+    if (a.checkOut !== '--') return false;
+    const [year, mon, day] = a.date.split('-').map(Number);
+    const [h, m] = a.checkIn.split(':').map(Number);
+    const checkInDateTime = new Date(year, mon - 1, day, h, m);
+    const diff = (new Date().getTime() - checkInDateTime.getTime()) / (1000 * 60 * 60);
+    return diff <= 12; // Must be within 12 hours
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
       
@@ -201,6 +211,35 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
           ))}
           {projects.filter(p => (isAdmin || p.department === currentUser.role) && (['Working on', 'New Project'].includes(p.status))).length === 0 && (
             <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '13px', fontStyle: 'italic', textAlign: 'center', width: '100%' }}>No projects currently active.</div>
+          )}
+        </div>
+      </div>
+
+      {/* 2.6 ACTIVE ATTENDANCE MONITOR */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', boxShadow: 'var(--shadow)', marginBottom: '25px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+          <div style={{ fontSize: '24px' }}>⏰</div>
+          <h3 style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Attendance Monitor</h3>
+          <div style={{ marginLeft: 'auto', background: '#059669', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold' }}>
+            {onDutyStaff.length} ON DUTY
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '10px' }} className="custom-scrollbar">
+          {onDutyStaff.map(a => (
+            <div key={a.id} onClick={() => onNavigate?.('attendance')} style={{ minWidth: '220px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '18px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#059669'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text3)' }}>{a.employeeId}</span>
+                <span style={{ fontSize: '9px', background: '#ecfdf5', color: '#059669', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>ON DUTY</span>
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', marginBottom: '4px' }}>{a.employeeName}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                 <span style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 'bold' }}>IN:</span>
+                 <span style={{ fontSize: '13px', fontWeight: '900', color: '#059669' }}>{formatTimeAMPM(a.checkIn)}</span>
+              </div>
+            </div>
+          ))}
+          {onDutyStaff.length === 0 && (
+            <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '13px', fontStyle: 'italic', textAlign: 'center', width: '100%' }}>No staff members currently on duty.</div>
           )}
         </div>
       </div>

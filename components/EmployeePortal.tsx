@@ -30,7 +30,24 @@ export default function EmployeePortal() {
   );
 
   const today = getCurrentDate();
-  const todayRecord = attendance.find(a => a.employeeId === employee?.id && a.date === today);
+  
+  // Find all records for today for this employee
+  const myTodayRecords = attendance.filter(a => a.employeeId === employee?.id && a.date === today);
+  
+  // Get the absolute latest record
+  const latestRecord = myTodayRecords.length > 0 ? myTodayRecords[myTodayRecords.length - 1] : null;
+
+  // 12-Hour Reset Logic: If latest record is > 12 hours old and not checked out, ignore it (allow new check-in)
+  const isStale = latestRecord && latestRecord.checkOut === '--' ? (() => {
+    const [year, mon, day] = latestRecord.date.split('-').map(Number);
+    const [h, m] = latestRecord.checkIn.split(':').map(Number);
+    const checkInDateTime = new Date(year, mon - 1, day, h, m);
+    const diff = (new Date().getTime() - checkInDateTime.getTime()) / (1000 * 60 * 60);
+    return diff > 12;
+  })() : false;
+
+  // If the record is stale or doesn't exist, treat it as "not checked in" for the active session
+  const todayRecord = (latestRecord && !isStale) ? latestRecord : null;
 
   // Filter attendance for history
   const myAttendance = attendance.filter(a => {
@@ -75,8 +92,10 @@ export default function EmployeePortal() {
         title: 'Checked In!',
         text: `Welcome, ${employee.name}. Time: ${formatTimeAMPM(timeStr)}`,
         icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
+        timer: 800,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
       });
     } catch (e) {
       Swal.fire('Error', 'Failed to record attendance', 'error');
@@ -116,8 +135,10 @@ export default function EmployeePortal() {
         title: 'Checked Out!',
         text: `Goodbye, ${employee?.name}. Shift completed.`,
         icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
+        timer: 800,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
       });
     } catch (e) {
       Swal.fire('Error', 'Failed to record check-out', 'error');
@@ -143,8 +164,10 @@ export default function EmployeePortal() {
         title: type === 'in' ? 'Break Started' : 'Break Ended',
         text: `${type === 'in' ? 'Rest well!' : 'Welcome back!'} Time: ${formatTimeAMPM(timeStr)}`,
         icon: 'info',
-        timer: 2000,
-        showConfirmButton: false
+        timer: 800,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
       });
     } catch (e) {
       Swal.fire('Error', 'Failed to update break status', 'error');

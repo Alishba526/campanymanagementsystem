@@ -92,10 +92,10 @@ export default function ProjectsPage() {
 
     if (editingProject) {
       updateProject(editingProject.id, projectData);
-      Swal.fire({ title: 'Updated', text: 'Project details updated successfully', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
+      Swal.fire({ title: 'Updated', text: 'Project details updated successfully', icon: 'success', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
     } else {
       addProject(projectData);
-      Swal.fire({ title: 'Added', text: 'New project added successfully', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
+      Swal.fire({ title: 'Added', text: 'New project added successfully', icon: 'success', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
     }
     setShowModal(false);
   };
