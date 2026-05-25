@@ -402,8 +402,8 @@ export default function EmployeesPage() {
                              {(isAdmin || (currentUser.role === emp.department)) && (
                                 <button onClick={() => handleManageAccessActual(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🔑</button>
                              )}
-                             {isAdmin && <button onClick={() => handleUpdateSalary(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>💰</button>}
-                             {isAdmin && <button onClick={() => handleDelete(emp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🗑️</button>}
+                             {(isAdmin || (currentUser.role === emp.department)) && <button onClick={() => handleUpdateSalary(emp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>💰</button>}
+                             {(isAdmin || (currentUser.role === emp.department)) && <button onClick={() => handleDelete(emp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>}
                           </div>
                         </td>
                       </tr>
