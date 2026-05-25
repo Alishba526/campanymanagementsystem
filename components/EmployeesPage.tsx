@@ -505,7 +505,7 @@ export default function EmployeesPage() {
                       // @ts-ignore
                       onChange={(e) => setFormData({ ...formData, portalUsername: e.target.value })} 
                       // Disable if editing a manager and current user is not admin
-                      disabled={editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin}
+                      disabled={!!(editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin)}
                       style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none', opacity: (editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin) ? 0.7 : 1 }} 
                       placeholder="e.g. EMP-001" 
                     />
@@ -519,7 +519,7 @@ export default function EmployeesPage() {
                       // @ts-ignore
                       onChange={(e) => setFormData({ ...formData, portalPassword: e.target.value })} 
                       // Disable if editing a manager and current user is not admin
-                      disabled={editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin}
+                      disabled={!!(editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin)}
                       style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none', opacity: (editingEmployee && users.find(u => (u.email === editingEmployee?.id || u.email === editingEmployee?.email) && u.role !== 'employee') && !isAdmin) ? 0.7 : 1 }} 
                       placeholder="Enter unique password" 
                     />
