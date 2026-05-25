@@ -162,7 +162,7 @@ export interface Project {
   cost: number;
   totalBudget: number; 
   amountReceived: number;
-  paymentStatus: 'upfront_50' | 'remaining_50' | '100_received';
+  paymentStatus: 'upfront_50' | 'remaining_50' | '100_received' | 'not_received';
   paymentMethod: string;
   workingDays: number;
   startDate: string;

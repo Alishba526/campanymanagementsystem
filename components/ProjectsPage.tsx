@@ -326,9 +326,10 @@ export default function ProjectsPage() {
                             </td>
                             <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
                               <div style={{ fontSize: '13px', fontWeight: '900', color: '#059669' }}>{formatCurrency(p.cost || p.totalBudget)}</div>
-                              <div style={{ fontSize: '9px', color: '#4f46e5', fontWeight: '900', textTransform: 'uppercase' }}>
+                              <div style={{ fontSize: '9px', color: p.paymentStatus === 'not_received' ? '#dc2626' : '#4f46e5', fontWeight: '900', textTransform: 'uppercase' }}>
                                 {p.paymentStatus === 'upfront_50' ? '50% Upfront' : 
                                  p.paymentStatus === 'remaining_50' ? '50% Remaining' : 
+                                 p.paymentStatus === 'not_received' ? 'Not Received' :
                                  '100% Paid'}
                               </div>
                             </td>
@@ -451,6 +452,7 @@ export default function ProjectsPage() {
                     <option value="upfront_50">upfront 50% Received</option>
                     <option value="remaining_50">remaining 50% Received</option>
                     <option value="100_received">100% received</option>
+                    <option value="not_received">not receive Yet</option>
                   </select>
                 </div>
                 <div>
