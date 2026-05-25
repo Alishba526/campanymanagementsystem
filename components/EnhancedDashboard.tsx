@@ -173,6 +173,36 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
         </>
       )}
 
+      {/* 2.5 ACTIVE PROJECT MONITOR */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', boxShadow: 'var(--shadow)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+          <div style={{ fontSize: '24px' }}>🚀</div>
+          <h3 style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Project Monitor</h3>
+          <div style={{ marginLeft: 'auto', background: 'var(--accent)', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold' }}>
+            {projects.filter(p => (isAdmin || p.department === currentUser.role) && (p.status === 'Working on' || p.status === 'New Project')).length} ONGOING
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '10px' }} className="custom-scrollbar">
+          {projects.filter(p => (isAdmin || p.department === currentUser.role) && (p.status === 'Working on' || p.status === 'New Project')).map(p => (
+            <div key={p.id} onClick={() => onNavigate?.('projects')} style={{ minWidth: '240px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '18px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--accent)' }}>#{p.projectNo}</span>
+                <span style={{ fontSize: '9px', background: p.status === 'New Project' ? '#f5f3ff' : '#eff6ff', color: p.status === 'New Project' ? '#7c3aed' : '#2563eb', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>{p.status.toUpperCase()}</span>
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', marginBottom: '4px' }}>{p.projectName}</div>
+              <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 'bold', marginBottom: '10px' }}>👤 {p.clientName}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                 <span style={{ fontSize: '12px', fontWeight: '900', color: '#059669' }}>$ {(p.cost || 0).toLocaleString()}</span>
+                 <span style={{ fontSize: '10px', color: 'var(--text2)', fontWeight: '700' }}>⏳ {formatDateShort(p.deadline)}</span>
+              </div>
+            </div>
+          ))}
+          {projects.filter(p => (isAdmin || p.department === currentUser.role) && (p.status === 'Working on' || p.status === 'New Project')).length === 0 && (
+            <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '13px', fontStyle: 'italic', textAlign: 'center', width: '100%' }}>No projects currently active.</div>
+          )}
+        </div>
+      </div>
+
       {/* 3. ACTIVITY & RANKINGS (2 COLUMN) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)' }}>
