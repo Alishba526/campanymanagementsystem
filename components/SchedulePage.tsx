@@ -2,7 +2,7 @@
 
 import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
-import { getCurrentDate, formatTimeAMPM } from '@/lib/dateUtils';
+import { getCurrentDate, formatTimeAMPM, formatDateShort } from '@/lib/dateUtils';
 import Swal from 'sweetalert2';
 
 interface MonthlySchedule {
@@ -32,19 +32,33 @@ export default function SchedulePage() {
     totalHours: 176
   });
 
-  if (!currentUser || currentUser.role !== 'admin') {
+  if (!currentUser) return null;
+
+  const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const isManager = ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
+
+  if (!isAdmin && !isManager) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
         <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
         <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-        <p>Only Admin can manage monthly schedules.</p>
+        <p>Only Department Managers and Admins can manage work schedules.</p>
       </div>
     );
   }
 
+  // Filter employees for the modal based on department access
+  const availableEmployees = isAdmin 
+    ? employees 
+    : employees.filter(e => e.department === currentUser.role);
+
   // Archive Grouping
   const currentMonthPrefix = getCurrentDate().substring(0, 7);
   const archiveGroups = schedules.reduce((groups: Record<string, MonthlySchedule[]>, sch) => {
+    // Only group schedules the current user has access to
+    const emp = employees.find(e => e.id === sch.employeeId);
+    if (!isAdmin && emp?.department !== currentUser.role) return groups;
+
     if (sch.month === currentMonthPrefix) return groups;
     if (!groups[sch.month]) groups[sch.month] = [];
     groups[sch.month].push(sch);
@@ -128,15 +142,18 @@ export default function SchedulePage() {
   };
 
   const displaySchedules = schedules.filter(sch => {
+    const emp = employees.find(e => e.id === sch.employeeId);
+    const isDeptMatch = isAdmin || emp?.department === currentUser.role;
+
     const searchLower = searchQuery.toLowerCase();
     const isSearchMatch = !searchQuery || 
       sch.employeeName.toLowerCase().includes(searchLower) ||
       sch.employeeId.toLowerCase().includes(searchLower);
 
     if (viewTab === 'active') {
-      return sch.month === currentMonthPrefix && isSearchMatch;
+      return isDeptMatch && sch.month === currentMonthPrefix && isSearchMatch;
     } else {
-      return sch.month === selectedArchiveMonth && isSearchMatch;
+      return isDeptMatch && sch.month === selectedArchiveMonth && isSearchMatch;
     }
   });
 
@@ -149,7 +166,7 @@ export default function SchedulePage() {
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>📅</div>
           <div>
             <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Shift Search Engine</h2>
-            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Planning {schedules.length} employee cycles</div>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Planning {displaySchedules.length} employee cycles</div>
           </div>
         </div>
 
@@ -246,6 +263,9 @@ export default function SchedulePage() {
                         </td>
                       </tr>
                     ))}
+                    {displaySchedules.length === 0 && (
+                      <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)' }}>No schedules found for this period.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -254,7 +274,7 @@ export default function SchedulePage() {
         )}
       </div>
 
-      {/* Modal remains same but updated with standard UI */}
+      {/* Modal Overlay */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', width: '90%', maxWidth: '550px', padding: '30px' }}>
@@ -265,7 +285,7 @@ export default function SchedulePage() {
                       <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Staff Member</label>
                       <select value={formData.employeeId || ''} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)' }}>
                          <option value="">Select Employee</option>
-                         {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                         {availableEmployees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                       </select>
                    </div>
                    <div>
@@ -293,8 +313,8 @@ export default function SchedulePage() {
                    </select>
                 </div>
                 <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                   <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text)', fontWeight: 'bold' }}>Cancel</button>
-                   <button onClick={handleSave} style={{ flex: 2, background: 'var(--accent)', color: '#fff', padding: '14px', borderRadius: '12px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}>💾 Save Schedule</button>
+                   <button onClick={() => setShowModal(false)} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text)', fontWeight: 'bold' }}>Cancel</button>
+                   <button onClick={handleSave} style={{ flex: 2, background: 'var(--accent)', color: '#fff', padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}>💾 Save Schedule</button>
                 </div>
              </div>
           </div>

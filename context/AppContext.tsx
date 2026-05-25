@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { User, Employee, AttendanceRecord, TaskLog, Expense, Income, AuditLog, LeaveRequest, Announcement, Project, MonthlySchedule, Bill, Notification, BreakRequest, Department } from '@/types';
+import { users as initialUsers } from '@/lib/data';
 import * as actions from '@/lib/actions';
 import Swal from 'sweetalert2';
 
@@ -108,7 +109,7 @@ const themeColors = {
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>(initialUsers); // Initialize with data from lib/data.ts
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [tasks, setTasks] = useState<TaskLog[]>([]);
@@ -170,7 +171,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (deptData) setDepartments(deptData as Department[]);
       if (leaveData) setLeaveRequests(leaveData as LeaveRequest[]);
       if (announceData) setAnnouncements(announceData as Announcement[]);
-      if (userData) setUsers(userData as User[]);
+      
+      // Merge database users with initial users, giving precedence to DB
+      if (userData) {
+        const dbUsers = userData as User[];
+        if (dbUsers.length > 0) {
+           setUsers(prev => {
+             const merged = [...dbUsers];
+             initialUsers.forEach(iu => {
+               if (!merged.find(mu => mu.email === iu.email)) {
+                 merged.push(iu);
+               }
+             });
+             return merged;
+           });
+        } else {
+           setUsers(initialUsers);
+        }
+      }
 
       if (projectData && (projectData as any).length > 0) {
         setProjects(prev => {
@@ -262,7 +280,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchData();
     const interval = setInterval(fetchData, 8000);
     const savedUser = localStorage.getItem('growzix-user');
-    if (savedUser) setCurrentUser(JSON.parse(savedUser));
+    if (savedUser) setCurrentUser(JSON.parse(savedUser) as any);
     const savedTheme = localStorage.getItem('growzix-theme') as ThemeColor;
     const savedMode = localStorage.getItem('growzix-theme-mode') as ThemeMode;
     if (savedTheme) setThemeColorState(savedTheme);
@@ -304,11 +322,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const users = await actions.getUsers();
-    const user = users.find((u: any) => u.email === email && u.password === password);
+    const cleanEmail = email.trim();
+    const cleanPass = password.trim();
+
+    // 1. Check database users first
+    const dbUsers = await actions.getUsers();
+    let user: any = dbUsers.find((u: any) => u.email === cleanEmail && u.password === cleanPass);
+    
+    // 2. Fallback to initialUsers if not found in DB
+    if (!user) {
+      user = initialUsers.find(u => u.email === cleanEmail && u.password === cleanPass);
+    }
+
     if (user) {
       const userData: User = { id: user.id, email: user.email, password: user.password, role: user.role as any, name: user.name };
-      setCurrentUser(userData);
+      setCurrentUser(userData as any);
       localStorage.setItem('growzix-user', JSON.stringify(userData));
       await addAuditLog(`${user.name} logged in`);
       return true;

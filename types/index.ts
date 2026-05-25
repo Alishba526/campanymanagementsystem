@@ -6,6 +6,8 @@ export interface User {
   password: string;
   role: UserRole;
   name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface Employee {
