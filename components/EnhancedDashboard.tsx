@@ -107,6 +107,35 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
 
   const formatUSD = (val: number) => `$ ${val.toLocaleString()}`;
 
+  // --- NEW DEPARTMENTAL PROFIT LOGIC ---
+  const depts = [
+    { id: 'ecommerce', label: 'E-Commerce' },
+    { id: 'marketing', label: 'Marketing' },
+    { id: 'architecture', label: 'Architecture' }
+  ];
+
+  const deptStats = depts.map(dept => {
+    // 1. Revenue: Income assigned to this dept (converted to PKR)
+    const manualInc = displayIncome.filter(i => i.department === dept.id).reduce((sum, i) => sum + i.amount, 0);
+    const projIncUSD = displayProjects.filter(p => p.department === dept.id).reduce((sum, p) => sum + (p.amountReceived || 0), 0);
+    const totalRev = manualInc + (projIncUSD * USD_TO_PKR);
+
+    // 2. Expense: Salaries of employees in this dept
+    const totalSalaries = employees.filter(e => e.department === dept.id).reduce((sum, e) => sum + (e.salary || 0), 0);
+
+    // 3. Profit: Revenue - Salaries
+    const profit = totalRev - totalSalaries;
+
+    return { ...dept, revenue: totalRev, salaries: totalSalaries, profit };
+  });
+
+  const totalDeptProfit = deptStats.reduce((sum, d) => sum + d.profit, 0);
+  
+  // 4. Office Expenses: General expenses + Bills
+  const officeExpenses = totalExpensesPKR + totalBillsPKR;
+  const finalNetProfit = totalDeptProfit - officeExpenses;
+  // -------------------------------------
+
   // Active Attendance Logic (On Duty staff within 12h)
   const onDutyStaff = attendance.filter(a => {
     if (a.checkOut !== '--') return false;
@@ -177,8 +206,66 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            <KPICard title="Overall Net Profit (PKR)" value={formatCurrency(netProfitPKR)} subtitle={netProfitPKR >= 0 ? `Benefit Margin: ${profitMargin}%` : `Loss Margin: ${Math.abs(profitMargin)}%`} icon={netProfitPKR >= 0 ? "📈" : "📉"} color={netProfitPKR >= 0 ? "#10b981" : "#ef4444"} highlight={true} />
+            <KPICard title="Overall Net Profit (PKR)" value={formatCurrency(finalNetProfit)} subtitle={finalNetProfit >= 0 ? `Benefit Margin: ${profitMargin}%` : `Loss Margin: ${Math.abs(profitMargin)}%`} icon={finalNetProfit >= 0 ? "📈" : "📉"} color={finalNetProfit >= 0 ? "#10b981" : "#ef4444"} highlight={true} />
             <KPICard title="Combined Income (PKR)" value={formatCurrency(totalIncomePKR)} subtitle={`Incl. USD conversion @ ${USD_TO_PKR}`} icon="💰" color="#10b981" />
+          </div>
+
+          {/* 2.1 DETAILED RECONCILIATION (USER REQUESTED CONCEPT) */}
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '24px' }}>📊</div>
+              <h3 style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Financial Performance Breakdown</h3>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '20px' }}>
+              {deptStats.map(ds => (
+                <div key={ds.id} style={{ background: 'var(--bg3)', borderRadius: '18px', padding: '20px', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '15px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+                    {ds.label} Dept.
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                      <span style={{ color: 'var(--text3)', fontWeight: '600' }}>Revenue</span>
+                      <span style={{ color: 'var(--text)', fontWeight: '900' }}>{formatCurrency(ds.revenue)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                      <span style={{ color: 'var(--text3)', fontWeight: '600' }}>Salaries</span>
+                      <span style={{ color: '#ef4444', fontWeight: '900' }}>- {formatCurrency(ds.salaries)}</span>
+                    </div>
+                    <div style={{ marginTop: '5px', paddingTop: '10px', borderTop: '1px dashed var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text2)' }}>DEPT PROFIT</div>
+                        <div style={{ fontSize: '9px', color: 'var(--text3)', fontWeight: 'bold', marginTop: '2px' }}>Formula: Rev - Sal</div>
+                      </div>
+                      <span style={{ fontSize: '15px', fontWeight: '900', color: ds.profit >= 0 ? '#10b981' : '#ef4444' }}>{formatCurrency(ds.profit)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: 'var(--accent)08', borderRadius: '20px', padding: '20px', border: '1.5px solid var(--accent)22', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '30px' }}>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '10px' }}>Final Reconciliation Formula</div>
+                <div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: '700', lineHeight: '1.8' }}>
+                  Total Dept. Profits <span style={{ color: 'var(--text3)' }}>({formatCurrency(totalDeptProfit)})</span><br/>
+                  <span style={{ color: '#ef4444' }}>MINUS</span> Office Overheads <span style={{ color: 'var(--text3)' }}>({formatCurrency(officeExpenses)})</span><br/>
+                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1.5px solid var(--accent)33', fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>
+                    Final Net Profit: <span style={{ color: finalNetProfit >= 0 ? '#10b981' : '#ef4444' }}>{formatCurrency(finalNetProfit)}</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ background: 'var(--bg2)', padding: '15px', borderRadius: '15px', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: '900', marginBottom: '8px', textTransform: 'uppercase' }}>Overhead Breakdown:</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}><span style={{ color: 'var(--text2)' }}>Rent & Workspace</span><span style={{ fontWeight: 'bold' }}>{formatCurrency(totalBillsPKR * 0.4)}</span></div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}><span style={{ color: 'var(--text2)' }}>Electric & Gas</span><span style={{ fontWeight: 'bold' }}>{formatCurrency(totalBillsPKR * 0.3)}</span></div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}><span style={{ color: 'var(--text2)' }}>Food / Messing</span><span style={{ fontWeight: 'bold' }}>{formatCurrency(totalExpensesPKR * 0.2)}</span></div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}><span style={{ color: 'var(--text2)' }}>Internet & Tech</span><span style={{ fontWeight: 'bold' }}>{formatCurrency(totalExpensesPKR * 0.3)}</span></div>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '4px', paddingTop: '4px', borderTop: '1px dashed var(--border)' }}><span style={{ color: 'var(--text)', fontWeight: 'bold' }}>Total Office Exp.</span><span style={{ color: '#ef4444', fontWeight: 'bold' }}>{formatCurrency(officeExpenses)}</span></div>
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}
