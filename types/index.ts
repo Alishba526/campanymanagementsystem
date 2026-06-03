@@ -14,6 +14,7 @@ export interface Employee {
   id: string;
   name: string;
   fatherName: string;
+  cnic?: string;
   phone: string;
   address: string;
   email: string;

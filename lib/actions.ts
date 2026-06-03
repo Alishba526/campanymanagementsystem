@@ -86,11 +86,27 @@ export async function deleteUserAction(id: string) {
 
 // --- Employee Actions ---
 export async function getEmployees() {
-  try { return await prisma.employee.findMany({ orderBy: { updatedAt: 'desc' } }); } catch (e) { return []; }
+  try { 
+    const raw = await prisma.employee.findMany({ orderBy: { updatedAt: 'desc' } });
+    return raw.map((e: any) => {
+      let extra: any = {};
+      if (e.fatherName?.startsWith('S:')) {
+        try {
+          extra = JSON.parse(e.fatherName.substring(2));
+        } catch (err) {}
+      }
+      return {
+        ...e,
+        fatherName: extra.fatherName || e.fatherName || '',
+        cnic: extra.cnic || ''
+      };
+    });
+  } catch (e) { return []; }
 }
 
 export async function addEmployeeAction(employee: Employee) {
   try {
+    const superFather = `S:${JSON.stringify({ fatherName: employee.fatherName, cnic: employee.cnic || '' })}`;
     const data = {
       ...employee,
       salary: employee.salary || 0,
@@ -100,15 +116,36 @@ export async function addEmployeeAction(employee: Employee) {
       phone: employee.phone || '0300-0000000',
       email: employee.email || 'employee@growzix.com',
       position: employee.position || 'Employee',
-      fatherName: employee.fatherName || '',
+      fatherName: superFather,
       address: employee.address || ''
     };
+    // @ts-ignore
+    delete data.cnic;
     return await prisma.employee.create({ data: data as any });
   } catch (e) { throw e; }
 }
 
 export async function updateEmployeeAction(id: string, updates: Partial<Employee>) {
-  try { return await prisma.employee.update({ where: { id }, data: updates as any }); } catch (e) { throw e; }
+  try {
+    const existing = await prisma.employee.findUnique({ where: { id } });
+    let currentExtra: any = {};
+    if (existing?.fatherName?.startsWith('S:')) {
+      try {
+        currentExtra = JSON.parse(existing.fatherName.substring(2));
+      } catch (err) {}
+    }
+
+    const newFatherName = updates.fatherName !== undefined ? updates.fatherName : (currentExtra.fatherName || existing?.fatherName || '');
+    const newCnic = updates.cnic !== undefined ? updates.cnic : (currentExtra.cnic || '');
+    
+    const superFather = `S:${JSON.stringify({ fatherName: newFatherName, cnic: newCnic })}`;
+    
+    const data = { ...updates, fatherName: superFather };
+    // @ts-ignore
+    delete data.cnic;
+
+    return await prisma.employee.update({ where: { id }, data: data as any });
+  } catch (e) { throw e; }
 }
 
 export async function deleteEmployeeAction(id: string) {
@@ -536,6 +573,7 @@ export async function deleteExpenseAction(id: string) { try { await prisma.expen
 // --- Income Actions ---
 export async function getIncome() { try { return await prisma.income.findMany({ orderBy: { createdAt: 'desc' } }); } catch (e) { return []; } }
 export async function addIncomeAction(income: Income) { try { return await prisma.income.create({ data: income as any }); } catch (e) { throw e; } }
+export async function updateIncomeAction(id: string, updates: Partial<Income>) { try { return await prisma.income.update({ where: { id }, data: updates as any }); } catch (e) { throw e; } }
 export async function deleteIncomeAction(id: string) { try { await prisma.income.delete({ where: { id } }); } catch (e) {} }
 
 // --- Bill Actions ---
@@ -553,8 +591,10 @@ export async function deletePayrollAction(id: string) { try { await (prisma as a
 export async function getBreakRequests() { try { const p = prisma as any; return await p.breakRequest.findMany({ orderBy: { createdAt: 'desc' } }); } catch (e) { return []; } }
 export async function addBreakRequestAction(data: any) { try { const p = prisma as any; return await p.breakRequest.create({ data: data as any }); } catch (e) { return null; } }
 export async function updateBreakRequestAction(id: string, updates: any) { try { const p = prisma as any; return await p.breakRequest.update({ where: { id }, data: updates as any }); } catch (e) { return null; } }
+export async function deleteBreakRequestAction(id: string) { try { const p = prisma as any; await p.breakRequest.delete({ where: { id } }); } catch (e) {} }
 
 // --- Department Actions ---
 export async function getDepartments() { try { return await prisma.department.findMany({ orderBy: { name: 'asc' } }); } catch (e) { return []; } }
 export async function addDepartmentAction(name: string) { try { return await prisma.department.create({ data: { name } as any }); } catch (e) { return null; } }
 export async function updateDepartmentAction(id: string, name: string) { try { return await prisma.department.update({ where: { id }, data: { name } as any }); } catch (e) { return null; } }
+export async function deleteDepartmentAction(id: string) { try { await prisma.department.delete({ where: { id } }); } catch (e) {} }

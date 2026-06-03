@@ -10,9 +10,20 @@ export default function LeavePage() {
   const { currentUser, leaveRequests, addLeaveRequest, updateLeaveRequest, deleteLeaveRequest, employees, fetchData } = useApp();
   const [showModal, setShowModal] = useState(false);
   const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
+  const [formData, setFormData] = useState<Partial<LeaveRequest>>({
+    type: 'sick',
+    status: 'pending'
+  });
+  
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterDate, setFilterDate] = useState(getCurrentDate());
+  const [viewTab, setViewTab] = useState<'active' | 'archives'>('active');
+  const [selectedArchiveMonth, setSelectedArchiveMonth] = useState<string | null>(null);
 
-  // ... rest ...
+  if (!currentUser) return null;
+
+  const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const currentMonthPrefix = getCurrentDate().substring(0, 7);
 
   const handleAddRequest = () => {
     setEditingRequest(null);
@@ -46,7 +57,7 @@ export default function LeavePage() {
       endDate: formData.endDate!,
       type: formData.type as any,
       status: (formData.status as any) || 'pending',
-      reason: formData.reason
+      reason: formData.reason || ''
     };
 
     if (editingRequest) {
@@ -56,116 +67,126 @@ export default function LeavePage() {
     }
     
     Swal.fire({ title: 'Request Saved', icon: 'success', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
-    fetchData(); // Background sync
+    fetchData(); 
     setShowModal(false);
   };
 
   const handleStatusChange = async (id: string, status: 'approved' | 'rejected') => {
     await updateLeaveRequest(id, { status, approvedBy: currentUser.name });
-    Swal.fire({ title: `Leave ${status}`, icon: 'success', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
-    fetchData(); // Sync
+    Swal.fire('Success', `Request ${status}`, 'success');
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return '#059669';
-      case 'rejected': return '#dc2626';
-      default: return '#d97706';
+  // Filter Logic
+  const displayRequests = leaveRequests.filter(req => {
+    const emp = employees.find(e => e.id === req.employeeId);
+    const isDeptMatch = isAdmin || emp?.department === currentUser.role;
+    if (!isDeptMatch) return false;
+
+    const searchLower = searchQuery.toLowerCase();
+    const isSearchMatch = !searchQuery || 
+      req.employeeName.toLowerCase().includes(searchLower) ||
+      req.employeeId.toLowerCase().includes(searchLower) ||
+      req.reason?.toLowerCase().includes(searchLower);
+
+    if (searchQuery) return isSearchMatch;
+
+    if (viewTab === 'active') {
+       const isCurrentMonth = req.startDate.startsWith(currentMonthPrefix);
+       const isDateMatch = !filterDate || req.startDate === filterDate;
+       return isCurrentMonth || isDateMatch;
+    } else {
+       return selectedArchiveMonth ? req.startDate.startsWith(selectedArchiveMonth) : false;
     }
-  };
+  });
+
+  // Archive Grouping
+  const archiveGroups = leaveRequests.reduce((groups: Record<string, LeaveRequest[]>, a) => {
+    const month = a.startDate.substring(0, 7);
+    if (month === currentMonthPrefix) return groups;
+    if (!groups[month]) groups[month] = [];
+    groups[month].push(a);
+    return groups;
+  }, {});
+
+  const sortedArchiveMonths = Object.keys(archiveGroups).sort().reverse();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      
-      {/* Premium Header */}
+      {/* Header */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>🏖️</div>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Leave Search Engine</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Leave Management System</h2>
             <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Live Tracking: {displayRequests.length} requests found</div>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
-            <input 
-              type="text" 
-              placeholder="Search staff or reason..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', width: '200px', fontSize: '12px' }}
-            />
-          </div>
+          <input type="text" placeholder="Search staff..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', color: 'var(--text)', outline: 'none', width: '150px', fontSize: '12px' }} />
           <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px', color: 'var(--text)', outline: 'none', fontSize: '12px', fontWeight: 'bold' }} />
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'flex', gap: '8px', padding: '4px', background: 'var(--bg2)', borderRadius: '12px', border: '1px solid var(--border)', width: 'fit-content' }}>
+      <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={() => { setViewTab('active'); setSelectedArchiveMonth(null); }} style={{ background: viewTab === 'active' ? 'var(--accent)' : 'transparent', color: viewTab === 'active' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}>Active Requests</button>
           <button onClick={() => setViewTab('archives')} style={{ background: viewTab === 'archives' ? 'var(--accent)' : 'transparent', color: viewTab === 'archives' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}>Past Archives</button>
-        </div>
+      </div>
 
-        {viewTab === 'archives' && !selectedArchiveMonth && (
-           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', marginTop: '10px' }}>
+      {viewTab === 'archives' && !selectedArchiveMonth && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
              {sortedArchiveMonths.map(month => (
                 <div key={month} onClick={() => setSelectedArchiveMonth(month)} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '25px', cursor: 'pointer', transition: '0.3s' }}>
                   <div style={{ fontSize: '40px', marginBottom: '15px' }}>📂</div>
-                  <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>{month} Archives</div>
+                  <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)', marginBottom: '10px' }}>{month}</div>
                   <div style={{ fontSize: '12px', color: 'var(--text3)', fontWeight: 'bold', marginTop: '5px' }}>{archiveGroups[month].length} Total Requests</div>
                 </div>
              ))}
-           </div>
-        )}
+        </div>
+      )}
 
-        {(viewTab === 'active' || (viewTab === 'archives' && selectedArchiveMonth)) && (
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)' }}>
-            <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)' }}>
+      {(viewTab === 'active' || (viewTab === 'archives' && selectedArchiveMonth)) && (
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)' }}>
+          <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text)' }}>
                 {selectedArchiveMonth ? `📅 ${selectedArchiveMonth} History` : '📋 Recent Leave Requests'}
-              </h3>
-              <div style={{ display: 'flex', gap: '10px' }}>
+                </h3>
+                <div style={{ display: 'flex', gap: '10px' }}>
                 {selectedArchiveMonth && <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>← Back</button>}
-                <button onClick={handleAddRequest} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ New Request</button>
-              </div>
-            </div>
+                {viewTab === 'active' && <button onClick={handleAddRequest} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ New Request</button>}
+                </div>
+          </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                    <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Employee</th>
-                    <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Period</th>
-                    <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Type</th>
-                    <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Reason</th>
-                    <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Status</th>
-                    <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayRequests.map(req => (
-                    <tr key={req.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '12px 15px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text)' }}>{req.employeeName}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 'bold' }}>{req.employeeId}</div>
-                      </td>
-                      <td style={{ padding: '12px 15px', fontSize: '12px', color: 'var(--text2)', fontWeight: '600' }}>
-                        {formatDateShort(req.startDate)} → {formatDateShort(req.endDate)}
-                      </td>
-                      <td style={{ padding: '12px 15px' }}>
-                        <span style={{ fontSize: '10px', fontWeight: '900', color: '#4338ca', background: '#eef2ff', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>{req.type}</span>
-                      </td>
-                      <td style={{ padding: '12px 15px', fontSize: '12px', color: 'var(--text)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {req.reason || '—'}
-                      </td>
-                      <td style={{ padding: '12px 15px' }}>
-                        <span style={{ background: `${getStatusColor(req.status)}15`, color: getStatusColor(req.status), padding: '4px 12px', borderRadius: '20px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', border: `1px solid ${getStatusColor(req.status)}33` }}>
-                          {req.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 15px' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '900px' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg3)', borderBottom: '1px solid var(--border)' }}>
+                  <th style={{ padding: '10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase' }}>Employee</th>
+                  <th style={{ padding: '10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase' }}>Period</th>
+                  <th style={{ padding: '10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase' }}>Type</th>
+                  <th style={{ padding: '10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase' }}>Reason</th>
+                  <th style={{ padding: '10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ padding: '10px', textAlign: 'left', fontSize: '10px', color: 'var(--text2)', textTransform: 'uppercase' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayRequests.map(req => (
+                  <tr key={req.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }}>
+                    <td style={{ padding: '10px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '800' }}>{req.employeeName}</div>
+                      <div style={{ fontSize: '10px', color: 'var(--text3)' }}>{req.employeeId}</div>
+                    </td>
+                    <td style={{ padding: '10px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 'bold' }}>{formatDateShort(req.startDate)} - {formatDateShort(req.endDate)}</div>
+                    </td>
+                    <td style={{ padding: '10px' }}>
+                      <span style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'var(--bg3)', fontWeight: 'bold', textTransform: 'uppercase' }}>{req.type}</span>
+                    </td>
+                    <td style={{ padding: '10px', fontSize: '12px', color: 'var(--text2)', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.reason}</td>
+                    <td style={{ padding: '10px' }}>
+                      <span style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '12px', background: req.status === 'approved' ? '#ecfdf5' : req.status === 'rejected' ? '#fef2f2' : '#fff7ed', color: req.status === 'approved' ? '#059669' : req.status === 'rejected' ? '#dc2626' : '#ea580c', fontWeight: '900', textTransform: 'uppercase' }}>{req.status}</span>
+                    </td>
+                    <td style={{ padding: '10px' }}>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           {req.status === 'pending' && isAdmin && (
                             <>
@@ -176,60 +197,57 @@ export default function LeavePage() {
                           <button onClick={() => handleEdit(req)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
                           <button onClick={() => deleteLeaveRequest(req.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {displayRequests.length === 0 && (
-                    <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)', fontSize: '12px' }}>No requests found.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    </td>
+                  </tr>
+                ))}
+                {displayRequests.length === 0 && (
+                  <tr><td colSpan={6} style={{ padding: '30px', textAlign: 'center', color: 'var(--text3)' }}>No matching records found.</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', width: '90%', maxWidth: '450px', overflow: 'hidden' }}>
-            <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--border)', background: 'var(--bg3)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text)' }}>Request Leave</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
-            </div>
-            <div style={{ padding: '25px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Select Employee</label>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', width: '100%', maxWidth: '500px', padding: '30px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px' }}>{editingRequest ? 'Update Leave Request' : 'Submit Leave Request'}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '-10px' }}>Select Employee</label>
                 <select value={formData.employeeId || ''} onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }}>
-                  <option value="">Select Employee</option>
+                  <option value="">-- Choose Staff --</option>
                   {employees.filter(e => isAdmin || e.department === currentUser.role).map(e => (
                     <option key={e.id} value={e.id}>{e.name} ({e.id})</option>
                   ))}
                 </select>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Start Date</label>
-                  <input type="date" value={formData.startDate || ''} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>Start Date</label>
+                    <input type="date" value={formData.startDate || ''} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '5px', display: 'block' }}>End Date</label>
+                    <input type="date" value={formData.endDate || ''} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
+                  </div>
                 </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>End Date</label>
-                  <input type="date" value={formData.endDate || ''} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }} />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Leave Type</label>
+
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '-10px' }}>Leave Type</label>
                 <select value={formData.type || 'sick'} onChange={(e) => setFormData({ ...formData, type: e.target.value as any })} style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none' }}>
                   <option value="sick">Sick Leave</option>
                   <option value="casual">Casual Leave</option>
                   <option value="annual">Annual Leave</option>
-                  <option value="paid">Paid Leave</option>
+                  <option value="other">Other</option>
                 </select>
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px', display: 'block' }}>Reason</label>
+
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '-10px' }}>Reason</label>
                 <textarea value={formData.reason || ''} onChange={(e) => setFormData({ ...formData, reason: e.target.value })} style={{ width: '100%', height: '80px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px', color: 'var(--text)', outline: 'none', resize: 'none' }} placeholder="Why are you taking leave?" />
-              </div>
-              <button onClick={handleSave} style={{ background: 'var(--accent)', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' }}>Submit Request</button>
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button onClick={() => setShowModal(false)} style={{ padding: '12px 25px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
+                <button onClick={handleSave} style={{ flex: 1, background: 'var(--accent)', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>{editingRequest ? 'Update Request' : 'Submit Request'}</button>
+                </div>
             </div>
           </div>
         </div>
