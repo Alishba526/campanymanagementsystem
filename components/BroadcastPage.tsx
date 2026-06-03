@@ -23,7 +23,55 @@ export default function BroadcastPage() {
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
 
-  // ... rest ofGrouping logic ...
+  // Archive Grouping
+  const currentMonthPrefix = getCurrentDate().substring(0, 7);
+  const archiveGroups = announcements.reduce((groups: Record<string, Announcement[]>, ann) => {
+    const month = new Date(ann.createdAt).toISOString().substring(0, 7);
+    if (month === currentMonthPrefix) return groups;
+    if (!groups[month]) groups[month] = [];
+    groups[month].push(ann);
+    return groups;
+  }, {});
+
+  const sortedArchiveMonths = Object.keys(archiveGroups).sort().reverse();
+
+  const getMonthName = (yearMonth: string) => {
+    const [year, month] = yearMonth.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  };
+
+  const displayAnnouncements = announcements.filter(ann => {
+    const annMonth = new Date(ann.createdAt).toISOString().substring(0, 7);
+    const annDate = new Date(ann.createdAt).toISOString().substring(0, 10);
+    
+    const searchLower = searchQuery.toLowerCase();
+    const isSearchMatch = !searchQuery || 
+      ann.title.toLowerCase().includes(searchLower) || 
+      ann.content.toLowerCase().includes(searchLower);
+
+    if (searchQuery) return isSearchMatch;
+
+    const isDateMatch = !filterDate || annDate === filterDate;
+
+    if (viewTab === 'active') {
+      return annMonth === currentMonthPrefix && isDateMatch;
+    } else {
+      return annMonth === selectedArchiveMonth;
+    }
+  });
+
+  useEffect(() => {
+    if (!isAdmin && announcements.length > 0) {
+      markCategoryNotificationsAsRead('broadcast');
+      const unread = announcements.filter(ann => !ann.seenBy?.includes(currentUser.name));
+      if (unread.length > 0) {
+        unread.forEach(ann => {
+          markAnnouncementAsRead(ann.id, currentUser.name, currentUser.role);
+        });
+      }
+    }
+  }, [announcements.length, isAdmin, currentUser.name, currentUser.role]);
 
   const handleAdd = () => {
     setEditingAnnouncement(null);
@@ -77,7 +125,7 @@ export default function BroadcastPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Standardized Header */}
+      {/* Header */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#fff' }}>📢</div>
@@ -140,7 +188,7 @@ export default function BroadcastPage() {
                  <button onClick={() => setSelectedArchiveMonth(null)} style={{ background: 'var(--bg3)', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: 'var(--text2)', fontWeight: 'bold', fontSize: '11px' }}>← Back to Archives</button>
               ) : <div />}
               {viewTab === 'active' && isAdmin && (
-                <button onClick={() => setShowModal(true)} style={{ background: 'var(--accent)', color: '#fff', padding: '10px 25px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>+ New Broadcast</button>
+                <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', padding: '10px 25px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>+ New Broadcast</button>
               )}
             </div>
 
@@ -168,7 +216,6 @@ export default function BroadcastPage() {
         )}
       </div>
 
-      {/* Modal remains same but updated with standard UI */}
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', borderRadius: '24px', width: '90%', maxWidth: '550px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)', padding: '30px' }}>

@@ -481,6 +481,42 @@ export async function deleteAnnouncementAction(id: string) {
   try { await prisma.announcement.delete({ where: { id } }); } catch (e) {}
 }
 
+export async function updateAnnouncementAction(id: string, updates: Partial<Announcement>) {
+  try {
+    const ann = await prisma.announcement.findUnique({ where: { id } });
+    if (!ann) return null;
+
+    let currentData: any = {};
+    if (ann.content.startsWith('S:')) {
+      try {
+        currentData = JSON.parse(ann.content.substring(2));
+      } catch (e) {
+        currentData = { content: ann.content };
+      }
+    } else {
+      currentData = { content: ann.content };
+    }
+
+    // Merge updates into our JSON object
+    const mergedData = { ...currentData, ...updates };
+    const compositeContent = `S:${JSON.stringify(mergedData)}`;
+
+    return await prisma.announcement.update({
+      where: { id },
+      data: {
+        title: updates.title || ann.title,
+        content: compositeContent,
+        author: updates.author || ann.author,
+        priority: updates.priority || ann.priority,
+        updatedAt: new Date()
+      } as any
+    });
+  } catch (e) {
+    console.error("Broadcast update failed:", e);
+    return null;
+  }
+}
+
 // --- Audit Log Actions ---
 export async function getAuditLogs() { try { return await prisma.auditLog.findMany({ orderBy: { createdAt: 'desc' } }); } catch (e) { return []; } }
 export async function addAuditLogAction(log: AuditLog) { try { return await prisma.auditLog.create({ data: log as any }); } catch (e) { return null; } }

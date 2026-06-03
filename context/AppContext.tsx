@@ -59,6 +59,7 @@ interface AppContextType {
   addDepartment: (name: string) => Promise<void>;
   updateDepartment: (id: string, name: string) => Promise<void>;
   addAnnouncement: (announcement: Announcement) => Promise<void>;
+  updateAnnouncement: (id: string, updates: Partial<Announcement>) => Promise<void>;
   markAnnouncementAsRead: (id: string, name: string, role: string) => Promise<void>;
   deleteAnnouncement: (id: string) => Promise<void>;
   addProject: (project: Project) => Promise<void>;
@@ -267,12 +268,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setAnnouncements(validAnnounces);
         }
       }
-
-      if (projectData && (projectData as any).length > 0) {
-        setProjects(projectData as any);
-      }
-      setSchedules(scheduleData as MonthlySchedule[]);
-      setBills(billData as Bill[]);
     } catch (error) {} finally { setIsLoading(false); }
   };
 
@@ -635,6 +630,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {}
   };
 
+  const updateAnnouncement = async (id: string, updates: Partial<Announcement>) => {
+    try {
+      setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+      await actions.updateAnnouncementAction(id, updates);
+      await fetchData();
+    } catch (e) {}
+  };
+
   const deleteAnnouncement = async (id: string) => {
     try {
       // Remove from Local Backup
@@ -757,7 +760,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       themeColor, themeMode, isLoading, fetchData, login, logout, addEmployee, updateEmployee, deleteEmployee, addAttendance, updateAttendance, deleteAttendance,
       addTask, updateTask, deleteTask, addExpense, updateExpense, deleteExpense, addIncome, deleteIncome, addAuditLog, addNotification, markNotificationAsRead,
       markCategoryNotificationsAsRead, markAllNotificationsAsRead, addLeaveRequest, updateLeaveRequest, deleteLeaveRequest, addBreakRequest, updateBreakRequest, addDepartment, updateDepartment,
-      addAnnouncement, markAnnouncementAsRead, deleteAnnouncement, addProject, updateProject, deleteProject, addMonthlySchedule, updateMonthlySchedule, deleteMonthlySchedule, addBill, updateBill, deleteBill,
+      addAnnouncement, updateAnnouncement, markAnnouncementAsRead, deleteAnnouncement, addProject, updateProject, deleteProject, addMonthlySchedule, updateMonthlySchedule, deleteMonthlySchedule, addBill, updateBill, deleteBill,
       setThemeColor, setThemeMode
     }}>
       {children}
