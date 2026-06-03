@@ -141,30 +141,16 @@ export default function ProjectsPage() {
     }
 
     // 3. Active Ledger View
-    const isActiveStatus = ['Working on', 'Submited', 'on hold', 'New Project'].includes(p.status);
-    
-    // CONDITION: "Working on" and "New Project" are ALWAYS visible (Folder logic)
-    const isAlwaysVisible = ['Working on', 'New Project'].includes(p.status);
-    
-    // Status Filter (If user selected a specific status)
-    const matchesStatusFilter = statusFilter === 'all' || p.status === statusFilter;
-
     if (viewTab === 'active') {
-      // If we are looking for "Working Folder" items, they ignore date
-      if (isAlwaysVisible) return isActiveStatus && matchesStatusFilter;
-      
-      // Others must match the selected date
-      const isDateMatch = !filterDate || p.startDate === filterDate;
-      return isActiveStatus && matchesDateOrStatus(p, filterDate) && matchesStatusFilter;
+      // If 'All' is selected, show EVERYTHING (ignore date)
+      if (statusFilter === 'all') return true;
+
+      // If a specific status filter is active, show ALL matching projects regardless of date
+      return p.status === statusFilter;
     }
     
     return false;
   });
-
-  function matchesDateOrStatus(p: Project, fDate: string) {
-      if (['Working on', 'New Project'].includes(p.status)) return true;
-      return p.startDate === fDate;
-  }
 
   // REAL-TIME USD CALCULATIONS
   const totalUSDBudget = displayProjects.reduce((sum, p) => sum + (p.cost || 0), 0);
@@ -194,12 +180,14 @@ export default function ProjectsPage() {
             <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Active Folder: {displayProjects.length} records found</div>
           </div>
         </div>
-
         {/* Status Quick Filter (The "Folder" Filter) */}
-        <div style={{ display: 'flex', gap: '8px', background: 'var(--bg3)', padding: '5px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', gap: '8px', background: 'var(--bg3)', padding: '5px', borderRadius: '12px', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
            <StatusToggle label="All" active={statusFilter === 'all'} onClick={() => setStatusFilter('all')} color="var(--accent)" />
            <StatusToggle label="Working" active={statusFilter === 'Working on'} onClick={() => setStatusFilter('Working on')} color="#2563eb" />
            <StatusToggle label="New" active={statusFilter === 'New Project'} onClick={() => setStatusFilter('New Project')} color="#7c3aed" />
+           <StatusToggle label="Submited" active={statusFilter === 'Submited'} onClick={() => setStatusFilter('Submited')} color="#059669" />
+           <StatusToggle label="Close" active={statusFilter === 'Close'} onClick={() => setStatusFilter('Close')} color="#4b5563" />
+           <StatusToggle label="On Hold" active={statusFilter === 'on hold'} onClick={() => setStatusFilter('on hold')} color="#ea580c" />
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>

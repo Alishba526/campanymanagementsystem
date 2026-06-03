@@ -179,11 +179,9 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
          <h3 style={{ fontSize: '13px', fontWeight: '900', color: 'var(--text)', textTransform: 'uppercase', marginBottom: '15px', opacity: 0.7 }}>⚡ Global Management</h3>
          <div style={{ 
            display: 'grid', 
-           gridTemplateColumns: 'repeat(8, 1fr)', 
-           gap: '12px',
-           overflowX: 'auto',
-           paddingBottom: '5px'
-         }} className="custom-scrollbar">
+           gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
+           gap: '15px'
+         }}>
             <ActionCard icon="👥" label="Staff" onClick={() => onNavigate?.('employees')} />
             <ActionCard icon="⏰" label="Attend" onClick={() => onNavigate?.('attendance')} />
             {isAdmin && <ActionCard icon="💸" label="Expense" onClick={() => onNavigate?.('expenses')} />}
@@ -279,7 +277,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
             {projects.filter(p => ['Working on', 'New Project'].includes(p.status)).length} ONGOING
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '10px' }} className="custom-scrollbar">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
           {projects
             .filter(p => ['Working on', 'New Project'].includes(p.status))
             .map(p => (
@@ -311,7 +309,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
             {onDutyStaff.length} ON DUTY
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '10px' }} className="custom-scrollbar">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
           {onDutyStaff.map(a => (
             <div key={a.id} onClick={() => onNavigate?.('attendance')} style={{ minWidth: '220px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '18px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#059669'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
