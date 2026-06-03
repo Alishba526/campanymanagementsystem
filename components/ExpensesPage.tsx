@@ -7,8 +7,9 @@ import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
 import Swal from 'sweetalert2';
 
 export default function ExpensesPage() {
-  const { currentUser, expenses, addExpense, deleteExpense } = useApp();
+  const { currentUser, expenses, addExpense, updateExpense, deleteExpense } = useApp();
   const [showModal, setShowModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [formData, setFormData] = useState<Partial<Expense>>({});
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,10 +44,17 @@ export default function ExpensesPage() {
   const sortedArchiveMonths = Object.keys(archiveGroups).sort().reverse();
 
   const handleAdd = () => {
+    setEditingExpense(null);
     setFormData({
       date: getCurrentDate(),
       category: 'office'
     });
+    setShowModal(true);
+  };
+
+  const handleEdit = (exp: Expense) => {
+    setEditingExpense(exp);
+    setFormData(exp);
     setShowModal(true);
   };
 
@@ -56,8 +64,8 @@ export default function ExpensesPage() {
       return;
     }
 
-    const newExpense: Expense = {
-      id: `EXP${Date.now()}`,
+    const expenseData: Expense = {
+      id: editingExpense?.id || `EXP${Date.now()}`,
       description: formData.description,
       amount: formData.amount,
       category: formData.category || 'office',
@@ -67,9 +75,13 @@ export default function ExpensesPage() {
       submittedBy: currentUser.name
     };
 
-    addExpense(newExpense);
+    if (editingExpense) {
+      updateExpense(editingExpense.id, expenseData);
+    } else {
+      addExpense(expenseData);
+    }
     setShowModal(false);
-    Swal.fire({ title: 'Expense Logged', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
+    Swal.fire({ title: 'Expense Saved', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
   };
 
   const handleDelete = (id: string) => {
@@ -214,7 +226,10 @@ export default function ExpensesPage() {
                       </td>
                       <td style={{ padding: '6px 10px', fontSize: '13px', color: '#dc2626', fontWeight: '900', whiteSpace: 'nowrap' }}>Rs. {exp.amount.toLocaleString()}</td>
                       <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
-                        <button onClick={() => handleDelete(exp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>🗑️</button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => handleEdit(exp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
+                          <button onClick={() => handleDelete(exp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -229,7 +244,7 @@ export default function ExpensesPage() {
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', width: '100%', maxWidth: '500px', padding: '30px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '25px', color: 'var(--text)' }}>Log New Expense</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '25px', color: 'var(--text)' }}>{editingExpense ? 'Edit Expense Detail' : 'Log New Expense'}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div>
                 <label style={{ fontSize: '12px', color: 'var(--text2)', display: 'block', marginBottom: '8px' }}>Description</label>
@@ -256,7 +271,7 @@ export default function ExpensesPage() {
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '15px' }}>
                 <button onClick={() => setShowModal(false)} style={{ padding: '12px 25px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', cursor: 'pointer', fontWeight: 'bold' }}>Cancel</button>
-                <button onClick={handleSave} style={{ padding: '12px 35px', borderRadius: '10px', background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Log Expense</button>
+                <button onClick={handleSave} style={{ padding: '12px 35px', borderRadius: '10px', background: 'var(--red)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{editingExpense ? 'Update Expense' : 'Log Expense'}</button>
               </div>
             </div>
           </div>
