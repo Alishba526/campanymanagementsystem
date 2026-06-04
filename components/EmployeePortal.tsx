@@ -22,11 +22,12 @@ export default function EmployeePortal() {
 
   if (!currentUser) return null;
 
-  // Find the employee record linked to this user (Robust ID-based matching)
+  // Find the employee record linked to this user (Universal Matching)
   const employee = employees.find(e => 
-    e.id === currentUser.name || // Primary link: Admin stores EMP ID in User.name
-    e.email === currentUser.email || 
-    e.id === currentUser.email
+    e.id === currentUser.name || // Primary: Linked by ID
+    e.name === currentUser.name || // Fallback: Linked by Name
+    e.email === currentUser.email || // Fallback: Linked by Email
+    e.id === currentUser.email // Fallback: ID as username
   );
 
   const today = getCurrentDate();
