@@ -525,9 +525,7 @@ function ProjectTable({ projects, formatCurrency, formatDateShort, updateProject
               <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={() => handleEdit(p)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px' }}>✏️</button>
-                  {(isAdmin || p.managerEmail === currentUser.email) && (
-                    <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>
-                  )}
+                  <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: 'var(--red)' }}>🗑️</button>
                 </div>
               </td>
             </tr>
