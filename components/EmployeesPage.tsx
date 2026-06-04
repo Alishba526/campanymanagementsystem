@@ -14,7 +14,7 @@ export default function EmployeesPage() {
   const [formData, setFormData] = useState<Partial<Employee>>({});
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterDate, setFilterDate] = useState(getCurrentDate());
+  const [selectedYear, setSelectedYear] = useState<string>('all');
 
   if (!currentUser) return null;
 
@@ -28,10 +28,9 @@ export default function EmployeesPage() {
      if (existingUser) {
        const result = await Swal.fire({
          title: `Access Control: ${emp.name}`,
-         html: `<div style="text-align:left; font-size:14px; background:var(--bg3); padding:15px; border-radius:10px; border:1px solid var(--border)">
-                  <div style="margin-bottom:8px"><b>User ID:</b> <span style="color:var(--accent)">${existingUser.email}</span></div>
-                  <div style="margin-bottom:8px"><b>Portal Status:</b> <span style="color:var(--green)">Active Access</span></div>
-                  <div style="padding-top:10px; border-top:1px solid var(--border); color:var(--accent); font-weight:bold">Current Password: ${existingUser.password}</div>
+         html: `<div style="text-align:left; font-size:14px; background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #e2e8f0">
+                  <div style="margin-bottom:8px; color:#1e293b"><b>Username:</b> <span style="color:var(--accent)">${existingUser.email}</span></div>
+                  <div style="margin-bottom:8px; color:#1e293b"><b>Password:</b> <span style="color:#4f46e5; font-weight:900">${existingUser.password}</span></div>
                 </div>`,
          icon: 'info',
          showCancelButton: true,
@@ -40,7 +39,7 @@ export default function EmployeesPage() {
          denyButtonText: '🗑️ Revoke Access',
          cancelButtonText: 'Close',
          confirmButtonColor: 'var(--accent)',
-         denyButtonColor: 'var(--red)',
+         denyButtonColor: '#ef4444',
        });
 
        if (result.isConfirmed) {
@@ -63,13 +62,13 @@ export default function EmployeesPage() {
            text: `${emp.name} will no longer be able to log in.`,
            icon: 'warning',
            showCancelButton: true,
-           confirmButtonColor: 'var(--red)',
+           confirmButtonColor: '#ef4444',
            confirmButtonText: 'Yes, Revoke'
          });
          if (confirm.isConfirmed) {
            await actions.deleteUserAction(existingUser.id);
            await fetchData(); 
-           Swal.fire('Revoked', 'Employee access removed.', 'success');
+           Swal.fire('Revoked', 'Access removed.', 'success');
          }
        }
      } else {
@@ -77,17 +76,15 @@ export default function EmployeesPage() {
          title: `Grant Portal Access`,
          html: `
            <div style="text-align:left; font-size:14px; margin-bottom:15px">
-             <label style="display:block; margin-bottom:5px; font-weight:bold">Employee ID: ${emp.id}</label>
-             <label style="display:block; margin-bottom:5px; font-weight:bold">Set Login ID (Username):</label>
+             <label style="display:block; margin-bottom:5px; font-weight:bold; color:#1e293b">Setting Access for ID: ${emp.id}</label>
              <input id="swal-username" class="swal2-input" style="margin:0; width:100%" value="${emp.name.toLowerCase().replace(/\s/g, '')}" placeholder="Username">
-             <label style="display:block; margin-top:15px; margin-bottom:5px; font-weight:bold">Set Password:</label>
-             <input id="swal-password" type="text" class="swal2-input" style="margin:0; width:100%" placeholder="Password">
+             <input id="swal-password" type="text" class="swal2-input" style="margin-top:10px; width:100%" placeholder="Set Password">
            </div>
          `,
          focusConfirm: false,
          showCancelButton: true,
          confirmButtonText: 'Create Account',
-         confirmButtonColor: 'var(--green)',
+         confirmButtonColor: '#10b981',
          preConfirm: () => {
            return [
              (document.getElementById('swal-username') as HTMLInputElement).value,
@@ -184,7 +181,7 @@ export default function EmployeesPage() {
       text: "Permanent action!",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: 'var(--red)',
+      confirmButtonColor: '#ef4444',
       confirmButtonText: 'Yes, delete'
     }).then((result) => {
       if (result.isConfirmed) {
@@ -200,28 +197,61 @@ export default function EmployeesPage() {
     { id: 'architecture', label: 'Architecture' }
   ];
 
+  const years = ['all'];
+  const startYear = 2010;
+  const currentYear = new Date().getFullYear();
+  for(let y = currentYear; y >= startYear; y--) years.push(y.toString());
+
   const filteredEmployees = employees.filter(emp => {
     const searchLower = searchQuery.toLowerCase();
-    return !searchQuery || 
+    const matchesSearch = !searchQuery || 
       emp.name.toLowerCase().includes(searchLower) ||
       emp.id.toLowerCase().includes(searchLower) ||
       emp.cnic?.includes(searchQuery) ||
       emp.fatherName?.toLowerCase().includes(searchLower);
+    
+    const matchesYear = selectedYear === 'all' || (emp.joinDate && emp.joinDate.startsWith(selectedYear));
+    
+    return matchesSearch && matchesYear;
   });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
-      {/* Header */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '15px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>👥 Employee Search Engine (All Details)</h2>
-        <input 
-          type="text" 
-          placeholder="Search staff, CNIC, Father Name..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 15px', color: 'var(--text)', outline: 'none', width: '250px', fontSize: '12px' }}
-        />
+      {/* Premium Header */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
+        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+           <div style={{fontSize:'28px'}}>📑</div>
+           <div>
+             <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a' }}>Employee Master Ledger</h2>
+             <div style={{fontSize:'10px', color:'#1e40af', fontWeight:'900'}}>DATABASE TRACKING: {employees.length} PERSONNEL REGISTERED</div>
+           </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          {/* Historical Year Filter */}
+          <div style={{background:'#f1f5f9', padding:'4px 12px', borderRadius:'12px', border:'1px solid #e2e8f0', display:'flex', alignItems:'center', gap:'10px'}}>
+             <span style={{fontSize:'10px', fontWeight:'900', color:'#1e293b'}}>ARCHIVE SEARCH (YEAR):</span>
+             <select 
+               value={selectedYear} 
+               onChange={(e) => setSelectedYear(e.target.value)}
+               style={{background:'none', border:'none', fontSize:'13px', fontWeight:'900', color:'#1e40af', outline:'none', cursor:'pointer'}}
+             >
+               {years.map(y => <option key={y} value={y}>{y === 'all' ? 'LIVE/ALL' : y}</option>)}
+             </select>
+          </div>
+
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search Profile, CNIC, ID..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '10px 15px 10px 35px', color: '#000', outline: 'none', width: '300px', fontSize: '12px', fontWeight: '900' }}
+            />
+          </div>
+        </div>
       </div>
 
       {departments.map(dept => {
@@ -229,100 +259,99 @@ export default function EmployeesPage() {
         const deptEmps = filteredEmployees.filter(e => e.department === dept.id);
 
         return (
-          <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
+          <div key={dept.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)', marginBottom: '10px' }}>
             <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text)' }}>🏢 {dept.label} Department</h3>
-              <button onClick={() => handleAdd(dept.id)} style={{ background: 'var(--accent)', color: '#fff', padding: '6px 15px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>+ Add Employee</button>
+              <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                <div style={{width:'8px', height:'24px', background: dept.id === 'ecommerce' ? '#6366f1' : dept.id === 'marketing' ? '#ec4899' : '#10b981', borderRadius:'4px'}}></div>
+                <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#111827' }}>{dept.label} Operations</h3>
+              </div>
+              <button onClick={() => handleAdd(dept.id)} style={{ background: 'var(--accent)', color: '#fff', padding: '8px 25px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', boxShadow:'0 4px 10px rgba(var(--accent-rgb), 0.3)' }}>+ Enroll New Staff</button>
             </div>
 
-            <div style={{ overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                    <th style={{ width: '60px', padding: '10px', textAlign: 'left', fontSize: '10px', color: '#374151', fontWeight: '900', textTransform: 'uppercase' }}>ID</th>
-                    <th style={{ width: '180px', padding: '10px', textAlign: 'left', fontSize: '10px', color: '#374151', fontWeight: '900', textTransform: 'uppercase' }}>Name / Father</th>
-                    <th style={{ width: '160px', padding: '10px', textAlign: 'left', fontSize: '10px', color: '#374151', fontWeight: '900', textTransform: 'uppercase' }}>Identity / Position</th>
-                    <th style={{ width: '150px', padding: '10px', textAlign: 'left', fontSize: '10px', color: '#374151', fontWeight: '900', textTransform: 'uppercase' }}>Contact Info</th>
-                    <th style={{ width: '160px', padding: '10px', textAlign: 'left', fontSize: '10px', color: '#374151', fontWeight: '900', textTransform: 'uppercase' }}>Credentials</th>
-                    <th style={{ width: '150px', padding: '10px', textAlign: 'left', fontSize: '10px', color: '#374151', fontWeight: '900', textTransform: 'uppercase' }}>Salary / Hours</th>
-                    <th style={{ width: '120px', padding: '10px', textAlign: 'center', fontSize: '10px', color: '#374151', fontWeight: '900', textTransform: 'uppercase' }}>Status / Perf</th>
-                    <th style={{ width: '140px', padding: '10px', textAlign: 'center', fontSize: '10px', color: '#374151', fontWeight: '900', textTransform: 'uppercase' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deptEmps.map(emp => {
-                    const user = users.find((u: any) => u.role === 'employee' ? (u.name === emp.id) : (u.email === emp.email));
-                    return (
-                      <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                        {/* ID */}
-                        <td style={{ padding: '12px 10px', verticalAlign: 'top' }}>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginBottom: '2px' }}>SERIAL ID</div>
-                           <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--accent)' }}>{emp.id}</div>
-                        </td>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {deptEmps.map(emp => {
+                const user = users.find((u: any) => u.role === 'employee' ? (u.name === emp.id) : (u.email === emp.email));
+                return (
+                  <div key={emp.id} style={{ 
+                    background: '#fff', 
+                    border: '1px solid #e2e8f0', 
+                    borderRadius: '16px', 
+                    padding: '10px 20px', 
+                    display: 'grid', 
+                    gridTemplateColumns: '60px 1.2fr 1fr 1.2fr 1.2fr 1.5fr 1.2fr 1fr 150px',
+                    alignItems: 'center',
+                    gap: '12px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                  }}>
+                    {/* 1. ID Block */}
+                    <div>
+                      <div style={{ fontSize: '8px', color: '#1e293b', fontWeight: '900', marginBottom: '2px', textTransform: 'uppercase' }}>Serial ID</div>
+                      <div style={{ fontSize: '13px', fontWeight: '900', color: 'var(--accent)' }}>{emp.id}</div>
+                    </div>
 
-                        {/* Name & Father */}
-                        <td style={{ padding: '12px 10px', verticalAlign: 'top' }}>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginBottom: '2px' }}>FULL NAME</div>
-                           <div style={{ fontSize: '14px', fontWeight: '900', color: '#111827' }}>{emp.name}</div>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginTop: '4px' }}>FATHER NAME (S/O)</div>
-                           <div style={{ fontSize: '11px', fontWeight: '700', color: '#374151' }}>{emp.fatherName || '--'}</div>
-                        </td>
+                    {/* 2. Official Name */}
+                    <div style={{ background: '#eff6ff', borderRadius: '10px', padding: '5px 12px', border: '1px solid #dbeafe' }}>
+                       <div style={{ fontSize: '8px', color: '#1e40af', fontWeight: '900', marginBottom: '2px', textTransform: 'uppercase' }}>Full Name</div>
+                       <div style={{ fontSize: '13px', fontWeight: '900', color: '#1e40af' }}>{emp.name}</div>
+                    </div>
 
-                        {/* Identity & Position */}
-                        <td style={{ padding: '12px 10px', verticalAlign: 'top' }}>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginBottom: '2px' }}>CNIC NUMBER</div>
-                           <div style={{ fontSize: '12px', fontWeight: '900', color: '#111827', fontFamily: 'monospace' }}>{emp.cnic || '--'}</div>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginTop: '4px' }}>DESIGNATION</div>
-                           <div style={{ fontSize: '11px', fontWeight: '900', color: '#374151', textTransform: 'uppercase' }}>{emp.position}</div>
-                        </td>
+                    {/* 3. Father Name */}
+                    <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '5px 12px', border: '1px solid #e2e8f0' }}>
+                       <div style={{ fontSize: '8px', color: '#0f172a', fontWeight: '900', marginBottom: '2px', textTransform: 'uppercase' }}>Father Name</div>
+                       <div style={{ fontSize: '11px', fontWeight: '900', color: '#0f172a' }}>{emp.fatherName || '--'}</div>
+                    </div>
 
-                        {/* Contact */}
-                        <td style={{ padding: '12px 10px', verticalAlign: 'top' }}>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginBottom: '2px' }}>PHONE</div>
-                           <div style={{ fontSize: '12px', fontWeight: '900', color: '#111827' }}>{emp.phone || '--'}</div>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginTop: '4px' }}>RESIDENTIAL ADDRESS</div>
-                           <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#374151', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={emp.address}>{emp.address || '--'}</div>
-                        </td>
+                    {/* 4. Joining Date (HIGHLIGHTED) */}
+                    <div style={{ background: '#f5f3ff', borderRadius: '10px', padding: '5px 12px', border: '1px solid #ddd6fe' }}>
+                       <div style={{ fontSize: '8px', color: '#4338ca', fontWeight: '900', marginBottom: '2px', textTransform: 'uppercase' }}>Joining Date</div>
+                       <div style={{ fontSize: '11px', fontWeight: '900', color: '#4338ca' }}>{formatDateShort(emp.joinDate)}</div>
+                    </div>
 
-                        {/* Credentials */}
-                        <td style={{ padding: '12px 10px', verticalAlign: 'top' }}>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginBottom: '2px' }}>PORTAL LOGIN ID</div>
-                           <div style={{ fontSize: '11px', fontWeight: '900', color: 'var(--accent)' }}>{user?.email || '—'}</div>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginTop: '4px' }}>PORTAL PASSWORD</div>
-                           <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#4338ca' }}>{user?.password || '—'}</div>
-                        </td>
+                    {/* 5. Document Identity */}
+                    <div style={{ background: '#fff', borderRadius: '10px', padding: '5px 12px', border: '1px solid #f1f5f9' }}>
+                       <div style={{ fontSize: '8px', color: '#000', fontWeight: '900', marginBottom: '2px', textTransform: 'uppercase' }}>CNIC Identity</div>
+                       <div style={{ fontSize: '11px', fontWeight: '900', color: '#000', fontFamily: 'monospace' }}>{emp.cnic || '--'}</div>
+                    </div>
 
-                        {/* Salary & Hours */}
-                        <td style={{ padding: '12px 10px', verticalAlign: 'top' }}>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginBottom: '2px' }}>MONTHLY SALARY</div>
-                           <div style={{ fontSize: '14px', fontWeight: '900', color: '#059669' }}>Rs. {(emp.salary || 0).toLocaleString()}</div>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginTop: '4px' }}>MONTHLY TARGET</div>
-                           <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#374151' }}>{emp.monthlyHours} HRS / MO</div>
-                        </td>
+                    {/* 6. Portal Access (VISIBLE FOR ADMIN) */}
+                    <div style={{ background: '#faf5ff', borderRadius: '10px', padding: '5px 12px', border: '1px solid #f3e8ff' }}>
+                       <div style={{ fontSize: '8px', color: '#7c3aed', fontWeight: '900', marginBottom: '2px', textTransform: 'uppercase' }}>Login Credentials</div>
+                       <div style={{ display: 'flex', gap: '8px' }}>
+                         <div style={{ fontSize: '10px', fontWeight: '900', color: '#4338ca' }}>U: {user?.email || '—'}</div>
+                         <div style={{ fontSize: '10px', fontWeight: '900', color: '#9333ea' }}>P: {user?.password || '—'}</div>
+                       </div>
+                    </div>
 
-                        {/* Status & Perf */}
-                        <td style={{ padding: '12px 10px', textAlign: 'center', verticalAlign: 'top' }}>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginBottom: '4px' }}>CURRENT STATUS</div>
-                           <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '4px', background: emp.status === 'active' ? '#ecfdf5' : '#fef2f2', color: emp.status === 'active' ? '#059669' : '#dc2626', fontWeight: '900', textTransform: 'uppercase' }}>{emp.status}</span>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginTop: '6px' }}>PERFORMANCE</div>
-                           <div style={{ fontSize: '12px', fontWeight: '900', color: '#111827' }}>{getAvgScore(emp.id)}% SCORE</div>
-                        </td>
+                    {/* 7. Professional Role */}
+                    <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '5px 12px', border: '1px solid #e2e8f0' }}>
+                       <div style={{ fontSize: '8px', color: '#334155', fontWeight: '900', marginBottom: '2px', textTransform: 'uppercase' }}>Designation</div>
+                       <div style={{ fontSize: '10px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase' }}>{emp.position}</div>
+                    </div>
 
-                        {/* Actions */}
-                        <td style={{ padding: '12px 10px', textAlign: 'center', verticalAlign: 'top' }}>
-                           <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 'bold', marginBottom: '10px' }}>CONTROL PANEL</div>
-                           <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                              <button onClick={() => handleEdit(emp)} style={{ background: '#f3f4f6', border: '1px solid #d1d5db', padding: '6px', borderRadius: '8px', cursor: 'pointer' }} title="Edit">✏️</button>
-                              <button onClick={() => handleManageAccessActual(emp)} style={{ background: '#eef2ff', border: '1px solid #c7d2fe', padding: '6px', borderRadius: '8px', cursor: 'pointer' }} title="Key">🔑</button>
-                              <button onClick={() => handleUpdateSalary(emp)} style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '6px', borderRadius: '8px', cursor: 'pointer' }} title="Salary">💰</button>
-                              <button onClick={() => handleDelete(emp.id)} style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '6px', borderRadius: '8px', cursor: 'pointer', color: 'var(--red)' }} title="Delete">🗑️</button>
-                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    {/* 8. Financials */}
+                    <div style={{ background: '#ecfdf5', borderRadius: '10px', padding: '5px 12px', border: '1px solid #d1fae5', textAlign: 'center' }}>
+                       <div style={{ fontSize: '8px', color: '#059669', fontWeight: '900', marginBottom: '2px', textTransform: 'uppercase' }}>Salary</div>
+                       <div style={{ fontSize: '13px', fontWeight: '900', color: '#059669' }}>Rs. {(emp.salary || 0).toLocaleString()}</div>
+                    </div>
+
+                    {/* 9. Operations */}
+                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
+                       <div style={{textAlign:'center'}}>
+                         <div style={{ fontSize: '7px', color: '#1e293b', fontWeight: '900', marginBottom: '3px', textTransform: 'uppercase' }}>Control</div>
+                         <div style={{ display: 'flex', gap: '4px' }}>
+                           <button onClick={() => handleEdit(emp)} style={{ width: '28px', height: '28px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✏️</button>
+                           <button onClick={() => handleManageAccessActual(emp)} style={{ width: '28px', height: '28px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔑</button>
+                           <button onClick={() => handleUpdateSalary(emp)} style={{ width: '28px', height: '28px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💰</button>
+                           <button onClick={() => handleDelete(emp.id)} style={{ width: '28px', height: '28px', background: '#fff', border: '1px solid #fee2e2', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>🗑️</button>
+                         </div>
+                       </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {deptEmps.length === 0 && (
+                <div style={{ padding: '30px', textAlign: 'center', background: '#f8fafc', borderRadius: '16px', color: '#0f172a', fontWeight:'900', border: '1px dashed #e2e8f0' }}>No active personnel registered for the selected criteria.</div>
+              )}
             </div>
           </div>
         );
@@ -330,29 +359,29 @@ export default function EmployeesPage() {
 
       {showModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', width: '100%', maxWidth: '600px', padding: '30px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '20px' }}>{editingEmployee ? 'Update Profile' : `Add New Employee`}</h3>
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '32px', width: '100%', maxWidth: '650px', padding: '30px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '900', marginBottom: '25px', color: '#0f172a' }}>{editingEmployee ? '📝 Update Staff Profile' : `👤 Enroll New Staff`}</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Full Name" style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
-              <input type="text" value={formData.fatherName || ''} onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })} placeholder="Father Name" style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
-              <input type="text" value={formData.cnic || ''} onChange={(e) => setFormData({ ...formData, cnic: e.target.value })} placeholder="CNIC" style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
-              <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="Phone" style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
-              <input type="text" value={formData.id || ''} onChange={(e) => setFormData({ ...formData, id: e.target.value })} disabled={!!editingEmployee} placeholder="Employee ID" style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
-              <select value={formData.department || ''} onChange={(e) => setFormData({ ...formData, department: e.target.value })} style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }}>
+              <input type="text" value={formData.name || ''} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Full Name" style={{ padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }} />
+              <input type="text" value={formData.fatherName || ''} onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })} placeholder="Father Name" style={{ padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }} />
+              <input type="text" value={formData.cnic || ''} onChange={(e) => setFormData({ ...formData, cnic: e.target.value })} placeholder="CNIC Number" style={{ padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }} />
+              <input type="text" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="Phone Number" style={{ padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }} />
+              <input type="text" value={formData.id || ''} onChange={(e) => setFormData({ ...formData, id: e.target.value })} disabled={!!editingEmployee} placeholder="Employee ID" style={{ padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900', opacity: editingEmployee ? 0.6 : 1 }} />
+              <select value={formData.department || ''} onChange={(e) => setFormData({ ...formData, department: e.target.value })} style={{ padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }}>
                 <option value="ecommerce">E-Commerce</option>
                 <option value="marketing">Marketing</option>
                 <option value="architecture">Architecture</option>
               </select>
-              <input type="text" value={formData.position || ''} onChange={(e) => setFormData({ ...formData, position: e.target.value })} placeholder="Position" style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
-              <input type="number" value={formData.monthlyHours || 176} onChange={(e) => setFormData({ ...formData, monthlyHours: Number(e.target.value) })} placeholder="Monthly Hours" style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
-              <input type="date" value={formData.joinDate || ''} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} style={{ padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
+              <input type="text" value={formData.position || ''} onChange={(e) => setFormData({ ...formData, position: e.target.value })} placeholder="Position / Designation" style={{ padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }} />
+              <input type="number" value={formData.monthlyHours || 176} onChange={(e) => setFormData({ ...formData, monthlyHours: Number(e.target.value) })} placeholder="Monthly Hours" style={{ padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }} />
+              <input type="date" value={formData.joinDate || ''} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} style={{ width: '100%', padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }} />
               <div style={{ gridColumn: 'span 2' }}>
-                <input type="text" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Address" style={{ width: '100%', padding: '10px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)' }} />
+                <input type="text" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Residential Address" style={{ width: '100%', padding: '12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', outline: 'none', fontWeight:'900' }} />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: '8px 20px', borderRadius: '6px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)' }}>Cancel</button>
-              <button onClick={handleSave} style={{ padding: '8px 30px', borderRadius: '6px', background: 'var(--accent)', color: '#fff', border: 'none', fontWeight: 'bold' }}>Save Profile</button>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '25px' }}>
+              <button onClick={() => setShowModal(false)} style={{ padding: '12px 30px', borderRadius: '15px', border: '1px solid #e2e8f0', background: 'transparent', color: '#1e293b', cursor: 'pointer', fontWeight: 'bold' }}>Discard</button>
+              <button onClick={handleSave} style={{ padding: '12px 50px', borderRadius: '15px', background: '#1e293b', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}>Finalize Record</button>
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { getCurrentDate, formatTimeAMPM, formatDateShort } from '@/lib/dateUtils';
 import Swal from 'sweetalert2';
 import { AttendanceRecord } from '@/types';
+import Loader from './Loader';
 
 export default function EmployeePortal() {
   const { currentUser, employees, attendance, addAttendance, updateAttendance, logout } = useApp();
@@ -22,50 +23,35 @@ export default function EmployeePortal() {
 
   if (!currentUser) return null;
 
-  // Find the employee record linked to this user (Universal Matching)
   const employee = employees.find(e => 
-    e.id === currentUser.name || // Primary: Linked by ID
-    e.name === currentUser.name || // Fallback: Linked by Name
-    e.email === currentUser.email || // Fallback: Linked by Email
-    e.id === currentUser.email // Fallback: ID as username
+    e.id === currentUser.name || e.name === currentUser.name || e.email === currentUser.email || e.id === currentUser.email
   );
 
-  const today = getCurrentDate();
+  // 🛡️ RAAT 12 BAJE WALA FIX: Find the absolute latest record regardless of date
+  const myAttendanceRecords = attendance.filter(a => a.employeeId === employee?.id);
+  const latestSession = myAttendanceRecords.length > 0 
+    ? [...myAttendanceRecords].sort((a, b) => new Date(b.date + ' ' + (b.checkIn === '--' ? '00:00' : b.checkIn)).getTime() - new Date(a.date + ' ' + (a.checkIn === '--' ? '00:00' : a.checkIn)).getTime())[0]
+    : null;
+
+  // If latest session is NOT checked out, it's an "Active Shift" (even if date changed)
+  const hasActiveShift = latestSession && latestSession.checkOut === '--';
   
-  // Find all records for today for this employee
-  const myTodayRecords = attendance.filter(a => a.employeeId === employee?.id && a.date === today);
-  
-  // Get the absolute latest record
-  const latestRecord = myTodayRecords.length > 0 ? myTodayRecords[myTodayRecords.length - 1] : null;
+  // Check if today's shift is already fully completed
+  const todaySession = myAttendanceRecords.find(a => a.date === getCurrentDate());
+  const isAlreadyDoneToday = todaySession && todaySession.checkOut !== '--';
 
-  // 12-Hour Reset Logic: If latest record is > 12 hours old and not checked out, ignore it (allow new check-in)
-  const isStale = latestRecord && latestRecord.checkOut === '--' ? (() => {
-    const [year, mon, day] = latestRecord.date.split('-').map(Number);
-    const [h, m] = latestRecord.checkIn.split(':').map(Number);
-    const checkInDateTime = new Date(year, mon - 1, day, h, m);
-    const diff = (new Date().getTime() - checkInDateTime.getTime()) / (1000 * 60 * 60);
-    return diff > 12;
-  })() : false;
-
-  // If the record is stale or doesn't exist, treat it as "not checked in" for the active session
-  const todayRecord = (latestRecord && !isStale) ? latestRecord : null;
-
-  // Filter attendance for history
-  const myAttendance = attendance.filter(a => {
-    const isMe = a.employeeId === employee?.id;
+  const myAttendance = myAttendanceRecords.filter(a => {
     const searchLower = searchQuery.toLowerCase();
     const isSearchMatch = !searchQuery || a.status.toLowerCase().includes(searchLower) || a.date.includes(searchLower);
     const isDateMatch = !filterDate || a.date === filterDate;
-    
-    return isMe && isSearchMatch && isDateMatch;
+    return isSearchMatch && isDateMatch;
   }).sort((a, b) => b.date.localeCompare(a.date));
 
   const handleCheckIn = async () => {
     if (!employee) {
-      Swal.fire('Error', 'Employee record not found. Please contact admin.', 'error');
+      Swal.fire('Error', 'Employee record not found.', 'error');
       return;
     }
-    
     setIsProcessing(true);
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
@@ -74,7 +60,7 @@ export default function EmployeePortal() {
       id: `ATT${Date.now()}`,
       employeeId: employee.id,
       employeeName: employee.name,
-      date: today,
+      date: getCurrentDate(),
       checkIn: timeStr,
       checkOut: '--',
       status: 'present',
@@ -89,67 +75,54 @@ export default function EmployeePortal() {
     try {
       await addAttendance(newRecord);
       setNote('');
-      Swal.fire({
-        title: 'Checked In!',
-        text: `Welcome, ${employee.name}. Time: ${formatTimeAMPM(timeStr)}`,
-        icon: 'success',
-        timer: 800,
-        showConfirmButton: false,
-        toast: true,
-        position: 'top-end'
-      });
+      Swal.fire({ title: 'Shift Started', text: `Welcome, ${employee.name}.`, icon: 'success', timer: 1500, showConfirmButton: false });
     } catch (e) {
-      Swal.fire('Error', 'Failed to record attendance', 'error');
+      Swal.fire('Error', 'Failed to start shift', 'error');
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleCheckOut = async () => {
-    if (!todayRecord) return;
+    const targetSession = hasActiveShift ? latestSession : todaySession;
+    if (!targetSession) return;
     
     setIsProcessing(true);
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
     
-    const [inH, inM] = todayRecord.checkIn.split(':').map(Number);
-    const [outH, outM] = timeStr.split(':').map(Number);
-    let calculatedHours = ((outH * 60 + outM) - (inH * 60 + inM)) / 60;
+    // Calculate hours (Handles midnight cross)
+    const startDateTime = new Date(targetSession.date + ' ' + targetSession.checkIn);
+    const endDateTime = new Date(); // Right now
+    let calculatedHours = (endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60 * 60);
 
-    if (todayRecord.breakIn && todayRecord.breakOut && todayRecord.breakOut !== '--') {
-      const [binH, binM] = todayRecord.breakIn.split(':').map(Number);
-      const [boutH, boutM] = todayRecord.breakOut.split(':').map(Number);
-      const breakDuration = ((boutH * 60 + boutM) - (binH * 60 + binM)) / 60;
+    if (targetSession.breakIn && targetSession.breakOut && targetSession.breakOut !== '--') {
+      const bIn = new Date(targetSession.date + ' ' + targetSession.breakIn);
+      const bOut = new Date(targetSession.date + ' ' + targetSession.breakOut);
+      const breakDuration = (bOut.getTime() - bIn.getTime()) / (1000 * 60 * 60);
       if (breakDuration > 0) calculatedHours -= breakDuration;
     }
 
     const updates: Partial<AttendanceRecord> = {
       checkOut: timeStr,
       hours: calculatedHours > 0 ? calculatedHours : 0,
-      earlyExit: note ? `Note: ${note}` : todayRecord.earlyExit || '00:00'
+      earlyExit: note ? `Note: ${note}` : targetSession.earlyExit || '00:00'
     };
 
     try {
-      await updateAttendance(todayRecord.id, updates);
+      await updateAttendance(targetSession.id, updates);
       setNote('');
-      Swal.fire({
-        title: 'Checked Out!',
-        text: `Goodbye, ${employee?.name}. Shift completed.`,
-        icon: 'success',
-        timer: 800,
-        showConfirmButton: false,
-        toast: true,
-        position: 'top-end'
-      });
+      Swal.fire({ title: 'Shift Ended', text: `Goodbye! Total Hours: ${calculatedHours.toFixed(2)}h`, icon: 'success', timer: 2000, showConfirmButton: false });
     } catch (e) {
-      Swal.fire('Error', 'Failed to record check-out', 'error');
+      Swal.fire('Error', 'Failed to end shift', 'error');
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleBreak = async (type: 'in' | 'out') => {
-    if (!todayRecord) return;
+    const targetSession = hasActiveShift ? latestSession : todaySession;
+    if (!targetSession) return;
     
     setIsProcessing(true);
     const now = new Date();
@@ -160,18 +133,10 @@ export default function EmployeePortal() {
       : { breakOut: timeStr };
 
     try {
-      await updateAttendance(todayRecord.id, updates);
-      Swal.fire({
-        title: type === 'in' ? 'Break Started' : 'Break Ended',
-        text: `${type === 'in' ? 'Rest well!' : 'Welcome back!'} Time: ${formatTimeAMPM(timeStr)}`,
-        icon: 'info',
-        timer: 800,
-        showConfirmButton: false,
-        toast: true,
-        position: 'top-end'
-      });
+      await updateAttendance(targetSession.id, updates);
+      Swal.fire({ title: type === 'in' ? 'Break Started' : 'Break Ended', icon: 'info', timer: 1000, showConfirmButton: false, toast: true, position:'top-end' });
     } catch (e) {
-      Swal.fire('Error', 'Failed to update break status', 'error');
+      Swal.fire('Error', 'Update failed', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -180,178 +145,107 @@ export default function EmployeePortal() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'present': return '#059669';
-      case 'late': return '#f59e0b';
       case 'absent': return '#dc2626';
       case 'leave': return '#2563eb';
-      case 'half-day': return '#7c3aed';
-      default: return 'var(--text3)';
+      default: return '#1e293b';
     }
   };
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
       
-      {/* Standardized Header */}
+      {/* Header */}
       <div style={{ width: '100%', maxWidth: '1000px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>🚀</div>
           <div>
-            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Employee Portal</h2>
-            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>{view === 'portal' ? 'Personal Dashboard' : 'My Attendance History'}</div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a' }}>Employee Duty Portal</h2>
+            <div style={{ fontSize: '11px', color: '#1e40af', fontWeight: '900' }}>{view === 'portal' ? 'Personal Command Center' : 'Historical Records'}</div>
           </div>
         </div>
-
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
-            <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', opacity: 0.5, fontSize: '12px' }}>🔍</span>
-            <input 
-              type="text" 
-              placeholder="Search records..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px 8px 30px', color: 'var(--text)', outline: 'none', width: '180px', fontSize: '12px' }}
-            />
-          </div>
-          <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px', color: 'var(--text)', outline: 'none', fontSize: '12px', fontWeight: 'bold' }} />
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={() => setView('portal')} style={{ background: view === 'portal' ? 'var(--accent)' : '#f1f5f9', color: view === 'portal' ? '#fff' : '#1e293b', border: 'none', padding: '8px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: '900', fontSize: '12px' }}>Dashboard</button>
+          <button onClick={() => setView('history')} style={{ background: view === 'history' ? 'var(--accent)' : '#f1f5f9', color: view === 'history' ? '#fff' : '#1e293b', border: 'none', padding: '8px 25px', borderRadius: '10px', cursor: 'pointer', fontWeight: '900', fontSize: '12px' }}>My History</button>
+          <button onClick={logout} style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', padding: '8px 20px', borderRadius: '10px', cursor: 'pointer', fontSize: '12px', fontWeight: '900' }}>🚪 Exit</button>
         </div>
       </div>
 
-      <div style={{ width: '100%', maxWidth: '1000px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '8px', padding: '4px', background: 'var(--bg2)', borderRadius: '12px', border: '1px solid var(--border)', width: 'fit-content' }}>
-            <button onClick={() => setView('portal')} style={{ background: view === 'portal' ? 'var(--accent)' : 'transparent', color: view === 'portal' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 25px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}>Dashboard</button>
-            <button onClick={() => setView('history')} style={{ background: view === 'history' ? 'var(--accent)' : 'transparent', color: view === 'history' ? '#fff' : 'var(--text2)', border: 'none', padding: '8px 25px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px', transition: '0.2s' }}>My Records</button>
-          </div>
-          <button onClick={logout} style={{ background: 'var(--bg3)', color: 'var(--red)', border: '1px solid var(--border)', padding: '8px 20px', borderRadius: '10px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>🚪 Logout</button>
-        </div>
-
-        {view === 'portal' ? (
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '20px' }}>
-            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '30px', width: '100%', maxWidth: '500px', padding: '40px', boxShadow: 'var(--shadow)', textAlign: 'center' }}>
-              
-              <div style={{ background: 'var(--bg3)', borderRadius: '20px', padding: '20px', marginBottom: '30px', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '14px', color: 'var(--text3)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>
-                  {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                </div>
-                <div style={{ fontSize: '48px', fontWeight: '900', color: 'var(--accent)' }}>
-                  {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
-                </div>
+      {view === 'portal' ? (
+        <div style={{ width: '100%', maxWidth: '500px', marginTop: '20px' }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '30px', padding: '40px', boxShadow: 'var(--shadow)', textAlign: 'center' }}>
+            
+            <div style={{ background: '#f8fafc', borderRadius: '20px', padding: '20px', marginBottom: '30px', border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: '14px', color: '#1e40af', fontWeight: '900', textTransform: 'uppercase', marginBottom: '5px' }}>
+                {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </div>
-
-              <div style={{ textAlign: 'left', background: 'var(--bg3)', padding: '15px', borderRadius: '15px', marginBottom: '25px', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '12px', color: 'var(--text3)', marginBottom: '4px', textTransform: 'uppercase', fontWeight: '900', opacity: 0.7 }}>Logged in as:</div>
-                <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>{employee?.name || currentUser.name}</div>
-                <div style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '700', textTransform: 'capitalize', marginTop: '2px' }}>ID: {employee?.id || 'N/A'} • {employee?.position || 'Employee'}</div>
+              <div style={{ fontSize: '48px', fontWeight: '900', color: '#0f172a' }}>
+                {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
               </div>
-
-              {!todayRecord ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <textarea 
-                    placeholder="Morning note (Optional)..." 
-                    value={note} 
-                    onChange={(e) => setNote(e.target.value)}
-                    style={{ width: '100%', height: '70px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '15px', padding: '15px', color: 'var(--text)', outline: 'none', resize: 'none', fontSize: '14px' }}
-                  />
-                  <button onClick={handleCheckIn} disabled={isProcessing} style={{ width: '100%', background: '#059669', color: '#fff', border: 'none', borderRadius: '15px', padding: '18px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 20px rgba(5, 150, 105, 0.2)' }}>
-                    {isProcessing ? 'Processing...' : '▶ Duty In'}
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                    <div style={{ background: 'var(--bg3)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: '900' }}>CHECK IN</div>
-                      <div style={{ fontSize: '16px', fontWeight: '900', color: '#059669' }}>{formatTimeAMPM(todayRecord.checkIn)}</div>
-                    </div>
-                    <div style={{ background: 'var(--bg3)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: '900' }}>CHECK OUT</div>
-                      <div style={{ fontSize: '16px', fontWeight: '900', color: todayRecord.checkOut === '--' ? 'var(--text3)' : '#dc2626' }}>{todayRecord.checkOut === '--' ? '--:--' : formatTimeAMPM(todayRecord.checkOut)}</div>
-                    </div>
-                  </div>
-
-                  {todayRecord.checkOut === '--' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                        <button 
-                          onClick={() => handleBreak('in')} 
-                          disabled={isProcessing || !!todayRecord.breakIn} 
-                          style={{ background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: !!todayRecord.breakIn ? 0.5 : 1 }}
-                        >
-                          ☕ Break Start
-                        </button>
-                        <button 
-                          onClick={() => handleBreak('out')} 
-                          disabled={isProcessing || !todayRecord.breakIn || (todayRecord.breakOut !== '' && todayRecord.breakOut !== '--')} 
-                          style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: '12px', padding: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!todayRecord.breakIn || (todayRecord.breakOut !== '' && todayRecord.breakOut !== '--')) ? 0.5 : 1 }}
-                        >
-                          🔄 Break End
-                        </button>
-                      </div>
-                      {todayRecord.breakIn && todayRecord.breakOut === '--' && (
-                        <div style={{ fontSize: '12px', color: '#f59e0b', fontWeight: '900', animation: 'pulse 2s infinite' }}>⚠️ Currently on Break</div>
-                      )}
-                      <div style={{ borderTop: '1px solid var(--border)', paddingTop: '15px' }}>
-                        <textarea placeholder="End shift note..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '70px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '15px', padding: '15px', color: 'var(--text)', outline: 'none', resize: 'none', fontSize: '14px', marginBottom: '15px' }} />
-                        <button onClick={handleCheckOut} disabled={isProcessing || !!(todayRecord.breakIn && todayRecord.breakOut === '--')} style={{ width: '100%', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '15px', padding: '18px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 20px rgba(220, 38, 38, 0.2)' }}>
-                          {isProcessing ? 'Processing...' : '■ Duty Out'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {todayRecord.checkOut !== '--' && (
-                    <div style={{ background: 'var(--bluebg)', color: 'var(--blue)', padding: '20px', borderRadius: '15px', border: '1px solid var(--blue)44' }}>
-                      <div style={{ fontSize: '16px', fontWeight: '900' }}>✅ Shift Completed</div>
-                      <div style={{ fontSize: '13px', marginTop: '5px', fontWeight: 'bold' }}>Total Hours: {todayRecord.hours.toFixed(2)}h</div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
+
+            <div style={{ textAlign: 'left', background: '#eff6ff', padding: '20px', borderRadius: '20px', marginBottom: '25px', border: '1px solid #dbeafe' }}>
+              <div style={{ fontSize: '11px', color: '#3b82f6', textTransform: 'uppercase', fontWeight: '900', marginBottom: '4px' }}>Logged Profile:</div>
+              <div style={{ fontSize: '20px', fontWeight: '900', color: '#1e40af' }}>{employee?.name || currentUser.name}</div>
+              <div style={{ fontSize: '11px', color: '#1e40af', fontWeight: '900', marginTop: '5px' }}>ID: {employee?.id || 'N/A'} • {employee?.position || 'Personnel'}</div>
+            </div>
+
+            {isAlreadyDoneToday && !hasActiveShift ? (
+              <div style={{ padding: '30px', background: '#ecfdf5', borderRadius: '20px', border: '1px solid #10b981' }}>
+                <div style={{ fontSize: '40px', marginBottom: '10px' }}>✅</div>
+                <div style={{ fontSize: '18px', fontWeight: '900', color: '#059669' }}>Today's Duty Completed</div>
+                <div style={{ fontSize: '11px', color: '#065f46', fontWeight: '900', marginTop: '8px' }}>You have already finished your shift for today.</div>
+              </div>
+            ) : hasActiveShift ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                 <div style={{ background: '#fff7ed', padding: '12px', borderRadius: '12px', border: '1px solid #fed7aa', color: '#9a3412', fontWeight: '900', fontSize: '12px' }}>
+                   ⚠️ ACTIVE SHIFT STARTED: {formatDateShort(latestSession.date)} at {latestSession.checkIn}
+                 </div>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                   <button onClick={() => handleBreak('in')} disabled={isProcessing || !!latestSession.breakIn} style={{ padding: '15px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>☕ Start Break</button>
+                   <button onClick={() => handleBreak('out')} disabled={isProcessing || !latestSession.breakIn || (latestSession.breakOut !== '' && latestSession.breakOut !== '--')} style={{ padding: '15px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>🔄 End Break</button>
+                 </div>
+                 <textarea placeholder="End of shift notes..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
+                 <button onClick={handleCheckOut} disabled={isProcessing || (latestSession.breakIn && latestSession.breakOut === '--')} style={{ width: '100%', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(220,38,38,0.2)' }}>⏹️ FINISH DUTY</button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                 <textarea placeholder="Start of shift notes (Optional)..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
+                 <button onClick={handleCheckIn} disabled={isProcessing} style={{ width: '100%', background: '#059669', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(5,150,105,0.2)' }}>▶ START DUTY</button>
+              </div>
+            )}
           </div>
-        ) : (
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', width: '100%', padding: '25px', boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text)', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📊</span> Attendance History Ledger
-            </h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Date</th>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Check In</th>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Check Out</th>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Hours</th>
-                    <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '10px', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</th>
+        </div>
+      ) : (
+        <div style={{ width: '100%', maxWidth: '1000px', background: '#fff', borderRadius: '24px', padding: '30px', boxShadow: 'var(--shadow)', border: '1px solid #e2e8f0' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', marginBottom: '20px' }}>Work History Ledger</h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '11px', color: '#0f172a', fontWeight: '900' }}>DATE</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '11px', color: '#0f172a', fontWeight: '900' }}>IN TIME</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '11px', color: '#0f172a', fontWeight: '900' }}>OUT TIME</th>
+                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '11px', color: '#0f172a', fontWeight: '900' }}>HOURS</th>
+                  <th style={{ padding: '12px', textAlign: 'center', fontSize: '11px', color: '#0f172a', fontWeight: '900' }}>STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myAttendance.map(rec => (
+                  <tr key={rec.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '12px', fontSize: '13px', fontWeight: '900', color: '#0f172a' }}>{formatDateShort(rec.date)}</td>
+                    <td style={{ padding: '12px', fontSize: '12px', fontWeight: '900', color: '#059669' }}>{formatTimeAMPM(rec.checkIn)}</td>
+                    <td style={{ padding: '12px', fontSize: '12px', fontWeight: '900', color: '#dc2626' }}>{rec.checkOut === '--' ? '--' : formatTimeAMPM(rec.checkOut)}</td>
+                    <td style={{ padding: '12px', fontSize: '12px', fontWeight: '900', color: '#1e40af' }}>{rec.hours.toFixed(2)}h</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                       <span style={{ fontSize: '9px', fontWeight: '900', padding: '3px 10px', borderRadius: '6px', background: `${getStatusColor(rec.status)}15`, color: getStatusColor(rec.status), border: `1px solid ${getStatusColor(rec.status)}30` }}>{rec.status.toUpperCase()}</span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {myAttendance.map((rec) => (
-                    <tr key={rec.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.1s' }}>
-                      <td style={{ padding: '8px 12px', fontSize: '13px', color: 'var(--text)', fontWeight: 'bold' }}>{formatDateShort(rec.date)}</td>
-                      <td style={{ padding: '8px 12px', fontSize: '12px', color: '#059669', fontWeight: '900' }}>{formatTimeAMPM(rec.checkIn)}</td>
-                      <td style={{ padding: '8px 12px', fontSize: '12px', color: rec.checkOut === '--' ? 'var(--text3)' : '#dc2626', fontWeight: '900' }}>{rec.checkOut === '--' ? '--' : formatTimeAMPM(rec.checkOut)}</td>
-                      <td style={{ padding: '8px 12px', fontSize: '12px', color: 'var(--text)', fontWeight: '900' }}>{rec.hours.toFixed(2)}h</td>
-                      <td style={{ padding: '8px 12px' }}>
-                        <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', background: `${getStatusColor(rec.status)}15`, color: getStatusColor(rec.status), border: `1px solid ${getStatusColor(rec.status)}33` }}>
-                          {rec.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {myAttendance.length === 0 && (
-                    <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text3)', fontSize: '12px' }}>No matching records found.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
-
-      <style jsx>{`
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-      `}</style>
+        </div>
+      )}
     </div>
   );
 }
