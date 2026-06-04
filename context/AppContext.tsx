@@ -329,108 +329,111 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addEmployee = async (employee: Employee) => {
+    // ⚡ OPTIMISTIC UPDATE: Update UI instantly
+    setEmployees(prev => [employee, ...prev]);
     try {
       await actions.addEmployeeAction(employee);
-      setEmployees(prev => [employee, ...prev]);
       await addAuditLog(`Registered: ${employee.name}`);
-    } catch (e) {}
+    } catch (e) {
+      showToast('Error', 'Failed to sync with database', 'error');
+    }
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
+    setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     try {
       await actions.updateEmployeeAction(id, updates);
-      setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     } catch (e) {}
   };
 
   const deleteEmployee = async (id: string) => {
+    setEmployees(prev => prev.filter(e => e.id !== id));
     try {
       await actions.deleteEmployeeAction(id);
-      setEmployees(prev => prev.filter(e => e.id !== id));
     } catch (e) {}
   };
 
   const addAttendance = async (record: AttendanceRecord) => {
+    setAttendance(prev => [record, ...prev]);
     try {
       await actions.addAttendanceAction(record);
-      setAttendance(prev => [record, ...prev]);
     } catch (e) {}
   };
 
   const updateAttendance = async (id: string, updates: Partial<AttendanceRecord>) => {
+    setAttendance(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
     try {
       await actions.updateAttendanceAction(id, updates);
-      setAttendance(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
     } catch (e) {}
   };
 
   const deleteAttendance = async (id: string) => {
+    setAttendance(prev => prev.filter(a => a.id !== id));
     try {
       await actions.deleteAttendanceAction(id);
-      setAttendance(prev => prev.filter(a => a.id !== id));
     } catch (e) {}
   };
 
   const addTask = async (task: TaskLog) => {
+    setTasks(prev => [task, ...prev]);
     try {
       await actions.addTaskAction(task);
-      setTasks(prev => [task, ...prev]);
     } catch (e) {}
   };
 
   const updateTask = async (id: string, updates: Partial<TaskLog>) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
     try {
       await actions.updateTaskAction(id, updates);
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
     } catch (e) {}
   };
 
   const deleteTask = async (id: string) => {
+    setTasks(prev => prev.filter(t => t.id !== id));
     try {
       await actions.deleteTaskAction(id);
-      setTasks(prev => prev.filter(t => t.id !== id));
     } catch (e) {}
   };
 
   const addExpense = async (expense: Expense) => {
+    setExpenses(prev => [expense, ...prev]);
     try {
       await actions.addExpenseAction(expense);
-      setExpenses(prev => [expense, ...prev]);
     } catch (e) {}
   };
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
+    setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     try {
       await actions.updateExpenseAction(id, updates);
-      setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     } catch (e) {}
   };
 
   const deleteExpense = async (id: string) => {
+    setExpenses(prev => prev.filter(e => e.id !== id));
     try {
       await actions.deleteExpenseAction(id);
-      setExpenses(prev => prev.filter(e => e.id !== id));
     } catch (e) {}
   };
 
   const addIncome = async (inc: Income) => {
+    setIncome(prev => [inc, ...prev]);
     try {
       await actions.addIncomeAction(inc);
-      setIncome(prev => [inc, ...prev]);
     } catch (e) {}
   };
 
   const updateIncome = async (id: string, updates: Partial<Income>) => {
+    setIncome(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
     try {
       await actions.updateIncomeAction(id, updates);
-      setIncome(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
     } catch (e) {}
   };
 
   const deleteIncome = async (id: string) => {
+    setIncome(prev => prev.filter(i => i.id !== id));
     try {
       await actions.deleteIncomeAction(id);
-      setIncome(prev => prev.filter(i => i.id !== id));
     } catch (e) {}
   };
 
