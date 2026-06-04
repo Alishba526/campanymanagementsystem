@@ -205,7 +205,7 @@ export default function EmployeePortal() {
                    <button onClick={() => handleBreak('out')} disabled={isProcessing || !latestSession.breakIn || (latestSession.breakOut !== '' && latestSession.breakOut !== '--')} style={{ padding: '15px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>🔄 End Break</button>
                  </div>
                  <textarea placeholder="End of shift notes..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
-                 <button onClick={handleCheckOut} disabled={isProcessing || (latestSession.breakIn && latestSession.breakOut === '--')} style={{ width: '100%', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(220,38,38,0.2)' }}>⏹️ FINISH DUTY</button>
+                 <button onClick={handleCheckOut} disabled={isProcessing || (!!latestSession.breakIn && latestSession.breakOut === '--')} style={{ width: '100%', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(220,38,38,0.2)' }}>⏹️ FINISH DUTY</button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
