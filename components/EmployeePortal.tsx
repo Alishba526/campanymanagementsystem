@@ -27,18 +27,17 @@ export default function EmployeePortal() {
     e.id === currentUser.name || e.name === currentUser.name || e.email === currentUser.email || e.id === currentUser.email
   );
 
-  // 🛡️ RAAT 12 BAJE WALA FIX: Find the absolute latest record regardless of date
+  // 🛡️ SHIFT LOGIC: Find absolute latest record regardless of date
   const myAttendanceRecords = attendance.filter(a => a.employeeId === employee?.id);
   const latestSession = myAttendanceRecords.length > 0 
     ? [...myAttendanceRecords].sort((a, b) => new Date(b.date + ' ' + (b.checkIn === '--' ? '00:00' : b.checkIn)).getTime() - new Date(a.date + ' ' + (a.checkIn === '--' ? '00:00' : a.checkIn)).getTime())[0]
     : null;
 
-  // If latest session is NOT checked out, it's an "Active Shift" (even if date changed)
   const hasActiveShift = latestSession && latestSession.checkOut === '--';
   
-  // Check if today's shift is already fully completed
-  const todaySession = myAttendanceRecords.find(a => a.date === getCurrentDate());
-  const isAlreadyDoneToday = todaySession && todaySession.checkOut !== '--';
+  // 🛡️ BOSS REQUIREMENT: No 'Duty In' after 12:00 AM.
+  const currentHour = currentTime.getHours();
+  const isLateNight = currentHour >= 0 && currentHour < 10; // 12 AM to 10 AM block
 
   const myAttendance = myAttendanceRecords.filter(a => {
     const searchLower = searchQuery.toLowerCase();
@@ -84,21 +83,20 @@ export default function EmployeePortal() {
   };
 
   const handleCheckOut = async () => {
-    const targetSession = hasActiveShift ? latestSession : todaySession;
-    if (!targetSession) return;
+    if (!latestSession) return;
     
     setIsProcessing(true);
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
     
     // Calculate hours (Handles midnight cross)
-    const startDateTime = new Date(targetSession.date + ' ' + targetSession.checkIn);
-    const endDateTime = new Date(); // Right now
+    const startDateTime = new Date(latestSession.date + ' ' + latestSession.checkIn);
+    const endDateTime = new Date(); 
     let calculatedHours = (endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60 * 60);
 
-    if (targetSession.breakIn && targetSession.breakOut && targetSession.breakOut !== '--') {
-      const bIn = new Date(targetSession.date + ' ' + targetSession.breakIn);
-      const bOut = new Date(targetSession.date + ' ' + targetSession.breakOut);
+    if (latestSession.breakIn && latestSession.breakOut && latestSession.breakOut !== '--') {
+      const bIn = new Date(latestSession.date + ' ' + latestSession.breakIn);
+      const bOut = new Date(latestSession.date + ' ' + latestSession.breakOut);
       const breakDuration = (bOut.getTime() - bIn.getTime()) / (1000 * 60 * 60);
       if (breakDuration > 0) calculatedHours -= breakDuration;
     }
@@ -106,11 +104,11 @@ export default function EmployeePortal() {
     const updates: Partial<AttendanceRecord> = {
       checkOut: timeStr,
       hours: calculatedHours > 0 ? calculatedHours : 0,
-      earlyExit: note ? `Note: ${note}` : targetSession.earlyExit || '00:00'
+      earlyExit: note ? `Note: ${note}` : latestSession.earlyExit || '00:00'
     };
 
     try {
-      await updateAttendance(targetSession.id, updates);
+      await updateAttendance(latestSession.id, updates);
       setNote('');
       Swal.fire({ title: 'Shift Ended', text: `Goodbye! Total Hours: ${calculatedHours.toFixed(2)}h`, icon: 'success', timer: 2000, showConfirmButton: false });
     } catch (e) {
@@ -121,8 +119,7 @@ export default function EmployeePortal() {
   };
 
   const handleBreak = async (type: 'in' | 'out') => {
-    const targetSession = hasActiveShift ? latestSession : todaySession;
-    if (!targetSession) return;
+    if (!latestSession) return;
     
     setIsProcessing(true);
     const now = new Date();
@@ -133,7 +130,7 @@ export default function EmployeePortal() {
       : { breakOut: timeStr };
 
     try {
-      await updateAttendance(targetSession.id, updates);
+      await updateAttendance(latestSession.id, updates);
       Swal.fire({ title: type === 'in' ? 'Break Started' : 'Break Ended', icon: 'info', timer: 1000, showConfirmButton: false, toast: true, position:'top-end' });
     } catch (e) {
       Swal.fire('Error', 'Update failed', 'error');
@@ -149,6 +146,41 @@ export default function EmployeePortal() {
       case 'leave': return '#2563eb';
       default: return '#1e293b';
     }
+  };
+
+  const renderActionButtons = () => {
+    if (hasActiveShift) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+           <div style={{ background: '#fff7ed', padding: '12px', borderRadius: '12px', border: '1px solid #fed7aa', color: '#9a3412', fontWeight: '900', fontSize: '12px' }}>
+             ⚠️ ACTIVE SHIFT: Started {formatDateShort(latestSession.date)} at {latestSession.checkIn}
+           </div>
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+             <button onClick={() => handleBreak('in')} disabled={isProcessing || !!latestSession.breakIn} style={{ padding: '15px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>☕ Break Start</button>
+             <button onClick={() => handleBreak('out')} disabled={isProcessing || !latestSession.breakIn || (latestSession.breakOut !== '' && latestSession.breakOut !== '--')} style={{ padding: '15px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>🔄 Break End</button>
+           </div>
+           <textarea placeholder="End shift note..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
+           <button onClick={handleCheckOut} disabled={isProcessing || (!!latestSession.breakIn && latestSession.breakOut === '--')} style={{ width: '100%', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(220,38,38,0.2)' }}>⏹️ FINISH DUTY</button>
+        </div>
+      );
+    }
+
+    if (isLateNight) {
+      return (
+        <div style={{ padding: '30px', background: '#f1f5f9', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '30px', marginBottom: '10px' }}>🌙</div>
+          <div style={{ fontSize: '16px', fontWeight: '900', color: '#1e293b' }}>Shift Start Restricted</div>
+          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '900', marginTop: '8px' }}>New duty sessions cannot be started between 12:00 AM and 10:00 AM.</div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+         <textarea placeholder="Morning note (Optional)..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
+         <button onClick={handleCheckIn} disabled={isProcessing} style={{ width: '100%', background: '#059669', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(5, 150, 105, 0.2)' }}>▶ START DUTY</button>
+      </div>
+    );
   };
 
   return (
@@ -189,30 +221,7 @@ export default function EmployeePortal() {
               <div style={{ fontSize: '11px', color: '#1e40af', fontWeight: '900', marginTop: '5px' }}>ID: {employee?.id || 'N/A'} • {employee?.position || 'Personnel'}</div>
             </div>
 
-            {isAlreadyDoneToday && !hasActiveShift ? (
-              <div style={{ padding: '30px', background: '#ecfdf5', borderRadius: '20px', border: '1px solid #10b981' }}>
-                <div style={{ fontSize: '40px', marginBottom: '10px' }}>✅</div>
-                <div style={{ fontSize: '18px', fontWeight: '900', color: '#059669' }}>Today's Duty Completed</div>
-                <div style={{ fontSize: '11px', color: '#065f46', fontWeight: '900', marginTop: '8px' }}>You have already finished your shift for today.</div>
-              </div>
-            ) : hasActiveShift ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                 <div style={{ background: '#fff7ed', padding: '12px', borderRadius: '12px', border: '1px solid #fed7aa', color: '#9a3412', fontWeight: '900', fontSize: '12px' }}>
-                   ⚠️ ACTIVE SHIFT STARTED: {formatDateShort(latestSession.date)} at {latestSession.checkIn}
-                 </div>
-                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                   <button onClick={() => handleBreak('in')} disabled={isProcessing || !!latestSession.breakIn} style={{ padding: '15px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>☕ Start Break</button>
-                   <button onClick={() => handleBreak('out')} disabled={isProcessing || !latestSession.breakIn || (latestSession.breakOut !== '' && latestSession.breakOut !== '--')} style={{ padding: '15px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>🔄 End Break</button>
-                 </div>
-                 <textarea placeholder="End of shift notes..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
-                 <button onClick={handleCheckOut} disabled={isProcessing || (!!latestSession.breakIn && latestSession.breakOut === '--')} style={{ width: '100%', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(220,38,38,0.2)' }}>⏹️ FINISH DUTY</button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                 <textarea placeholder="Start of shift notes (Optional)..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
-                 <button onClick={handleCheckIn} disabled={isProcessing} style={{ width: '100%', background: '#059669', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(5,150,105,0.2)' }}>▶ START DUTY</button>
-              </div>
-            )}
+            {renderActionButtons()}
           </div>
         </div>
       ) : (
