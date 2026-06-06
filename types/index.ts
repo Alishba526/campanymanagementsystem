@@ -63,6 +63,11 @@ export interface TaskLog {
   conversionRatio: number;
   ordersHandled?: number;
   netProfit?: number;
+  accountName?: string;
+  sales?: number;
+  listings?: number;
+  targetProfit?: number;
+  trackingSet?: boolean;
 }
 
 export interface Expense {

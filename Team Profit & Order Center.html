@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Manager Suite | Accounts + Orders + Profit Targets</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: #eef2f9;
+      padding: 1.5rem;
+    }
+
+    .app-container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* header & toolbar */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      background: white;
+      padding: 0.8rem 1.5rem;
+      border-radius: 2rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, #1E3A5F, #2c5282);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .date-control {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    button, .btn {
+      background: #1E3A5F;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 0.8rem;
+    }
+
+    .btn-outline {
+      background: white;
+      border: 1px solid #cbd5e1;
+      color: #1e3a5f;
+    }
+
+    .btn-outline:hover {
+      background: #eef2ff;
+    }
+
+    button:hover {
+      background: #0f2b42;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 1rem;
+      margin: 1.5rem 0 1rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      border-radius: 2rem 2rem 0 0;
+      color: #4a5568;
+    }
+
+    .tab-btn.active {
+      color: #1E3A5F;
+      border-bottom: 3px solid #1E3A5F;
+      background: #f1f5f9;
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fade 0.2s;
+    }
+
+    .tab-pane.active-pane {
+      display: block;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(5px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+
+    /* cards */
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 1.2rem;
+      padding: 0.8rem 1.2rem;
+      flex: 1 1 200px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #e2edf2;
+    }
+
+    .stat-card span {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: #4b6b8f;
+    }
+
+    .stat-card .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #0f2b42;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      background: white;
+      border-radius: 1.2rem;
+      border: 1px solid #e9eef3;
+      margin-bottom: 1.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    th {
+      background: #f8fafd;
+      padding: 0.75rem 0.6rem;
+      text-align: left;
+      font-weight: 600;
+      color: #1e3a5f;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    td {
+      padding: 0.6rem;
+      border-bottom: 1px solid #f0f2f5;
+      vertical-align: middle;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid #cfdfed;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #1E3A5F;
+    }
+
+    .profit-cell {
+      font-weight: 600;
+      background: #fefce8;
+      text-align: center;
+    }
+
+    .progress-bar {
+      background: #e2e8f0;
+      border-radius: 20px;
+      height: 6px;
+      width: 100%;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-fill {
+      background: #2c6e2f;
+      height: 100%;
+      width: 0%;
+      border-radius: 20px;
+    }
+
+    .target-info {
+      font-size: 0.7rem;
+      color: #2d3e5f;
+    }
+
+    .delete-icon {
+      color: #a0aec0;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .delete-icon:hover {
+      color: #dc2626;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.7rem;
+      margin-top: 2rem;
+      color: #5b6e8c;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="top-bar">
+    <h1>📋 Team Profit & Order Center</h1>
+    <div class="date-control">
+      <input type="date" id="globalDate" style="border:1px solid #cbd5e1; border-radius: 2rem; padding: 0.3rem 0.8rem;">
+      <button id="resetMonthBtn" class="btn-outline">🔄 Reset month data</button>
+      <button id="exportFullBtn" class="btn-outline">📎 Export CSV</button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="account">💰 Account Management (Profit & Targets)</button>
+    <button class="tab-btn" data-tab="order">📦 Order Placement → Updates Profit Sheet</button>
+  </div>
+
+  <!-- ================= ACCOUNT MANAGEMENT PANE ================= -->
+  <div id="accountPane" class="tab-pane active-pane">
+    <div class="stats-row">
+      <div class="stat-card"><span>📆 Month-to-Date Total Profit</span><div class="value" id="monthTotalProfit">$0</div></div>
+      <div class="stat-card"><span>🎯 Avg Target Achievement</span><div class="value" id="avgTargetAchieve">0%</div></div>
+    </div>
+    <div class="table-wrapper">
+      <table id="accountMasterTable">
+        <thead>
+          <tr><th>Employee Name</th><th>Account Name</th><th>Daily Sale ($)</th><th>Daily Profit ($)</th><th>Daily Listings</th><th style="min-width:110px">🎯 Monthly Target (Profit $)</th><th>Month Profit Accumulated</th><th>Achievement</th><th style="width:30px"></th></tr>
+        </thead>
+        <tbody id="accountTbody"></tbody>
+      </table>
+    </div>
+    <div style="display: flex; gap: 0.8rem; margin: 0 0 1rem;">
+      <button id="addAccountRowBtn" class="btn">+ Add new account (employee)</button>
+      <button id="setTargetForAllBtn" class="btn-outline">Set target for all employees</button>
+      <span style="font-size:0.7rem; margin-left: auto;">💡 Daily data is saved per date. Switch date to see different days. Monthly totals sum all days in current month.</span>
+    </div>
+  </div>
+
+  <!-- ================= ORDER PLACEMENT PANE ================= -->
+  <div id="orderPane" class="tab-pane">
+    <div class="stats-row">
+      <div class="stat-card"><span>📦 Today's Total Orders</span><div class="value" id="totalOrdersToday">0</div></div>
+      <div class="stat-card"><span>✅ Tracking Set</span><div class="value" id="totalTrackingToday">0</div></div>
+      <div class="stat-card"><span>⚙️ Profit auto-sync</span><div class="value" style="font-size:0.9rem;">per order avg $<span id="avgProfitPerOrderDisplay">0</span></div></div>
+    </div>
+    <div class="table-wrapper">
+      <table id="orderTable">
+        <thead>
+          <tr><th>Employee</th><th>Account Name</th><th>Orders Processed (Today)</th><th>Tracking Set (Yes/No)</th><th>Push to Profit</th><th style="width:30px"></th></tr>
+        </thead>
+        <tbody id="orderTbody"></tbody>
+      </table>
+    </div>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+      <button id="addOrderRowBtn" class="btn">+ Add order row (employee + account)</button>
+      <div style="background:#f1f5f9; padding:0.2rem 1rem; border-radius: 2rem; display: flex; align-items: center; gap: 10px;">
+        <span>💰 Profit per order (auto-update): $</span>
+        <input type="number" id="profitPerOrderInput" value="8.50" step="0.5" style="width: 80px;">
+        <button id="applyProfitToAllOrdersBtn" class="btn-outline" style="padding:0.2rem 0.8rem;">Update profit sheet from orders</button>
+      </div>
+    </div>
+    <p style="font-size:0.75rem; background:#eef2ff; padding:0.6rem; border-radius:1rem;">📌 Each order employee can manage multiple accounts (min 5 recommended). Click "Update profit sheet" to add today's profit based on orders processed × profit per order. It will add to the corresponding account in Account Management (if exists, else creates a new entry).</p>
+  </div>
+  <footer>Daily data persists in browser. Monthly targets track profit cumulatively. Order dept can directly contribute to profit sheet.</footer>
+</div>
+
+<script>
+  // ---------- DATA STRUCTURES ----------
+  // Account management: store daily entries keyed by "date|employee|accountName"
+  // Also store monthly target per employee (employee -> targetProfit)
+  // For quick cumulative: compute on the fly from stored daily entries of current month.
+  let dailyAccountData = {}; // key: "YYYY-MM-DD|employee|accountName" => { sale, profit, listings }
+  let employeeTargets = {};   // employeeName -> monthly target profit ($)
+  
+  // Order department: store orders per day keyed by "date|employee|accountName" => { ordersProcessed, trackingSet (bool) }
+  let dailyOrderData = {};
+
+  // Helper: get today's date (YYYY-MM-DD) from date picker
+  function getSelectedDate() {
+    return document.getElementById('globalDate').value;
+  }
+  
+  function setTodayDate() {
+    const today = new Date().toISOString().slice(0,10);
+    if(!document.getElementById('globalDate').value) document.getElementById('globalDate').value = today;
+  }
+
+  // Load from localStorage
+  function loadData() {
+    const storedAccount = localStorage.getItem('profit_daily_accounts');
+    if(storedAccount) dailyAccountData = JSON.parse(storedAccount);
+    const storedTargets = localStorage.getItem('employee_targets');
+    if(storedTargets) employeeTargets = JSON.parse(storedTargets);
+    const storedOrders = localStorage.getItem('order_daily_data');
+    if(storedOrders) dailyOrderData = JSON.parse(storedOrders);
+  }
+  function saveAll() {
+    localStorage.setItem('profit_daily_accounts', JSON.stringify(dailyAccountData));
+    localStorage.setItem('employee_targets', JSON.stringify(employeeTargets));
+    localStorage.setItem('order_daily_data', JSON.stringify(dailyOrderData));
+  }
+
+  // Get daily profit entry for a specific date, employee, account
+  function getAccountEntry(date, employee, accountName) {
+    const key = `${date}|${employee}|${accountName}`;
+    return dailyAccountData[key] || { sale: 0, profit: 0, listings: 0 };
+  }
+  function setAccountEntry(date, employee, accountName, sale, profit, listings) {
+    const key = `${date}|${employee}|${accountName}`;
+    dailyAccountData[key] = { sale: Number(sale), profit: Number(profit), listings: Number(listings) };
+    saveAll();
+    renderAccountTable();
+  }
+  // delete account entry (row removal)
+  function deleteAccountEntry(date, employee, accountName) {
+    const key = `${date}|${employee}|${accountName}`;
+    delete dailyAccountData[key];
+    saveAll();
+    renderAccountTable();
+  }
+
+  // Order entry
+  function getOrderEntry(date, employee, accountName) {
+    const key = `${date}|${employee}|${accountName}`;
+    return dailyOrderData[key] || { ordersProcessed: 0, trackingSet: false };
+  }
+  function setOrderEntry(date, employee, accountName, ordersProcessed, trackingSet) {
+    const key = `${date}|${employee}|${accountName}`;
+    dailyOrderData[key] = { ordersProcessed: Number(ordersProcessed), trackingSet: trackingSet === true || trackingSet === 'true' };
+    saveAll();
+    renderOrderTable();
+  }
+  function deleteOrderEntry(date, employee, accountName) {
+    const key = `${date}|${employee}|${accountName}`;
+    delete dailyOrderData[key];
+    saveAll();
+    renderOrderTable();
+  }
+
+  // Get all unique account rows for display (based on existing keys OR dynamic list of employees/accounts)
+  // We will maintain a master list of employee-account combos from both daily entries and order entries + user added.
+  // For simplicity: account management rows are derived from dailyAccountData keys + user can add new via button (which creates empty entry for today)
+  let dynamicAccountList = []; // store { employee, accountName } to allow adding rows without data
+  let dynamicOrderList = [];   // store { employee, accountName } for order department
+  
+  function rebuildAccountListFromData() {
+    const combos = new Set();
+    Object.keys(dailyAccountData).forEach(key => {
+      const parts = key.split('|');
+      if(parts.length>=3) combos.add(`${parts[1]}||${parts[2]}`);
+    });
+    // also include dynamicAccountList
+    dynamicAccountList.forEach(c => combos.add(`${c.employee}||${c.accountName}`));
+    const newList = Array.from(combos).map(str => {
+      const [emp, acc] = str.split('||');
+      return { employee: emp, accountName: acc };
+    });
+    dynamicAccountList = newList;
+  }
+
+  function rebuildOrderListFromData() {
+    const combos = new Set();
+    Object.keys(dailyOrderData).forEach(key => {
+      const parts = key.split('|');
+      if(parts.length>=3) combos.add(`${parts[1]}||${parts[2]}`);
+    });
+    dynamicOrderList.forEach(c => combos.add(`${c.employee}||${c.accountName}`));
+    const newList = Array.from(combos).map(str => {
+      const [emp, acc] = str.split('||');
+      return { employee: emp, accountName: acc };
+    });
+    dynamicOrderList = newList;
+  }
+
+  // RENDER ACCOUNT TABLE (with monthly cumulative)
+  function renderAccountTable() {
+    const date = getSelectedDate();
+    rebuildAccountListFromData();
+    const tbody = document.getElementById('accountTbody');
+    tbody.innerHTML = '';
+    let monthTotalProfitSum = 0;
+    let totalAchievementPct = 0;
+    let achievementCount = 0;
+    const currentMonth = date.slice(0,7); // YYYY-MM
+
+    // for each combo, get today's entry and also month cumulative profit from all days in same month
+    for(let combo of dynamicAccountList) {
+      const { employee, accountName } = combo;
+      const todayEntry = getAccountEntry(date, employee, accountName);
+      // compute month cumulative profit for this employee+account
+      let monthProfit = 0;
+      for(let [key, val] of Object.entries(dailyAccountData)) {
+        const keyParts = key.split('|');
+        if(keyParts.length>=3 && keyParts[1]===employee && keyParts[2]===accountName && keyParts[0].startsWith(currentMonth)) {
+          monthProfit += val.profit;
+        }
+      }
+      monthTotalProfitSum += monthProfit;
+      const target = employeeTargets[employee] || 0;
+      let achievement = 0;
+      let achievementText = '0%';
+      if(target > 0) {
+        achievement = (monthProfit / target) * 100;
+        achievement = Math.min(achievement, 100);
+        achievementText = achievement.toFixed(1)+'%';
+        totalAchievementPct += achievement;
+        achievementCount++;
+      } else {
+        achievementText = '—';
+      }
+      const progressWidth = (target>0 ? (monthProfit/target)*100 : 0);
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" class="emp-name" value="${escapeHtml(employee)}" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"></td>
+        <td><input type="text" class="acc-name" value="${escapeHtml(accountName)}" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"></td>
+        <td><input type="number" step="0.01" class="daily-sale" value="${todayEntry.sale.toFixed(2)}" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"></td>
+        <td><input type="number" step="0.01" class="daily-profit" value="${todayEntry.profit.toFixed(2)}" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"></td>
+        <td><input type="number" step="1" class="daily-listings" value="${todayEntry.listings}" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"></td>
+        <td><input type="number" step="100" class="target-input" value="${target}" data-emp="${escapeHtml(employee)}" style="width:100px;"> <span class="target-info">$</span></td>
+        <td><strong>$${monthProfit.toFixed(2)}</strong><div class="progress-bar"><div class="progress-fill" style="width:${progressWidth}%;"></div></div></td>
+        <td class="profit-cell">${achievementText}</td>
+        <td><span class="delete-icon" data-type="account" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}">🗑️</span></td>
+      `;
+      tbody.appendChild(tr);
+    }
+    document.getElementById('monthTotalProfit').innerText = `$${monthTotalProfitSum.toFixed(2)}`;
+    const avgAchieve = achievementCount > 0 ? (totalAchievementPct/achievementCount).toFixed(1) : 0;
+    document.getElementById('avgTargetAchieve').innerText = `${avgAchieve}%`;
+    attachAccountEvents();
+  }
+
+  function attachAccountEvents() {
+    // update daily fields on change
+    document.querySelectorAll('.daily-sale, .daily-profit, .daily-listings').forEach(inp => {
+      inp.removeEventListener('change', handleDailyChange);
+      inp.addEventListener('change', handleDailyChange);
+    });
+    document.querySelectorAll('.emp-name, .acc-name').forEach(inp => {
+      inp.removeEventListener('change', handleRename);
+      inp.addEventListener('change', handleRename);
+    });
+    document.querySelectorAll('.target-input').forEach(inp => {
+      inp.removeEventListener('change', handleTargetChange);
+      inp.addEventListener('change', handleTargetChange);
+    });
+    document.querySelectorAll('.delete-icon[data-type="account"]').forEach(icon => {
+      icon.removeEventListener('click', handleDeleteAccount);
+      icon.addEventListener('click', handleDeleteAccount);
+    });
+  }
+
+  function handleDailyChange(e) {
+    const emp = e.target.dataset.emp;
+    const acc = e.target.dataset.acc;
+    const date = getSelectedDate();
+    const sale = parseFloat(document.querySelector(`.daily-sale[data-emp="${emp}"][data-acc="${acc}"]`)?.value) || 0;
+    const profit = parseFloat(document.querySelector(`.daily-profit[data-emp="${emp}"][data-acc="${acc}"]`)?.value) || 0;
+    const listings = parseInt(document.querySelector(`.daily-listings[data-emp="${emp}"][data-acc="${acc}"]`)?.value) || 0;
+    setAccountEntry(date, emp, acc, sale, profit, listings);
+  }
+  function handleRename(e) {
+    // rename employee or account: we need to update keys - complex, for simplicity reload page? better rebuild keys
+    alert("To rename, please delete row and add new. Edits only for demonstration.");
+    renderAccountTable();
+  }
+  function handleTargetChange(e) {
+    const emp = e.target.dataset.emp;
+    const newTarget = parseFloat(e.target.value) || 0;
+    employeeTargets[emp] = newTarget;
+    saveAll();
+    renderAccountTable();
+  }
+  function handleDeleteAccount(e) {
+    const emp = e.target.dataset.emp;
+    const acc = e.target.dataset.acc;
+    const date = getSelectedDate();
+    if(confirm(`Remove account ${acc} for ${emp} from today's sheet? (Historical entries remain but hidden)`)) {
+      deleteAccountEntry(date, emp, acc);
+      // remove from dynamic list
+      dynamicAccountList = dynamicAccountList.filter(c => !(c.employee === emp && c.accountName === acc));
+      renderAccountTable();
+    }
+  }
+
+  // ------------------ ORDER TABLE ------------------
+  function renderOrderTable() {
+    const date = getSelectedDate();
+    rebuildOrderListFromData();
+    const tbody = document.getElementById('orderTbody');
+    tbody.innerHTML = '';
+    let totalOrders = 0, totalTracking = 0;
+    for(let combo of dynamicOrderList) {
+      const { employee, accountName } = combo;
+      const entry = getOrderEntry(date, employee, accountName);
+      totalOrders += entry.ordersProcessed;
+      if(entry.trackingSet) totalTracking += entry.ordersProcessed;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" class="order-emp" value="${escapeHtml(employee)}" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"></td>
+        <td><input type="text" class="order-acc" value="${escapeHtml(accountName)}" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"></td>
+        <td><input type="number" step="1" class="order-count" value="${entry.ordersProcessed}" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"></td>
+        <td><select class="tracking-set" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}"><option value="false" ${!entry.trackingSet ? 'selected' : ''}>No</option><option value="true" ${entry.trackingSet ? 'selected' : ''}>Yes</option></select></td>
+        <td><button class="push-profit-btn btn-outline" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}" style="padding:0.2rem 0.6rem;">📤 Push to Profit</button></td>
+        <td><span class="delete-icon" data-type="order" data-emp="${escapeHtml(employee)}" data-acc="${escapeHtml(accountName)}">🗑️</span></td>
+      `;
+      tbody.appendChild(tr);
+    }
+    document.getElementById('totalOrdersToday').innerText = totalOrders;
+    document.getElementById('totalTrackingToday').innerText = totalTracking;
+    attachOrderEvents();
+  }
+
+  function attachOrderEvents() {
+    document.querySelectorAll('.order-count, .tracking-set').forEach(el => {
+      el.removeEventListener('change', handleOrderChange);
+      el.addEventListener('change', handleOrderChange);
+    });
+    document.querySelectorAll('.push-profit-btn').forEach(btn => {
+      btn.removeEventListener('click', handlePushProfit);
+      btn.addEventListener('click', handlePushProfit);
+    });
+    document.querySelectorAll('.delete-icon[data-type="order"]').forEach(icon => {
+      icon.removeEventListener('click', handleDeleteOrder);
+      icon.addEventListener('click', handleDeleteOrder);
+    });
+  }
+
+  function handleOrderChange(e) {
+    const emp = e.target.dataset.emp;
+    const acc = e.target.dataset.acc;
+    const date = getSelectedDate();
+    const orders = parseInt(document.querySelector(`.order-count[data-emp="${emp}"][data-acc="${acc}"]`)?.value) || 0;
+    const trackingSelect = document.querySelector(`.tracking-set[data-emp="${emp}"][data-acc="${acc}"]`);
+    const tracking = trackingSelect?.value === 'true';
+    setOrderEntry(date, emp, acc, orders, tracking);
+  }
+  function handleDeleteOrder(e) {
+    const emp = e.target.dataset.emp;
+    const acc = e.target.dataset.acc;
+    const date = getSelectedDate();
+    if(confirm(`Remove order entry for ${emp} / ${acc} ?`)) {
+      deleteOrderEntry(date, emp, acc);
+      dynamicOrderList = dynamicOrderList.filter(c => !(c.employee === emp && c.accountName === acc));
+      renderOrderTable();
+    }
+  }
+  function handlePushProfit(e) {
+    const emp = e.target.dataset.emp;
+    const acc = e.target.dataset.acc;
+    const date = getSelectedDate();
+    const orderEntry = getOrderEntry(date, emp, acc);
+    const ordersCount = orderEntry.ordersProcessed;
+    const profitPer = parseFloat(document.getElementById('profitPerOrderInput').value) || 0;
+    const addedProfit = ordersCount * profitPer;
+    if(addedProfit === 0) { alert("No orders or profit per order is zero."); return; }
+    // get current daily account entry for this employee/account on same date
+    const existing = getAccountEntry(date, emp, acc);
+    const newProfit = existing.profit + addedProfit;
+    const newSale = existing.sale + (ordersCount * (profitPer * 1.2)); // rough sale proxy, or keep sale same? user may prefer just profit increment.
+    // Actually we only add profit, and optionally sale estimate. Better: add profit, sale by default same as profit? Provide update.
+    setAccountEntry(date, emp, acc, existing.sale + (ordersCount * (profitPer * 1.2)), newProfit, existing.listings);
+    alert(`Added $${addedProfit.toFixed(2)} profit to ${emp} / ${acc} (based on ${ordersCount} orders × $${profitPer})`);
+    renderAccountTable();
+  }
+
+  // add new row for account
+  function addAccountRow() {
+    const emp = prompt("Employee name:");
+    if(!emp) return;
+    const acc = prompt("Account name:");
+    if(!acc) return;
+    dynamicAccountList.push({ employee: emp, accountName: acc });
+    renderAccountTable();
+    saveAll();
+  }
+  function addOrderRow() {
+    const emp = prompt("Order employee name:");
+    if(!emp) return;
+    const acc = prompt("Account name (must match account management for sync):");
+    if(!acc) return;
+    dynamicOrderList.push({ employee: emp, accountName: acc });
+    renderOrderTable();
+    saveAll();
+  }
+  function setTargetForAll() {
+    const targetVal = parseFloat(prompt("Set monthly profit target for ALL existing employees:", "5000"));
+    if(isNaN(targetVal)) return;
+    const employeesSet = new Set();
+    dynamicAccountList.forEach(c => employeesSet.add(c.employee));
+    employeesSet.forEach(emp => { employeeTargets[emp] = targetVal; });
+    saveAll();
+    renderAccountTable();
+  }
+
+  function resetMonthData() {
+    if(confirm("⚠️ This will delete ALL daily entries for current month? (Targets remain).")) {
+      const currentMonth = getSelectedDate().slice(0,7);
+      for(let key of Object.keys(dailyAccountData)) {
+        if(key.startsWith(currentMonth)) delete dailyAccountData[key];
+      }
+      saveAll();
+      renderAccountTable();
+    }
+  }
+  function exportCSV() {
+    let csv = "==== ACCOUNT MANAGEMENT (Month accum) ====\n";
+    csv += "Employee,Account,Today Sale,Today Profit,Month Profit,Target,Achievement %\n";
+    const date = getSelectedDate();
+    const month = date.slice(0,7);
+    for(let combo of dynamicAccountList) {
+      const today = getAccountEntry(date, combo.employee, combo.accountName);
+      let monthProfit = 0;
+      for(let [k,v] of Object.entries(dailyAccountData)) if(k.startsWith(month) && k.includes(`|${combo.employee}|${combo.accountName}`)) monthProfit += v.profit;
+      const target = employeeTargets[combo.employee] || 0;
+      const ach = target? ((monthProfit/target)*100).toFixed(1): '-';
+      csv += `"${combo.employee}","${combo.accountName}",${today.sale},${today.profit},${monthProfit},${target},${ach}\n`;
+    }
+    csv += "\n==== ORDER DEPARTMENT ====\n";
+    csv += "Employee,Account,Orders Today,Tracking Set\n";
+    for(let combo of dynamicOrderList) {
+      const ord = getOrderEntry(date, combo.employee, combo.accountName);
+      csv += `"${combo.employee}","${combo.accountName}",${ord.ordersProcessed},${ord.trackingSet}\n`;
+    }
+    const blob = new Blob([csv], {type:"text/csv"});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `team_report_${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(blob);
+  }
+  function init() {
+    loadData();
+    setTodayDate();
+    // seed demo data if empty
+    if(Object.keys(dailyAccountData).length === 0 && dynamicAccountList.length === 0) {
+      dynamicAccountList = [
+        { employee: "Emma Watson", accountName: "eBay - Electronics" },
+        { employee: "Emma Watson", accountName: "Amazon - Gadgets" },
+        { employee: "Liam Chen", accountName: "eBay - Home Decor" },
+        { employee: "Liam Chen", accountName: "Amazon - Home" },
+        { employee: "Liam Chen", accountName: "Walmart - Home" }
+      ];
+      employeeTargets = { "Emma Watson": 6000, "Liam Chen": 5000 };
+      dynamicOrderList = [
+        { employee: "Sophia Order", accountName: "eBay - Electronics" },
+        { employee: "Sophia Order", accountName: "Amazon - Gadgets" },
+        { employee: "James Order", accountName: "eBay - Home Decor" }
+      ];
+      saveAll();
+    }
+    renderAccountTable();
+    renderOrderTable();
+    document.getElementById('globalDate').addEventListener('change', () => { renderAccountTable(); renderOrderTable(); });
+    document.getElementById('addAccountRowBtn').addEventListener('click', addAccountRow);
+    document.getElementById('addOrderRowBtn').addEventListener('click', addOrderRow);
+    document.getElementById('setTargetForAllBtn').addEventListener('click', setTargetForAll);
+    document.getElementById('resetMonthBtn').addEventListener('click', resetMonthData);
+    document.getElementById('exportFullBtn').addEventListener('click', exportCSV);
+    document.getElementById('applyProfitToAllOrdersBtn').addEventListener('click', () => {
+      for(let combo of dynamicOrderList) {
+        const emp = combo.employee, acc = combo.accountName;
+        const ord = getOrderEntry(getSelectedDate(), emp, acc);
+        if(ord.ordersProcessed > 0) {
+          const profitPer = parseFloat(document.getElementById('profitPerOrderInput').value);
+          const existing = getAccountEntry(getSelectedDate(), emp, acc);
+          setAccountEntry(getSelectedDate(), emp, acc, existing.sale + (ord.ordersProcessed * profitPer * 1.2), existing.profit + (ord.ordersProcessed * profitPer), existing.listings);
+        }
+      }
+      alert("Profit sheet updated from all order rows.");
+      renderAccountTable();
+    });
+    // tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active-pane'));
+        if(btn.dataset.tab === 'account') document.getElementById('accountPane').classList.add('active-pane');
+        else document.getElementById('orderPane').classList.add('active-pane');
+      });
+    });
+  }
+  function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+  init();
+</script>
+</body>
+</html>

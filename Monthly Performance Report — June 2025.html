@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Monthly Account Performance Tracker | June Report</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #eef2f9;
+      margin: 0;
+      padding: 1.5rem;
+    }
+    .report-container {
+      max-width: 100%;
+      background: white;
+      border-radius: 1.5rem;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem 0;
+      color: #0f2b42;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .sub {
+      color: #4a627a;
+      border-left: 3px solid #3b82f6;
+      padding-left: 0.8rem;
+      margin: 0.5rem 0 1.2rem 0;
+      font-size: 0.85rem;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.8rem;
+      align-items: center;
+      background: #f8fafc;
+      padding: 0.8rem 1.2rem;
+      border-radius: 1.2rem;
+    }
+    .employee-field {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: white;
+      padding: 0.2rem 1rem;
+      border-radius: 2rem;
+      border: 1px solid #cfdfed;
+    }
+    .employee-field label {
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    input, select {
+      border: 1px solid #cbd5e1;
+      border-radius: 0.8rem;
+      padding: 0.4rem 0.7rem;
+      font-size: 0.8rem;
+      background: white;
+    }
+    button {
+      background: #1e3a5f;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 0.8rem;
+    }
+    .btn-outline {
+      background: white;
+      border: 1px solid #cbd5e1;
+      color: #1e3a5f;
+    }
+    button:hover {
+      background: #0f2b42;
+    }
+    .btn-outline:hover {
+      background: #eef2ff;
+    }
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 1.2rem;
+      border: 1px solid #e9edf2;
+      background: white;
+      margin: 1rem 0 1.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      min-width: 900px;
+    }
+    th {
+      background: #f1f5f9;
+      padding: 0.8rem 0.4rem;
+      text-align: center;
+      font-weight: 700;
+      color: #1e3a5f;
+      border-bottom: 2px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+    }
+    td {
+      padding: 0.5rem 0.3rem;
+      text-align: center;
+      border-bottom: 1px solid #f0f2f5;
+    }
+    .date-col {
+      font-weight: 600;
+      background-color: #fefce8;
+      position: sticky;
+      left: 0;
+      background: #fefce8;
+    }
+    input.daily-input {
+      width: 85px;
+      text-align: center;
+      padding: 0.35rem 0.2rem;
+      font-size: 0.7rem;
+    }
+    .roi-cell {
+      font-weight: 600;
+      background: #f1f9fe;
+      border-radius: 20px;
+      text-align: center;
+    }
+    .summary-section {
+      background: #f8fafc;
+      border-radius: 1.2rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    .summary-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 0.8rem;
+    }
+    .summary-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 0.8rem 1rem;
+      flex: 1 1 200px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #e2edf2;
+    }
+    .summary-card h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.9rem;
+      color: #2c3e66;
+    }
+    .summary-card .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #0f2b42;
+    }
+    hr {
+      margin: 1rem 0;
+      border: none;
+      border-top: 1px solid #e2e8f0;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #5b6e8c;
+      margin-top: 1.5rem;
+    }
+    .warning {
+      background: #fffbeb;
+      padding: 0.3rem 0.8rem;
+      border-radius: 2rem;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+<div class="report-container">
+  <h1>
+    📆 Monthly Performance Report — June 2025
+    <button id="exportCsvBtn" class="btn-outline" style="font-size:0.75rem;">📎 Export CSV</button>
+  </h1>
+  <div class="sub">📌 Date‑wise tracking: Sales, Profit, Listings & ROI | Up to 3 accounts per employee</div>
+
+  <div class="controls">
+    <div class="employee-field">
+      <label>👤 Employee / User:</label>
+      <input type="text" id="employeeName" value="Alex Johnson" placeholder="Employee name">
+    </div>
+    <button id="resetMonthBtn" class="btn-outline">🔄 Reset all June data</button>
+    <button id="sampleDataBtn" class="btn-outline">📋 Load demo data</button>
+    <span class="warning">💡 All data auto-saves in your browser. ROI = (Profit / Sale) × 100</span>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="monthlyTable">
+      <thead id="tableHeader">
+        <!-- header will be built dynamically -->
+      </thead>
+      <tbody id="tableBody">
+        <!-- rows for each day -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Monthly summary per account -->
+  <div class="summary-section">
+    <h3 style="margin-bottom:0.5rem;">📊 Monthly Totals (June 1 – June 30)</h3>
+    <div id="summaryContainer" class="summary-grid">
+      <!-- dynamic summary cards -->
+    </div>
+  </div>
+  <footer>Data is stored locally. Edit any white cell — changes save automatically. June has 30 days. ROI updates live.</footer>
+</div>
+
+<script>
+  // ---------- CONFIGURATION ----------
+  const YEAR = 2025;
+  const MONTH = 5; // 5 = June (zero-indexed)
+  const DAYS_IN_JUNE = 30; // June has 30 days
+  
+  // Account names (max 3 accounts)
+  let ACCOUNTS = [
+    { id: 0, name: "Account A (eBay)" },
+    { id: 1, name: "Account B (Amazon)" },
+    { id: 2, name: "Account C (Walmart/Express)" }
+  ];
+  
+  // Data structure: dailyData[dayIndex][accountId] = { sales, profit, listings }
+  // dayIndex 0 = June 1, dayIndex 29 = June 30
+  let dailyData = [];
+  
+  // Load from localStorage or initialize empty
+  function loadData() {
+    const stored = localStorage.getItem('june_report_data_v2');
+    if(stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if(parsed.dailyData && parsed.accounts && parsed.employee) {
+          dailyData = parsed.dailyData;
+          if(parsed.employee) document.getElementById('employeeName').value = parsed.employee;
+          // ensure correct dimensions
+          if(dailyData.length !== DAYS_IN_JUNE) reinitData();
+          else {
+            for(let d=0; d<DAYS_IN_JUNE; d++) {
+              if(!dailyData[d]) dailyData[d] = [];
+              for(let a=0; a<ACCOUNTS.length; a++) {
+                if(!dailyData[d][a]) dailyData[d][a] = { sales: 0, profit: 0, listings: 0 };
+              }
+            }
+          }
+        } else reinitData();
+      } catch(e) { reinitData(); }
+    } else {
+      reinitData();
+    }
+    // also load employee name from storage if present
+    const storedEmp = localStorage.getItem('june_employee_name');
+    if(storedEmp && document.getElementById('employeeName')) document.getElementById('employeeName').value = storedEmp;
+  }
+  
+  function reinitData() {
+    dailyData = [];
+    for(let day=0; day<DAYS_IN_JUNE; day++) {
+      dailyData[day] = [];
+      for(let acc=0; acc<ACCOUNTS.length; acc++) {
+        dailyData[day][acc] = { sales: 0, profit: 0, listings: 0 };
+      }
+    }
+  }
+  
+  function saveAll() {
+    const toStore = {
+      dailyData: dailyData,
+      accounts: ACCOUNTS,
+      employee: document.getElementById('employeeName').value
+    };
+    localStorage.setItem('june_report_data_v2', JSON.stringify(toStore));
+    localStorage.setItem('june_employee_name', document.getElementById('employeeName').value);
+  }
+  
+  // Helper: compute ROI (profit / sales * 100) -> if sales=0 return 0
+  function computeROI(sales, profit) {
+    if(sales === undefined || sales === null) sales = 0;
+    if(profit === undefined || profit === null) profit = 0;
+    if(sales === 0) return 0;
+    let roi = (profit / sales) * 100;
+    return Math.round(roi * 10) / 10;
+  }
+  
+  // Render entire table with dynamic columns (one block per account)
+  function renderTable() {
+    const thead = document.getElementById('tableHeader');
+    const tbody = document.getElementById('tableBody');
+    
+    // Build header: Date + for each account: Sales, Profit, Listings, ROI
+    let headerRow = '<tr><th style="min-width:85px;">📅 Date</th>';
+    for(let acc of ACCOUNTS) {
+      headerRow += `<th colspan="4" style="background:#eef2ff;">${escapeHtml(acc.name)}</th>`;
+    }
+    headerRow += '</tr><tr><th>Day</th>';
+    for(let i=0; i<ACCOUNTS.length; i++) {
+      headerRow += `<th>💰 Sales ($)</th><th>📈 Profit ($)</th><th>📋 Listings</th><th>📊 ROI (%)</th>`;
+    }
+    headerRow += '</tr>';
+    thead.innerHTML = headerRow;
+    
+    // Build body rows (each day)
+    tbody.innerHTML = '';
+    for(let dayIdx=0; dayIdx<DAYS_IN_JUNE; dayIdx++) {
+      const dateObj = new Date(YEAR, MONTH, dayIdx+1);
+      const dateStr = `${dateObj.toLocaleString('default', { month: 'short' })} ${dayIdx+1}, ${YEAR}`;
+      let row = `<tr><td class="date-col"><strong>${dateStr}</strong></td>`;
+      
+      for(let accId=0; accId<ACCOUNTS.length; accId++) {
+        const data = dailyData[dayIdx][accId];
+        const sales = data.sales ?? 0;
+        const profit = data.profit ?? 0;
+        const listings = data.listings ?? 0;
+        const roi = computeROI(sales, profit);
+        
+        row += `
+          <td><input type="number" step="0.01" class="daily-input sales-input" data-day="${dayIdx}" data-acc="${accId}" value="${sales.toFixed(2)}"></td>
+          <td><input type="number" step="0.01" class="daily-input profit-input" data-day="${dayIdx}" data-acc="${accId}" value="${profit.toFixed(2)}"></td>
+          <td><input type="number" step="1" class="daily-input listings-input" data-day="${dayIdx}" data-acc="${accId}" value="${listings}"></td>
+          <td class="roi-cell" id="roi-${dayIdx}-${accId}">${roi}%</td>
+        `;
+      }
+      row += '</tr>';
+      tbody.insertAdjacentHTML('beforeend', row);
+    }
+    
+    // attach event listeners to all inputs
+    attachInputEvents();
+    // update monthly summaries
+    updateSummaries();
+  }
+  
+  function attachInputEvents() {
+    // sales inputs
+    document.querySelectorAll('.sales-input').forEach(inp => {
+      inp.removeEventListener('change', handleInputChange);
+      inp.addEventListener('change', handleInputChange);
+    });
+    document.querySelectorAll('.profit-input').forEach(inp => {
+      inp.removeEventListener('change', handleInputChange);
+      inp.addEventListener('change', handleInputChange);
+    });
+    document.querySelectorAll('.listings-input').forEach(inp => {
+      inp.removeEventListener('change', handleInputChange);
+      inp.addEventListener('change', handleInputChange);
+    });
+  }
+  
+  function handleInputChange(e) {
+    const day = parseInt(e.target.dataset.day);
+    const accId = parseInt(e.target.dataset.acc);
+    const type = e.target.classList.contains('sales-input') ? 'sales' : (e.target.classList.contains('profit-input') ? 'profit' : 'listings');
+    let newVal = parseFloat(e.target.value);
+    if(isNaN(newVal)) newVal = 0;
+    if(type === 'listings') newVal = Math.floor(Math.abs(newVal));
+    if(type === 'sales') dailyData[day][accId].sales = newVal;
+    else if(type === 'profit') dailyData[day][accId].profit = newVal;
+    else if(type === 'listings') dailyData[day][accId].listings = newVal;
+    
+    // update ROI cell for this day+account
+    const salesVal = dailyData[day][accId].sales;
+    const profitVal = dailyData[day][accId].profit;
+    const roi = computeROI(salesVal, profitVal);
+    const roiCell = document.getElementById(`roi-${day}-${accId}`);
+    if(roiCell) roiCell.innerText = `${roi}%`;
+    
+    saveAll();
+    updateSummaries(); // refresh totals
+  }
+  
+  // Update monthly summary per account
+  function updateSummaries() {
+    const summaryDiv = document.getElementById('summaryContainer');
+    if(!summaryDiv) return;
+    let totals = [];
+    for(let a=0; a<ACCOUNTS.length; a++) {
+      totals[a] = { totalSales: 0, totalProfit: 0, totalListings: 0, roiSum: 0, daysWithSales: 0 };
+    }
+    for(let day=0; day<DAYS_IN_JUNE; day++) {
+      for(let a=0; a<ACCOUNTS.length; a++) {
+        const sales = dailyData[day][a].sales;
+        const profit = dailyData[day][a].profit;
+        const listings = dailyData[day][a].listings;
+        totals[a].totalSales += sales;
+        totals[a].totalProfit += profit;
+        totals[a].totalListings += listings;
+        if(sales > 0) {
+          const roi = computeROI(sales, profit);
+          totals[a].roiSum += roi;
+          totals[a].daysWithSales++;
+        }
+      }
+    }
+    // Build cards
+    let html = '';
+    for(let a=0; a<ACCOUNTS.length; a++) {
+      const accName = ACCOUNTS[a].name;
+      const totalSales = totals[a].totalSales;
+      const totalProfit = totals[a].totalProfit;
+      const totalListings = totals[a].totalListings;
+      const avgROI = totals[a].daysWithSales > 0 ? (totals[a].roiSum / totals[a].daysWithSales).toFixed(1) : 0;
+      html += `
+        <div class="summary-card">
+          <h4>📁 ${escapeHtml(accName)}</h4>
+          <div>💰 Total Sales: <strong>$${totalSales.toFixed(2)}</strong></div>
+          <div>📈 Total Profit: <strong>$${totalProfit.toFixed(2)}</strong></div>
+          <div>📋 Total Listings: <strong>${totalListings}</strong></div>
+          <div>📊 Avg ROI: <strong>${avgROI}%</strong></div>
+        </div>
+      `;
+    }
+    // add overall summary card
+    const allSales = totals.reduce((sum, t) => sum + t.totalSales, 0);
+    const allProfit = totals.reduce((sum, t) => sum + t.totalProfit, 0);
+    const allListings = totals.reduce((sum, t) => sum + t.totalListings, 0);
+    const overallROI = allSales > 0 ? ((allProfit/allSales)*100).toFixed(1) : 0;
+    html += `
+      <div class="summary-card" style="background:#eef2ff;">
+        <h4>🏆 GRAND TOTAL (All Accounts)</h4>
+        <div>💰 Sales: $${allSales.toFixed(2)}</div>
+        <div>📈 Profit: $${allProfit.toFixed(2)}</div>
+        <div>📋 Listings: ${allListings}</div>
+        <div>📊 ROI: ${overallROI}%</div>
+      </div>
+    `;
+    summaryDiv.innerHTML = html;
+  }
+  
+  // Reset all data for June
+  function resetMonth() {
+    if(confirm('⚠️ Are you sure? This will erase ALL daily entries for June. This action cannot be undone.')) {
+      reinitData();
+      saveAll();
+      renderTable();
+    }
+  }
+  
+  // Load sample / demo data (realistic values for demonstration)
+  function loadSampleData() {
+    reinitData();
+    for(let day=0; day<DAYS_IN_JUNE; day++) {
+      for(let acc=0; acc<ACCOUNTS.length; acc++) {
+        // generate somewhat realistic fluctuating numbers
+        let baseSales = 0;
+        let baseProfit = 0;
+        let baseListings = 0;
+        if(acc === 0) { // account A
+          baseSales = 180 + Math.floor(Math.random() * 200) + (day * 2);
+          baseProfit = baseSales * (0.28 + Math.random() * 0.08);
+          baseListings = 3 + Math.floor(Math.random() * 8);
+        } else if(acc === 1) { // account B
+          baseSales = 250 + Math.floor(Math.random() * 300) + (day * 1.5);
+          baseProfit = baseSales * (0.32 + Math.random() * 0.1);
+          baseListings = 4 + Math.floor(Math.random() * 10);
+        } else {
+          baseSales = 95 + Math.floor(Math.random() * 150) + (day * 1);
+          baseProfit = baseSales * (0.22 + Math.random() * 0.07);
+          baseListings = 2 + Math.floor(Math.random() * 6);
+        }
+        baseSales = Math.round(baseSales * 100) / 100;
+        baseProfit = Math.round(baseProfit * 100) / 100;
+        dailyData[day][acc] = { sales: baseSales, profit: baseProfit, listings: baseListings };
+      }
+    }
+    // ensure some days have zero for realism
+    dailyData[5][2] = { sales: 0, profit: 0, listings: 0 };
+    dailyData[12][0] = { sales: 0, profit: 0, listings: 0 };
+    dailyData[18][1] = { sales: 0, profit: 0, listings: 0 };
+    saveAll();
+    renderTable();
+  }
+  
+  // Export to CSV: date, account wise columns
+  function exportToCSV() {
+    const employee = document.getElementById('employeeName').value || "Employee";
+    let csvRows = [];
+    // header row
+    let headers = ['Date'];
+    for(let acc of ACCOUNTS) {
+      headers.push(`${acc.name} Sales ($)`, `${acc.name} Profit ($)`, `${acc.name} Listings`, `${acc.name} ROI (%)`);
+    }
+    csvRows.push(headers.join(','));
+    // data rows
+    for(let day=0; day<DAYS_IN_JUNE; day++) {
+      const dateObj = new Date(YEAR, MONTH, day+1);
+      const dateStr = `${dateObj.getFullYear()}-${(dateObj.getMonth()+1).toString().padStart(2,'0')}-${(day+1).toString().padStart(2,'0')}`;
+      let row = [`"${dateStr}"`];
+      for(let a=0; a<ACCOUNTS.length; a++) {
+        const data = dailyData[day][a];
+        const sales = data.sales ?? 0;
+        const profit = data.profit ?? 0;
+        const listings = data.listings ?? 0;
+        const roi = computeROI(sales, profit);
+        row.push(sales.toFixed(2), profit.toFixed(2), listings, roi);
+      }
+      csvRows.push(row.join(','));
+    }
+    // add summary rows
+    csvRows.push([]);
+    csvRows.push(['"==== MONTHLY TOTALS ===="']);
+    let summaryHeaders = ['Metric'];
+    for(let acc of ACCOUNTS) summaryHeaders.push(acc.name);
+    csvRows.push(summaryHeaders.join(','));
+    // calculate totals
+    let totalsSales = [], totalsProfit = [], totalsListings = [], totalsAvgROI = [];
+    for(let a=0; a<ACCOUNTS.length; a++) {
+      let sumSales=0, sumProfit=0, sumList=0, roiDays=0, roiSum=0;
+      for(let d=0; d<DAYS_IN_JUNE; d++) {
+        sumSales += dailyData[d][a].sales;
+        sumProfit += dailyData[d][a].profit;
+        sumList += dailyData[d][a].listings;
+        if(dailyData[d][a].sales > 0) {
+          roiSum += computeROI(dailyData[d][a].sales, dailyData[d][a].profit);
+          roiDays++;
+        }
+      }
+      totalsSales.push(sumSales.toFixed(2));
+      totalsProfit.push(sumProfit.toFixed(2));
+      totalsListings.push(sumList);
+      totalsAvgROI.push(roiDays > 0 ? (roiSum/roiDays).toFixed(1) : 0);
+    }
+    csvRows.push(['Total Sales ($)', ...totalsSales]);
+    csvRows.push(['Total Profit ($)', ...totalsProfit]);
+    csvRows.push(['Total Listings', ...totalsListings]);
+    csvRows.push(['Avg ROI (%)', ...totalsAvgROI]);
+    
+    const blob = new Blob([csvRows.map(row => row.join(',')).join('\n')], {type: 'text/csv'});
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `june_report_${employee.replace(/\s/g,'_')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+  
+  // allow employee name change to be saved
+  function bindEmployeeChange() {
+    const empInput = document.getElementById('employeeName');
+    empInput.addEventListener('change', () => {
+      saveAll();
+      // no re-render needed but update storage
+    });
+  }
+  
+  // allow dynamic account renaming? optional: user can edit account names inline for flexibility
+  function addAccountInlineEdit() {
+    // Simple: add a little edit button for account names (nice to have)
+    const headerContainer = document.querySelector('#tableHeader');
+    if(!headerContainer) return;
+    // not mandatory but let's provide a way to rename accounts in summary area
+    const accountNamesDiv = document.createElement('div');
+    accountNamesDiv.style.marginBottom = '10px';
+    accountNamesDiv.style.fontSize = '0.8rem';
+    accountNamesDiv.innerHTML = `<span style="font-weight:600;">✏️ Account names:</span> `;
+    for(let i=0; i<ACCOUNTS.length; i++) {
+      const span = document.createElement('span');
+      span.style.margin = '0 8px';
+      span.innerHTML = `<input type="text" id="accName_${i}" value="${escapeHtml(ACCOUNTS[i].name)}" style="width:120px; padding:0.2rem 0.4rem;">`;
+      accountNamesDiv.appendChild(span);
+      const inputField = span.querySelector('input');
+      inputField.addEventListener('change', (e) => {
+        ACCOUNTS[i].name = e.target.value;
+        saveAll();
+        renderTable();   // re-render entire table with new account names
+      });
+    }
+    const controlsDiv = document.querySelector('.controls');
+    if(controlsDiv && !document.getElementById('inlineAccountEditor')) {
+      const editorDiv = document.createElement('div');
+      editorDiv.id = 'inlineAccountEditor';
+      editorDiv.style.display = 'flex';
+      editorDiv.style.alignItems = 'center';
+      editorDiv.style.gap = '0.5rem';
+      editorDiv.style.marginLeft = 'auto';
+      editorDiv.innerHTML = `<span style="font-size:0.7rem;">✏️ Edit account labels:</span>`;
+      for(let i=0;i<ACCOUNTS.length;i++) {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = ACCOUNTS[i].name;
+        inp.style.width = '100px';
+        inp.style.fontSize = '0.7rem';
+        inp.addEventListener('change', (e, idx=i) => {
+          ACCOUNTS[idx].name = e.target.value;
+          saveAll();
+          renderTable();
+        });
+        editorDiv.appendChild(inp);
+      }
+      controlsDiv.appendChild(editorDiv);
+    }
+  }
+  
+  function escapeHtml(str) {
+    if(!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if(m === '&') return '&amp;';
+      if(m === '<') return '&lt;';
+      if(m === '>') return '&gt;';
+      return m;
+    });
+  }
+  
+  // initial load
+  function init() {
+    loadData();
+    renderTable();
+    bindEmployeeChange();
+    addAccountInlineEdit();
+    document.getElementById('resetMonthBtn').addEventListener('click', resetMonth);
+    document.getElementById('sampleDataBtn').addEventListener('click', loadSampleData);
+    document.getElementById('exportCsvBtn').addEventListener('click', exportToCSV);
+  }
+  
+  init();
+</script>
+</body>
+</html>
