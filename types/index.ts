@@ -61,6 +61,8 @@ export interface TaskLog {
   leadsGenerated: number;
   emailsSent: number;
   conversionRatio: number;
+  ordersHandled?: number;
+  netProfit?: number;
 }
 
 export interface Expense {

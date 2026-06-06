@@ -4,208 +4,166 @@ import { useApp } from '@/context/AppContext';
 import { useState } from 'react';
 import { Expense } from '@/types';
 import { formatDateShort, getCurrentDate } from '@/lib/dateUtils';
+import Swal from 'sweetalert2';
 
 export default function ExpensesDepartmentPage() {
   const { currentUser, expenses, addExpense, updateExpense, deleteExpense } = useApp();
   const [showModal, setShowModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [formData, setFormData] = useState<Partial<Expense>>({});
   const [selectedDept, setSelectedDept] = useState<string>('all');
 
   if (!currentUser) return null;
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const isManager = ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
 
-  if (!isAdmin) {
+  if (!isAdmin && !isManager) {
     return (
-      <div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
-          <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
-          <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-          <p>Only admin can manage department expenses.</p>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
+        <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
+        <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
+        <p>Personnel role does not have permission to view this data.</p>
       </div>
     );
   }
 
   const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString()}`;
 
-  // Department expenses breakdown
-  const ecommerceExpenses = expenses.filter(e => e.department === 'ecommerce');
-  const marketingExpenses = expenses.filter(e => e.department === 'marketing');
-  const architectureExpenses = expenses.filter(e => e.department === 'architecture');
+  // 🔒 SECURITY SOURCE FILTERING
+  const ecommerceExpenses = isAdmin || currentUser.role === 'ecommerce' ? expenses.filter(e => e.department === 'ecommerce') : [];
+  const marketingExpenses = isAdmin || currentUser.role === 'marketing' ? expenses.filter(e => e.department === 'marketing') : [];
+  const architectureExpenses = isAdmin || currentUser.role === 'architecture' ? expenses.filter(e => e.department === 'architecture') : [];
 
   const ecommerceTotal = ecommerceExpenses.reduce((sum, e) => sum + e.amount, 0);
   const marketingTotal = marketingExpenses.reduce((sum, e) => sum + e.amount, 0);
   const architectureTotal = architectureExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalExpenses = ecommerceTotal + marketingTotal + architectureTotal;
 
-  // Filter expenses based on selected department
-  const displayExpenses = selectedDept === 'all'
-    ? expenses
-    : expenses.filter(e => e.department === selectedDept);
+  // Filter expenses based on selected department (Strictly enforced)
+  const displayExpenses = isAdmin 
+    ? (selectedDept === 'all' ? expenses : expenses.filter(e => e.department === selectedDept))
+    : expenses.filter(e => e.department === currentUser.role);
 
   const handleAdd = () => {
+    setEditingExpense(null);
     setFormData({
       date: getCurrentDate(),
-      status: 'pending',
-      department: 'ecommerce',
+      status: 'approved',
+      department: isAdmin ? 'ecommerce' : currentUser.role as string,
       submittedBy: currentUser.name
     });
     setShowModal(true);
   };
 
+  const handleEdit = (exp: Expense) => {
+    setEditingExpense(exp);
+    setFormData(exp);
+    setShowModal(true);
+  };
+
   const handleSave = () => {
     if (!formData.category || !formData.description || !formData.amount || !formData.department) {
-      alert('Please fill all required fields');
+      Swal.fire('Error', 'Please fill all required fields', 'error');
       return;
     }
 
-    const newExpense: Expense = {
-      id: `EX${Date.now()}`,
+    const expenseData: Expense = {
+      id: editingExpense?.id || `EX${Date.now()}`,
       date: formData.date || getCurrentDate(),
-      category: formData.category,
-      description: formData.description,
-      amount: formData.amount,
+      category: formData.category || 'Other',
+      description: formData.description || '',
+      amount: Number(formData.amount) || 0,
       status: 'approved',
-      approvedBy: currentUser.name,
-      submittedBy: currentUser.name,
+      approvedBy: editingExpense?.approvedBy || currentUser.name,
+      submittedBy: editingExpense?.submittedBy || currentUser.name,
       department: formData.department
     };
 
-    addExpense(newExpense);
+    if (editingExpense) {
+      updateExpense(editingExpense.id, expenseData);
+      Swal.fire({ title: 'Updated', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
+    } else {
+      addExpense(expenseData);
+      Swal.fire({ title: 'Expense Added', icon: 'success', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end' });
+    }
     setShowModal(false);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this expense?')) {
-      deleteExpense(id);
-    }
+    Swal.fire({
+      title: 'Delete this expense?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, delete'
+    }).then(r => {
+      if (r.isConfirmed) deleteExpense(id);
+    });
   };
 
   return (
-    <div>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'normal', color: '#000', margin: 0, marginBottom: '8px' }}>🧾 Department Expenses</h1>
-        <p style={{ fontSize: '14px', color: 'var(--text2)', margin: 0 }}>Manage expenses by department</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'var(--shadow)', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>🧾</div>
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>Departmental Overhead Master</h2>
+            <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: '700' }}>Live Tracking: {displayExpenses.length} overhead records</div>
+          </div>
+        </div>
+        <button onClick={handleAdd} style={{ background: 'var(--accent)', color: '#fff', padding: '10px 25px', borderRadius: '12px', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 4px 10px rgba(var(--accent-rgb), 0.3)' }}>+ Log New Expense</button>
       </div>
 
-      {/* Department Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '22px' }}>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--bluebg)', color: 'var(--blue)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            🛒
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(ecommerceTotal)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>E-Commerce</div>
-          <div style={{ fontSize: '11px', color: 'var(--blue)', marginTop: '4px' }}>{ecommerceExpenses.length} expenses</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--amberbg)', color: 'var(--amber)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            📢
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(marketingTotal)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Marketing</div>
-          <div style={{ fontSize: '11px', color: 'var(--amber)', marginTop: '4px' }}>{marketingExpenses.length} expenses</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--greenbg)', color: 'var(--green)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            🏗️
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(architectureTotal)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Architecture</div>
-          <div style={{ fontSize: '11px', color: 'var(--green)', marginTop: '4px' }}>{architectureExpenses.length} expenses</div>
-        </div>
-        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)', padding: '18px 16px' }}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--redbg)', color: 'var(--red)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>
-            💸
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 'normal', marginBottom: '2px', color: '#000' }}>{formatCurrency(totalExpenses)}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 'normal' }}>Total Expenses</div>
-          <div style={{ fontSize: '11px', color: 'var(--red)', marginTop: '4px' }}>All departments</div>
-        </div>
+      {/* Dept Summary Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
+        <StatCard icon="🛒" label="E-Commerce" value={formatCurrency(ecommerceTotal)} count={ecommerceExpenses.length} color="#6366f1" />
+        <StatCard icon="📢" label="Marketing" value={formatCurrency(marketingTotal)} count={marketingExpenses.length} color="#ec4899" />
+        <StatCard icon="🏗️" label="Architecture" value={formatCurrency(architectureTotal)} count={architectureExpenses.length} color="#10b981" />
+        <StatCard icon="💸" label="Total Flow" value={formatCurrency(totalExpenses)} count={expenses.length} color="var(--accent)" />
       </div>
 
-      {/* Filter and Add Button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <span style={{ fontSize: '14px', color: 'var(--text2)' }}>Filter by:</span>
-          <select
-            value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
-            style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
-          >
-            <option value="all">All Departments</option>
-            <option value="ecommerce">E-Commerce</option>
-            <option value="marketing">Marketing</option>
-            <option value="architecture">Architecture</option>
-          </select>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '15px 20px', boxShadow: 'var(--shadow)' }}>
+        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)' }}>📋 Expense Flow Ledger</h3>
+          {isAdmin && (
+            <select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)} style={{ background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '5px 12px', color: 'var(--text)', fontSize: '12px', outline: 'none' }}>
+              <option value="all">All Departments</option>
+              <option value="ecommerce">E-Commerce</option>
+              <option value="marketing">Marketing</option>
+              <option value="architecture">Architecture</option>
+            </select>
+          )}
         </div>
-        <button
-          onClick={handleAdd}
-          style={{ background: 'var(--accent)', color: '#fff', padding: '9px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 'normal', cursor: 'pointer', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', transition: '.15s' }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
-        >
-          <span>➕</span> Add Expense
-        </button>
-      </div>
 
-      {/* Expenses Table */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius2)' }}>
-        <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '16px', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px', color: '#000' }}>
-            <span style={{ color: 'var(--accent)' }}>🧾</span>
-            Department Expense Records
-          </div>
-        </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Date</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Department</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Category</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Description</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Amount</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'normal', letterSpacing: '.5px', textTransform: 'uppercase', color: '#000' }}>Actions</th>
+              <tr style={{ background: 'var(--bg3)', borderBottom: '2px solid var(--border)' }}>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Date</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Department</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Category</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Description</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Amount</th>
+                <th style={{ padding: '10px 15px', textAlign: 'left', fontSize: '11px', color: 'var(--text3)', textTransform: 'uppercase' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {displayExpenses.map(expense => (
-                <tr key={expense.id} style={{ borderBottom: '1px solid var(--border)' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)' }}>{formatDateShort(expense.date)}</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      background: expense.department === 'ecommerce' ? 'var(--bluebg)' : expense.department === 'marketing' ? 'var(--amberbg)' : 'var(--greenbg)',
-                      color: expense.department === 'ecommerce' ? 'var(--blue)' : expense.department === 'marketing' ? 'var(--amber)' : 'var(--green)',
-                      borderRadius: '20px',
-                      padding: '3px 9px',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      textTransform: 'capitalize'
-                    }}>
-                      {expense.department === 'ecommerce' ? '🛒' : expense.department === 'marketing' ? '📢' : '🏗️'} {expense.department}
-                    </span>
+              {displayExpenses.map(exp => (
+                <tr key={exp.id} style={{ borderBottom: '1px solid var(--border)', transition: '0.1s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg3)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                  <td style={{ padding: '10px 15px', fontSize: '13px', color: 'var(--text)' }}>{formatDateShort(exp.date)}</td>
+                  <td style={{ padding: '10px 15px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '900', padding: '2px 8px', borderRadius: '6px', background: 'var(--accent)15', color: 'var(--accent)', textTransform: 'uppercase' }}>{exp.department}</span>
                   </td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--accentbg)', color: 'var(--accent)', borderRadius: '20px', padding: '3px 9px', fontSize: '11px', fontWeight: 'bold' }}>
-                      {expense.category}
-                    </span>
-                  </td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--text)' }}>{expense.description}</td>
-                  <td style={{ padding: '10px 16px', fontSize: '13px', color: 'var(--red)', fontWeight: 'bold' }}>{formatCurrency(expense.amount)}</td>
-                  <td style={{ padding: '10px 16px' }}>
-                    <button
-                      onClick={() => handleDelete(expense.id)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--red)', transition: '.15s' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-                    >
-                      🗑️
-                    </button>
+                  <td style={{ padding: '10px 15px', fontSize: '12px', fontWeight: '800', color: 'var(--text2)' }}>{exp.category}</td>
+                  <td style={{ padding: '10px 15px', fontSize: '13px', color: 'var(--text)' }}>{exp.description}</td>
+                  <td style={{ padding: '10px 15px', fontSize: '14px', color: '#dc2626', fontWeight: '900' }}>{formatCurrency(exp.amount)}</td>
+                  <td style={{ padding: '10px 15px' }}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                       <button onClick={() => handleEdit(exp)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
+                       <button onClick={() => handleDelete(exp.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: '#ef4444' }}>🗑️</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -214,108 +172,65 @@ export default function ExpensesDepartmentPage() {
         </div>
       </div>
 
-      {/* Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: '18px', width: '90%', maxWidth: '520px' }}>
-            <div style={{ padding: '20px 22px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ fontSize: '16px', fontWeight: 'normal', color: '#000' }}>Add Department Expense</div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text2)', cursor: 'pointer', fontSize: '20px' }}>✕</button>
-            </div>
-            <div style={{ padding: '22px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Department</label>
-                <select
-                  value={formData.department || ''}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                >
-                  <option value="ecommerce">E-Commerce</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="architecture">Architecture</option>
-                </select>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Category</label>
-                  <select
-                    value={formData.category || ''}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', cursor: 'pointer' }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  >
-                    <option value="">Select Category</option>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '32px', width: '90%', maxWidth: '500px', padding: '30px', boxShadow: '0 25px 50px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '900', marginBottom: '25px', color: 'var(--text)' }}>{editingExpense ? '📝 Update Overhead' : '🧾 Log New Overhead'}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text3)', marginBottom: '8px', display: 'block' }}>DEPARTMENT</label>
+                    <select value={formData.department || ''} onChange={(e) => setFormData({ ...formData, department: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', outline: 'none' }} disabled={!isAdmin}>
+                      <option value="ecommerce">E-Commerce</option>
+                      <option value="marketing">Marketing</option>
+                      <option value="architecture">Architecture</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text3)', marginBottom: '8px', display: 'block' }}>OVERHEAD DATE</label>
+                    <input type="date" value={formData.date || ''} onChange={(e) => setFormData({ ...formData, date: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', outline: 'none' }} />
+                  </div>
+               </div>
+               <div>
+                  <label style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text3)', marginBottom: '8px', display: 'block' }}>CATEGORY</label>
+                  <select value={formData.category || ''} onChange={(e) => setFormData({ ...formData, category: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', outline: 'none' }}>
                     <option value="Marketing">Marketing</option>
                     <option value="Operations">Operations</option>
                     <option value="Software">Software</option>
                     <option value="Infrastructure">Infrastructure</option>
                     <option value="Utilities">Utilities</option>
+                    <option value="Food">Food / Messing</option>
                     <option value="Travel">Travel</option>
                     <option value="Equipment">Equipment</option>
                     <option value="Other">Other</option>
                   </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Amount (Rs.)</label>
-                  <input
-                    type="number"
-                    value={formData.amount || ''}
-                    onChange={(e) => setFormData({ ...formData, amount: parseInt(e.target.value) || 0 })}
-                    style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                    placeholder="50000"
-                    onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                  />
-                </div>
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Description</label>
-                <input
-                  type="text"
-                  value={formData.description || ''}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                  placeholder="Google Ads Campaign"
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 'normal', color: '#000', marginBottom: '6px', display: 'block' }}>Date</label>
-                <input
-                  type="date"
-                  value={formData.date || ''}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  style={{ width: '100%', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px', color: 'var(--text)', fontSize: '13px', outline: 'none', fontFamily: 'var(--font)' }}
-                  onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
-                />
-              </div>
-            </div>
-            <div style={{ padding: '16px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg3)', color: 'var(--text)', transition: '.15s' }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border2)'; e.currentTarget.style.background = 'var(--bg4)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--bg3)'; }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 'normal', cursor: 'pointer', border: '1px solid var(--accent)', transition: '.15s' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent)'}
-              >
-                Save
-              </button>
+               </div>
+               <div>
+                  <label style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text3)', marginBottom: '8px', display: 'block' }}>DESCRIPTION</label>
+                  <input type="text" value={formData.description || ''} onChange={(e) => setFormData({ ...formData, description: e.target.value })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', outline: 'none' }} placeholder="Detail of expense..." />
+               </div>
+               <div>
+                  <label style={{ fontSize: '11px', fontWeight: '900', color: 'var(--text3)', marginBottom: '8px', display: 'block' }}>AMOUNT (PKR Rs.)</label>
+                  <input type="number" value={formData.amount || ''} onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })} style={{ width: '100%', padding: '12px', background: 'var(--bg3)', border: '1px solid #dc262633', borderRadius: '12px', color: '#dc2626', fontWeight: '900', outline: 'none' }} placeholder="Rs. 5,000" />
+               </div>
+               <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '15px' }}>
+                  <button onClick={() => setShowModal(false)} style={{ padding: '12px 30px', borderRadius: '15px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', fontWeight: 'bold', cursor: 'pointer' }}>Discard</button>
+                  <button onClick={handleSave} style={{ padding: '12px 50px', borderRadius: '15px', background: '#1e293b', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{editingExpense ? 'Update Record' : 'Save Overhead'}</button>
+               </div>
             </div>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, count, color }: any) {
+  return (
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px', boxShadow: 'var(--shadow)' }}>
+       <div style={{ width: '36px', height: '36px', background: `${color}15`, color: color, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', marginBottom: '12px' }}>{icon}</div>
+       <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text)' }}>{value}</div>
+       <div style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: '900', textTransform: 'uppercase', marginTop: '4px' }}>{label} ({count})</div>
     </div>
   );
 }

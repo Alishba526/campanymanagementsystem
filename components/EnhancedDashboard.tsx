@@ -26,70 +26,82 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
   if (!currentUser) return null;
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const userDept = currentUser.role;
+
+  // 🔒 SECURITY SOURCE FILTERING (Strict Isolation)
+  const filteredEmployees = employees.filter(e => isAdmin || e.department === userDept);
+  const filteredProjects = projects.filter(p => isAdmin || p.department === userDept);
+  const filteredAttendance = attendance.filter(a => isAdmin || filteredEmployees.some(e => e.id === a.employeeId));
+  const filteredIncome = income.filter(i => isAdmin || i.department === userDept || (i.project && filteredProjects.some(p => p.projectName === i.project)));
+  const filteredExpenses = expenses.filter(e => isAdmin || e.department === userDept || e.description.toLowerCase().includes(userDept));
+  
+  // Bills are sensitive overheads - Admin only
+  const filteredBills = isAdmin ? bills : [];
+
+  const filteredAuditLogs = auditLogs.filter(log => {
+    if (isAdmin) return true;
+    const isMyAction = log.user === currentUser.name;
+    const isMyTeamAction = filteredEmployees.some(emp => log.action.includes(emp.name) || log.action.includes(emp.id));
+    return isMyAction || isMyTeamAction;
+  });
+
   const today = new Date().toISOString().split('T')[0];
   const filterPrefix = `${filterYear}-${filterMonth}`;
 
   const formatCurrency = (amount: number) => `Rs. ${(amount || 0).toLocaleString()}`;
   const USD_TO_PKR = 280;
 
-  // Filtering Logic
+  // 📂 UI FILTERING (Derived from Secured Source)
   const displayAttendance = isFiltered 
-    ? attendance.filter(a => a.date.startsWith(filterPrefix))
-    : attendance.filter(a => a.date === today);
+    ? filteredAttendance.filter(a => a.date.startsWith(filterPrefix))
+    : filteredAttendance.filter(a => a.date === today);
 
   const displayIncome = isFiltered
-    ? income.filter(i => i.date.startsWith(filterPrefix) && i.status === 'received')
-    : income.filter(i => i.status === 'received');
+    ? filteredIncome.filter(i => i.date.startsWith(filterPrefix) && i.status === 'received')
+    : filteredIncome.filter(i => i.status === 'received');
 
   const displayExpenses = isFiltered
-    ? expenses.filter(e => e.date.startsWith(filterPrefix))
-    : expenses;
+    ? filteredExpenses.filter(e => e.date.startsWith(filterPrefix))
+    : filteredExpenses;
 
   const displayBills = isFiltered 
-    ? bills.filter(b => b.date.startsWith(filterPrefix))
-    : bills;
+    ? filteredBills.filter(b => b.date.startsWith(filterPrefix))
+    : filteredBills;
 
   const displayProjects = isFiltered 
-    ? projects.filter(p => p.startDate.startsWith(filterPrefix))
-    : projects;
+    ? filteredProjects.filter(p => p.startDate.startsWith(filterPrefix))
+    : filteredProjects;
 
-  // Manager Specific Data
-  const managerDept = currentUser.role;
-  const myDeptEmps = employees.filter(e => e.department === managerDept);
-  const myDeptAtt = displayAttendance.filter(a => myDeptEmps.find(e => e.id === a.employeeId));
-  const myDeptPresent = myDeptAtt.filter(a => a.status === 'present' || a.status === 'late').length;
+  const activeEmpsCount = filteredEmployees.filter(e => e.status === 'active').length;
+  const presentCount = displayAttendance.filter(a => a.status === 'present' || a.status === 'late').length;
   
-  const myDeptLogs = auditLogs.filter(log => {
-    const isMyAction = log.user === currentUser.name;
-    const isMyTeamAction = myDeptEmps.some(emp => log.action.includes(emp.name) || log.action.includes(emp.id));
-    return isMyAction || isMyTeamAction;
-  });
-
   const formattedDateDay = currentTime.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const formattedTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  // Admin Stats Calculations
+  // Stats Calculations (Secured)
   const totalManualIncomePKR = displayIncome.reduce((sum, i) => sum + i.amount, 0);
-  
-  // Dynamic Project Income Calculation (Convert USD to PKR)
   const totalProjectIncomeUSD = displayProjects.reduce((sum, p) => sum + (p.amountReceived || 0), 0);
   const totalProjectBudgetUSD = displayProjects.reduce((sum, p) => sum + (p.cost || 0), 0);
   const totalProjectIncomePKR = totalProjectIncomeUSD * USD_TO_PKR;
   
   const totalIncomePKR = totalManualIncomePKR + totalProjectIncomePKR;
-
   const totalExpensesPKR = displayExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalBillsPKR = displayBills.reduce((sum, b) => sum + b.amount, 0);
-  const totalSalariesPKR = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
+  const totalSalariesPKR = filteredEmployees.reduce((sum, e) => sum + (e.salary || 0), 0);
   
   const totalCashOutPKR = totalExpensesPKR + totalSalariesPKR + totalBillsPKR;
   const netProfitPKR = totalIncomePKR - totalCashOutPKR;
   const profitMargin = totalIncomePKR > 0 ? Math.round((netProfitPKR / totalIncomePKR) * 100) : 0;
   
-  const activeEmpsCount = employees.filter(e => e.status === 'active').length;
-  const presentCount = displayAttendance.filter(a => a.status === 'present' || a.status === 'late').length;
-  const attRate = activeEmpsCount > 0 ? Math.round((presentCount / (isFiltered ? (activeEmpsCount * 22) : activeEmpsCount)) * 100) : 0;
+  const rankings = filteredEmployees.map(emp => {
+    const empTasks = tasks.filter(t => t.employeeId === emp.id);
+    const score = empTasks.length > 0 ? Math.round(empTasks.reduce((sum, t) => sum + t.score, 0) / empTasks.length) : 0;
+    return { name: emp.name, score };
+  }).sort((a, b) => b.score - a.score).slice(0, 5);
 
+  const formatUSD = (val: number) => `$ ${val.toLocaleString()}`;
+
+  // Date helper variables
   const currentYearNum = new Date().getFullYear();
   const years = Array.from({ length: 21 }, (_, i) => (currentYearNum + 10 - i).toString());
   const months = [
@@ -99,15 +111,16 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
     { v: '10', l: 'October' }, { v: '11', l: 'November' }, { v: '12', l: 'December' }
   ];
 
-  const rankings = employees.map(emp => {
-    const empTasks = tasks.filter(t => t.employeeId === emp.id);
-    const score = empTasks.length > 0 ? Math.round(empTasks.reduce((sum, t) => sum + t.score, 0) / empTasks.length) : 0;
-    return { name: emp.name, score };
-  }).sort((a, b) => b.score - a.score).slice(0, 5);
+  // On Duty Monitor Logic (Secured)
+  const onDutyStaff = filteredAttendance.filter(a => {
+    if (a.checkOut !== '--') return false;
+    const [year, mon, day] = a.date.split('-').map(Number);
+    const [h, m] = a.checkIn.split(':').map(Number);
+    const checkInDateTime = new Date(year, mon - 1, day, h, m);
+    const diff = (new Date().getTime() - checkInDateTime.getTime()) / (1000 * 60 * 60);
+    return diff <= 12;
+  });
 
-  const formatUSD = (val: number) => `$ ${val.toLocaleString()}`;
-
-  // --- NEW DEPARTMENTAL PROFIT LOGIC ---
   const depts = [
     { id: 'ecommerce', label: 'E-Commerce' },
     { id: 'marketing', label: 'Marketing' },
@@ -115,36 +128,17 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
   ];
 
   const deptStats = depts.map(dept => {
-    // 1. Revenue: Income assigned to this dept (converted to PKR)
     const manualInc = displayIncome.filter(i => i.department === dept.id).reduce((sum, i) => sum + i.amount, 0);
     const projIncUSD = displayProjects.filter(p => p.department === dept.id).reduce((sum, p) => sum + (p.amountReceived || 0), 0);
     const totalRev = manualInc + (projIncUSD * USD_TO_PKR);
-
-    // 2. Expense: Salaries of employees in this dept
-    const totalSalaries = employees.filter(e => e.department === dept.id).reduce((sum, e) => sum + (e.salary || 0), 0);
-
-    // 3. Profit: Revenue - Salaries
+    const totalSalaries = filteredEmployees.filter(e => e.department === dept.id).reduce((sum, e) => sum + (e.salary || 0), 0);
     const profit = totalRev - totalSalaries;
-
     return { ...dept, revenue: totalRev, salaries: totalSalaries, profit };
   });
 
   const totalDeptProfit = deptStats.reduce((sum, d) => sum + d.profit, 0);
-  
-  // 4. Office Expenses: General expenses + Bills
   const officeExpenses = totalExpensesPKR + totalBillsPKR;
   const finalNetProfit = totalDeptProfit - officeExpenses;
-  // -------------------------------------
-
-  // Active Attendance Logic (On Duty staff within 12h)
-  const onDutyStaff = attendance.filter(a => {
-    if (a.checkOut !== '--') return false;
-    const [year, mon, day] = a.date.split('-').map(Number);
-    const [h, m] = a.checkIn.split(':').map(Number);
-    const checkInDateTime = new Date(year, mon - 1, day, h, m);
-    const diff = (new Date().getTime() - checkInDateTime.getTime()) / (1000 * 60 * 60);
-    return diff <= 12; // Must be within 12 hours
-  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
@@ -193,7 +187,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
          </div>
       </div>
 
-      {/* 2. DUAL-CURRENCY KPI GRID (ADMIN STYLE - AS AT 1AM) */}
+      {/* 2. DUAL-CURRENCY KPI GRID (ADMIN STYLE) */}
       {isAdmin && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
@@ -208,7 +202,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
             <KPICard title="Combined Income (PKR)" value={formatCurrency(totalIncomePKR)} subtitle={`Incl. USD conversion @ ${USD_TO_PKR}`} icon="💰" color="#10b981" />
           </div>
 
-          {/* 2.1 DETAILED RECONCILIATION (USER REQUESTED CONCEPT) */}
+          {/* 2.1 DETAILED RECONCILIATION */}
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
               <div style={{ fontSize: '24px' }}>📊</div>
@@ -268,17 +262,17 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
         </>
       )}
 
-      {/* 2.5 ACTIVE PROJECT MONITOR */}
+      {/* 2.5 ACTIVE PROJECT MONITOR (SECURED) */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', boxShadow: 'var(--shadow)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
           <div style={{ fontSize: '24px' }}>🚀</div>
           <h3 style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Project Monitor</h3>
           <div style={{ marginLeft: 'auto', background: 'var(--accent)', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold' }}>
-            {projects.filter(p => ['Working on', 'New Project'].includes(p.status)).length} ONGOING
+            {displayProjects.filter(p => ['Working on', 'New Project'].includes(p.status)).length} ONGOING
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-          {projects
+          {displayProjects
             .filter(p => ['Working on', 'New Project'].includes(p.status))
             .map(p => (
             <div key={p.id} onClick={() => onNavigate?.('projects')} style={{ minWidth: '240px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '18px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
@@ -294,13 +288,13 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
               </div>
             </div>
           ))}
-          {projects.filter(p => (isAdmin || p.department === currentUser.role) && (['Working on', 'New Project'].includes(p.status))).length === 0 && (
+          {displayProjects.filter(p => ['Working on', 'New Project'].includes(p.status)).length === 0 && (
             <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '13px', fontStyle: 'italic', textAlign: 'center', width: '100%' }}>No projects currently active.</div>
           )}
         </div>
       </div>
 
-      {/* 2.6 ACTIVE ATTENDANCE MONITOR */}
+      {/* 2.6 ACTIVE ATTENDANCE MONITOR (SECURED) */}
       <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', boxShadow: 'var(--shadow)', marginBottom: '25px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
           <div style={{ fontSize: '24px' }}>⏰</div>
@@ -329,12 +323,12 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
         </div>
       </div>
 
-      {/* 3. ACTIVITY & RANKINGS (2 COLUMN) */}
+      {/* 3. ACTIVITY & RANKINGS (SECURED) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)' }}>
             <h3 style={{ fontSize: '15px', fontWeight: '900', marginBottom: '20px', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📜 Recent System Activity</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-               {(isAdmin ? auditLogs : myDeptLogs).slice(0, 6).map((log, i) => (
+               {filteredAuditLogs.slice(0, 6).map((log, i) => (
                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 15px', background: 'var(--bg3)', borderRadius: '15px', border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                        <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', border: '1px solid var(--border)' }}>👤</div>

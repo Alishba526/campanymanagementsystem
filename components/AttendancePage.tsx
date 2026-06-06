@@ -269,7 +269,7 @@ export default function AttendancePage() {
                             <td style={{ padding: '12px 10px', whiteSpace: 'nowrap' }}>
                               <div style={{ display: 'flex', gap: '12px' }}>
                                 <button onClick={() => handleEdit(rec)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>✏️</button>
-                                {isAdmin && <button onClick={() => handleDelete(rec.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px' }}>🗑️</button>}
+                                <button onClick={() => handleDelete(rec.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '16px', color: 'var(--red)' }}>🗑️</button>
                               </div>
                             </td>
                           </tr>

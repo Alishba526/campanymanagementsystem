@@ -16,14 +16,15 @@ export default function HistoricalReportsPage() {
   if (!currentUser) return null;
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const isManager = ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
 
-  if (!isAdmin) {
+  if (!isAdmin && !isManager) {
     return (
       <div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
           <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
           <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-          <p>Only admin can view historical reports.</p>
+          <p>Personnel role does not have permission to view historical reports.</p>
         </div>
       </div>
     );
@@ -42,17 +43,18 @@ export default function HistoricalReportsPage() {
     }
   };
 
-  // Calculate filtered data
-  const filteredIncome = income.filter(i => filterByPeriod(i.date) && i.status === 'received');
-  const filteredExpenses = expenses.filter(e => filterByPeriod(e.date) && e.status === 'approved');
-  const filteredBills = bills.filter(b => b.paidDate && filterByPeriod(b.paidDate) && b.status === 'paid');
-  const filteredAttendance = attendance.filter(a => filterByPeriod(a.date));
+  // 🔒 SECURITY SOURCE FILTERING
+  const filteredEmployees = employees.filter(e => isAdmin || e.department === currentUser.role);
+  const filteredIncome = income.filter(i => (isAdmin || i.department === currentUser.role) && filterByPeriod(i.date) && i.status === 'received');
+  const filteredExpenses = expenses.filter(e => (isAdmin || e.department === currentUser.role) && filterByPeriod(e.date) && e.status === 'approved');
+  const filteredBills = isAdmin ? bills.filter(b => b.paidDate && filterByPeriod(b.paidDate) && b.status === 'paid') : [];
+  const filteredAttendance = attendance.filter(a => filterByPeriod(a.date) && (isAdmin || filteredEmployees.some(e => e.id === a.employeeId)));
 
-  // Calculate totals
+  // Calculate totals (Secured)
   const totalIncome = filteredIncome.reduce((sum, i) => sum + i.amount, 0);
   const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalBills = filteredBills.reduce((sum, b) => sum + (b.paidAmount || b.amount), 0);
-  const totalSalaries = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
+  const totalSalaries = filteredEmployees.reduce((sum, e) => sum + (e.salary || 0), 0);
 
   // For monthly/yearly view, calculate proportional salaries
   let proportionalSalaries = totalSalaries;
@@ -66,14 +68,14 @@ export default function HistoricalReportsPage() {
   const netProfit = totalIncome - totalCashOut;
   const profitMargin = totalIncome > 0 ? Math.round((netProfit / totalIncome) * 100) : 0;
 
-  // Attendance stats
+  // Attendance stats (Secured)
   const presentCount = filteredAttendance.filter(a => a.status === 'present').length;
   const absentCount = filteredAttendance.filter(a => a.status === 'absent').length;
   const lateCount = filteredAttendance.filter(a => a.status === 'late').length;
   const attendanceRate = filteredAttendance.length > 0 ? Math.round((presentCount / filteredAttendance.length) * 100) : 0;
 
-  // Department-wise breakdown
-  const departments = ['ecommerce', 'marketing', 'architecture'];
+  // Department-wise breakdown (Restricted to authorized depts)
+  const departments = ['ecommerce', 'marketing', 'architecture'].filter(d => isAdmin || currentUser.role === d);
   const deptStats = departments.map(dept => {
     const deptEmployees = employees.filter(e => e.department === dept);
     const deptAttendance = filteredAttendance.filter(a => {

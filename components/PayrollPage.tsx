@@ -11,17 +11,25 @@ export default function PayrollPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  if (!currentUser || currentUser.role !== 'admin') {
+  if (!currentUser) return null;
+
+  const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const isManager = ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
+
+  if (!isAdmin && !isManager) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
         <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
         <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-        <p>Payroll management is reserved for System Admin only.</p>
+        <p>Payroll management is reserved for Department Managers and Admins.</p>
       </div>
     );
   }
 
   const formatCurrency = (amount: number) => `Rs. ${(amount || 0).toLocaleString()}`;
+
+  // 🔒 SECURITY SOURCE FILTERING
+  const filteredEmployees = employees.filter(emp => isAdmin || emp.department === currentUser.role);
 
   const getAvgScore = (empId: string) => {
     const empTasks = tasks.filter(t => t.employeeId === empId);
@@ -52,8 +60,8 @@ export default function PayrollPage() {
     return Math.round((salary / 176) * 1.5 * totalOvertime);
   };
 
-  // Universal Search Filter
-  const filteredEmployees = employees.filter(emp => {
+  // Universal Search Filter (Secured)
+  const displayEmployees = filteredEmployees.filter(emp => {
     const searchLower = searchQuery.toLowerCase();
     return !searchQuery || 
       emp.name.toLowerCase().includes(searchLower) ||
@@ -61,10 +69,10 @@ export default function PayrollPage() {
       emp.position?.toLowerCase().includes(searchLower);
   });
 
-  const totalPayroll = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
-  const avgSalary = employees.length > 0 ? Math.round(totalPayroll / employees.length) : 0;
+  const totalPayroll = filteredEmployees.reduce((sum, e) => sum + (e.salary || 0), 0);
+  const avgSalary = filteredEmployees.length > 0 ? Math.round(totalPayroll / filteredEmployees.length) : 0;
 
-  const selectedEmp = employees.find(e => e.id === selectedEmployee);
+  const selectedEmp = filteredEmployees.find(e => e.id === selectedEmployee);
   const selectedAvgScore = selectedEmp ? getAvgScore(selectedEmp.id) : 0;
   const selectedBonus = selectedEmp ? getBonus(selectedEmp.id, selectedEmp.salary) : 0;
   const selectedOvertimePay = selectedEmp ? getOvertimePay(selectedEmp.id, selectedEmp.salary) : 0;

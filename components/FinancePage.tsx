@@ -20,20 +20,25 @@ export default function FinancePage() {
   if (!currentUser) return null;
 
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const isManager = ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
 
-  if (!isAdmin) {
+  if (!isAdmin && !isManager) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
         <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
         <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-        <p>Your role does not have permission to view this data.</p>
+        <p>Your role does not have permission to view financial data.</p>
       </div>
     );
   }
 
+  // 🔒 SECURITY SOURCE FILTERING
+  const filteredIncome = income.filter(i => isAdmin || i.department === currentUser.role);
+  const filteredExpenses = expenses.filter(e => isAdmin || e.department === currentUser.role);
+
   // Archive Grouping
   const currentMonthPrefix = getCurrentDate().substring(0, 7);
-  const archiveGroups = income.reduce((groups: Record<string, Income[]>, inc) => {
+  const archiveGroups = filteredIncome.reduce((groups: Record<string, Income[]>, inc) => {
     const month = inc.date.substring(0, 7);
     if (month === currentMonthPrefix) return groups;
     if (!groups[month]) groups[month] = [];
@@ -53,7 +58,8 @@ export default function FinancePage() {
     setEditingIncome(null);
     setFormData({
       date: getCurrentDate(),
-      status: 'received'
+      status: 'received',
+      department: isAdmin ? 'ecommerce' : currentUser.role as string
     });
     setShowModal(true);
   };
@@ -76,7 +82,8 @@ export default function FinancePage() {
       client: formData.client || '',
       project: formData.project || '',
       amount: formData.amount || 0,
-      status: (formData.status as any) || 'received'
+      status: (formData.status as any) || 'received',
+      department: formData.department || (isAdmin ? 'ecommerce' : currentUser.role as string)
     };
 
     if (editingIncome) {
@@ -100,7 +107,7 @@ export default function FinancePage() {
     });
   };
 
-  const displayIncome = income.filter(inc => {
+  const displayIncome = filteredIncome.filter(inc => {
     const searchLower = searchQuery.toLowerCase();
     const isSearchMatch = !searchQuery || 
       inc.client.toLowerCase().includes(searchLower) || 
@@ -121,7 +128,7 @@ export default function FinancePage() {
   });
 
   const totalIncome = displayIncome.reduce((sum, i) => sum + i.amount, 0);
-  const totalExpenses = expenses.filter(e => e.date.startsWith(currentMonthPrefix)).reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenses = filteredExpenses.filter(e => e.date.startsWith(currentMonthPrefix)).reduce((sum, e) => sum + e.amount, 0);
 
   const formatCurrency = (val: number) => `Rs. ${val.toLocaleString()}`;
 

@@ -5,19 +5,24 @@ import { useApp } from '@/context/AppContext';
 export default function DepartmentAnalytics() {
   const { currentUser, employees, income, expenses, tasks } = useApp();
 
-  if (!currentUser || currentUser.role !== 'admin') {
+  if (!currentUser) return null;
+
+  const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
+  const isManager = ['ecommerce', 'marketing', 'architecture'].includes(currentUser.role);
+
+  if (!isAdmin && !isManager) {
     return (
       <div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px', textAlign: 'center', color: 'var(--text2)' }}>
           <div style={{ fontSize: '52px', marginBottom: '16px', color: 'var(--red)' }}>🔒</div>
           <h2 style={{ fontSize: '18px', fontWeight: 'normal', color: 'var(--text2)', marginBottom: '8px' }}>Access Restricted</h2>
-          <p>Only Admin can view Department Analytics.</p>
+          <p>Your role does not have permission to view analytics.</p>
         </div>
       </div>
     );
   }
 
-  const departments = ['ecommerce', 'marketing', 'architecture'];
+  const departments = ['ecommerce', 'marketing', 'architecture'].filter(d => isAdmin || currentUser.role === d);
 
   const formatCurrency = (amount: number) => `Rs. ${amount.toLocaleString()}`;
 

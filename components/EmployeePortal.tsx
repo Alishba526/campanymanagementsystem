@@ -35,9 +35,10 @@ export default function EmployeePortal() {
 
   const hasActiveShift = latestSession && latestSession.checkOut === '--';
   
-  // 🛡️ BOSS REQUIREMENT: No 'Duty In' after 12:00 AM.
+  // 🛡️ BOSS REQUIREMENT: 'Duty In' only allowed between 12:00 PM and 09:00 PM.
   const currentHour = currentTime.getHours();
-  const isLateNight = currentHour >= 0 && currentHour < 10; // 12 AM to 10 AM block
+  // Restricted if hour is >= 21 (9 PM) OR < 12 (12 PM)
+  const isRestrictedTime = currentHour >= 21 || currentHour < 12;
 
   const myAttendance = myAttendanceRecords.filter(a => {
     const searchLower = searchQuery.toLowerCase();
@@ -49,6 +50,10 @@ export default function EmployeePortal() {
   const handleCheckIn = async () => {
     if (!employee) {
       Swal.fire('Error', 'Employee record not found.', 'error');
+      return;
+    }
+    if (isRestrictedTime) {
+      Swal.fire('Restricted', 'New shifts can only start between 12 PM and 9 PM.', 'warning');
       return;
     }
     setIsProcessing(true);
@@ -89,7 +94,6 @@ export default function EmployeePortal() {
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
     
-    // Calculate hours (Handles midnight cross)
     const startDateTime = new Date(latestSession.date + ' ' + latestSession.checkIn);
     const endDateTime = new Date(); 
     let calculatedHours = (endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60 * 60);
@@ -165,12 +169,16 @@ export default function EmployeePortal() {
       );
     }
 
-    if (isLateNight) {
+    if (isRestrictedTime) {
       return (
-        <div style={{ padding: '30px', background: '#f1f5f9', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
-          <div style={{ fontSize: '30px', marginBottom: '10px' }}>🌙</div>
-          <div style={{ fontSize: '16px', fontWeight: '900', color: '#1e293b' }}>Shift Start Restricted</div>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '900', marginTop: '8px' }}>New duty sessions cannot be started between 12:00 AM and 10:00 AM.</div>
+        <div style={{ padding: '30px', background: '#fef2f2', borderRadius: '20px', border: '1px solid #fecaca', textAlign: 'center' }}>
+          <div style={{ fontSize: '40px', marginBottom: '15px' }}>🕒</div>
+          <div style={{ fontSize: '18px', fontWeight: '900', color: '#dc2626' }}>Shift Start Restricted</div>
+          <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: '900', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            New sessions are ONLY permitted between:<br/>
+            <span style={{ fontSize: '16px', display: 'block', marginTop: '5px' }}>12:00 PM — 09:00 PM</span>
+          </div>
+          <div style={{ fontSize: '10px', color: '#7f1d1d', marginTop: '15px', fontStyle: 'italic' }}>Please wait for the next official window to start your duty.</div>
         </div>
       );
     }
@@ -185,8 +193,6 @@ export default function EmployeePortal() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
-      
-      {/* Header */}
       <div style={{ width: '100%', maxWidth: '1000px', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '20px 25px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', boxShadow: 'var(--shadow)', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#fff' }}>🚀</div>
@@ -205,7 +211,6 @@ export default function EmployeePortal() {
       {view === 'portal' ? (
         <div style={{ width: '100%', maxWidth: '500px', marginTop: '20px' }}>
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '30px', padding: '40px', boxShadow: 'var(--shadow)', textAlign: 'center' }}>
-            
             <div style={{ background: '#f8fafc', borderRadius: '20px', padding: '20px', marginBottom: '30px', border: '1px solid #e2e8f0' }}>
               <div style={{ fontSize: '14px', color: '#1e40af', fontWeight: '900', textTransform: 'uppercase', marginBottom: '5px' }}>
                 {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -214,13 +219,11 @@ export default function EmployeePortal() {
                 {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
               </div>
             </div>
-
             <div style={{ textAlign: 'left', background: '#eff6ff', padding: '20px', borderRadius: '20px', marginBottom: '25px', border: '1px solid #dbeafe' }}>
               <div style={{ fontSize: '11px', color: '#3b82f6', textTransform: 'uppercase', fontWeight: '900', marginBottom: '4px' }}>Logged Profile:</div>
               <div style={{ fontSize: '20px', fontWeight: '900', color: '#1e40af' }}>{employee?.name || currentUser.name}</div>
               <div style={{ fontSize: '11px', color: '#1e40af', fontWeight: '900', marginTop: '5px' }}>ID: {employee?.id || 'N/A'} • {employee?.position || 'Personnel'}</div>
             </div>
-
             {renderActionButtons()}
           </div>
         </div>
