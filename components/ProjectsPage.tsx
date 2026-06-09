@@ -290,6 +290,18 @@ export default function ProjectsPage() {
                   </div>
                </div>
 
+               {/* 6. Manager Context Row */}
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '25px' }}>
+                  <div>
+                    <label style={labelStyle}>MY NAME (MANAGER)</label>
+                    <input type="text" value={formData.managerName || ''} onChange={(e) => setFormData({ ...formData, managerName: e.target.value })} style={inputStyle} placeholder="Your Name" />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>MY EMAIL (MANAGER)</label>
+                    <input type="email" value={formData.managerEmail || ''} onChange={(e) => setFormData({ ...formData, managerEmail: e.target.value })} style={inputStyle} placeholder="your@email.com" />
+                  </div>
+               </div>
+
                <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '10px' }}>
                   <button onClick={() => setShowModal(false)} style={{ padding: '12px 30px', borderRadius: '15px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', fontWeight: 'bold', cursor: 'pointer' }}>Discard</button>
                   <button onClick={handleSave} style={{ padding: '12px 50px', borderRadius: '15px', background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)' }}>{editingProject ? 'Secure Update' : 'Finalize & Save'}</button>
