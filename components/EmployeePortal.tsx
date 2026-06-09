@@ -52,10 +52,18 @@ export default function EmployeePortal() {
       Swal.fire('Error', 'Employee record not found.', 'error');
       return;
     }
+    
+    // 🛡️ DUPLICATION FIX: Prevent starting a shift if one is already active
+    if (hasActiveShift) {
+      Swal.fire('Warning', 'You already have an active shift running.', 'warning');
+      return;
+    }
+
     if (isRestrictedTime) {
       Swal.fire('Restricted', 'New shifts can only start between 12 PM and 9 PM.', 'warning');
       return;
     }
+
     setIsProcessing(true);
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
