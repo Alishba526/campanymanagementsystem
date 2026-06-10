@@ -16,6 +16,9 @@ export default function EmployeePortal() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterDate, setFilterDate] = useState(getCurrentDate());
 
+  // Local state to prevent race conditions while context updates
+  const [localActiveLock, setLocalActiveLock] = useState(false);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -35,12 +38,17 @@ export default function EmployeePortal() {
 
   const hasActiveShift = latestSession && latestSession.checkOut === '--';
   
-  // 🛡️ BOSS REQUIREMENT: 'Duty In' only allowed between 12:00 PM and 09:00 PM.
-  const currentHour = currentTime.getHours();
-  // Restricted if hour is >= 21 (9 PM) OR < 12 (12 PM)
-  const isRestrictedTime = currentHour >= 21 || currentHour < 12;
+  // 🛡️ DUPLICATION LOCK: Check if a record (Active or Completed) already exists for TODAY
+  const todayRecord = myAttendanceRecords.find(a => a.date === getCurrentDate());
+  const isAlreadyProcessedToday = !!todayRecord;
 
-  const myAttendance = myAttendanceRecords.filter(a => {
+  // 🛡️ BOSS REQUIREMENT: 'Duty In' only allowed between 12:00 PM and 11:00 PM.
+  const currentHour = currentTime.getHours();
+  // Restricted if hour is >= 23 (11 PM) OR < 12 (12 PM)
+  const isRestrictedTime = currentHour >= 23 || currentHour < 12;
+
+  // Ledger filtering
+  const myAttendanceDisplay = myAttendanceRecords.filter(a => {
     const searchLower = searchQuery.toLowerCase();
     const isSearchMatch = !searchQuery || a.status.toLowerCase().includes(searchLower) || a.date.includes(searchLower);
     const isDateMatch = !filterDate || a.date === filterDate;
@@ -53,18 +61,19 @@ export default function EmployeePortal() {
       return;
     }
     
-    // 🛡️ DUPLICATION FIX: Prevent starting a shift if one is already active
-    if (hasActiveShift) {
-      Swal.fire('Warning', 'You already have an active shift running.', 'warning');
+    // 🛡️ DUPLICATION FIX: Prevent starting a shift if one is already active (Local + Context Check)
+    if (hasActiveShift || localActiveLock || isAlreadyProcessedToday) {
+      Swal.fire('Warning', 'A session is already active or completed for today.', 'warning');
       return;
     }
 
     if (isRestrictedTime) {
-      Swal.fire('Restricted', 'New shifts can only start between 12 PM and 9 PM.', 'warning');
+      Swal.fire('Restricted', 'New shifts can only start between 12 PM and 11 PM.', 'warning');
       return;
     }
 
     setIsProcessing(true);
+    setLocalActiveLock(true); // Lock immediately
     const now = new Date();
     const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
     
@@ -89,6 +98,7 @@ export default function EmployeePortal() {
       setNote('');
       Swal.fire({ title: 'Shift Started', text: `Welcome, ${employee.name}.`, icon: 'success', timer: 1500, showConfirmButton: false });
     } catch (e) {
+      setLocalActiveLock(false); // Unlock on error
       Swal.fire('Error', 'Failed to start shift', 'error');
     } finally {
       setIsProcessing(false);
@@ -121,6 +131,7 @@ export default function EmployeePortal() {
 
     try {
       await updateAttendance(latestSession.id, updates);
+      setLocalActiveLock(false); // Unlock for new session
       setNote('');
       Swal.fire({ title: 'Shift Ended', text: `Goodbye! Total Hours: ${calculatedHours.toFixed(2)}h`, icon: 'success', timer: 2000, showConfirmButton: false });
     } catch (e) {
@@ -161,36 +172,52 @@ export default function EmployeePortal() {
   };
 
   const renderActionButtons = () => {
-    if (hasActiveShift) {
+    // 1. If there's an active shift (even if started yesterday), ONLY show 'Duty Out'
+    if (hasActiveShift || localActiveLock) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
            <div style={{ background: '#fff7ed', padding: '12px', borderRadius: '12px', border: '1px solid #fed7aa', color: '#9a3412', fontWeight: '900', fontSize: '12px' }}>
-             ⚠️ ACTIVE SHIFT: Started {formatDateShort(latestSession.date)} at {latestSession.checkIn}
+             ⚠️ ACTIVE SESSION: Started {latestSession ? formatDateShort(latestSession.date) : 'Recently'} {latestSession ? `at ${latestSession.checkIn}` : ''}
            </div>
            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-             <button onClick={() => handleBreak('in')} disabled={isProcessing || !!latestSession.breakIn} style={{ padding: '15px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>☕ Break Start</button>
-             <button onClick={() => handleBreak('out')} disabled={isProcessing || !latestSession.breakIn || (latestSession.breakOut !== '' && latestSession.breakOut !== '--')} style={{ padding: '15px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>🔄 Break End</button>
+             <button onClick={() => handleBreak('in')} disabled={isProcessing || Boolean(latestSession && !!latestSession.breakIn)} style={{ padding: '15px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>☕ Break Start</button>
+             <button onClick={() => handleBreak('out')} disabled={isProcessing || Boolean(latestSession && (!latestSession.breakIn || (latestSession.breakOut !== '' && latestSession.breakOut !== '--')))} style={{ padding: '15px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '15px', fontWeight: '900', cursor: 'pointer' }}>🔄 Break End</button>
            </div>
            <textarea placeholder="End shift note..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
-           <button onClick={handleCheckOut} disabled={isProcessing || (!!latestSession.breakIn && latestSession.breakOut === '--')} style={{ width: '100%', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(220,38,38,0.2)' }}>⏹️ FINISH DUTY</button>
+           <button onClick={handleCheckOut} disabled={isProcessing || Boolean(latestSession && !!latestSession.breakIn && latestSession.breakOut === '--')} style={{ width: '100%', background: '#dc2626', color: '#fff', border: 'none', borderRadius: '18px', padding: '20px', fontSize: '20px', fontWeight: '900', cursor: 'pointer', boxShadow: '0 10px 20px rgba(220,38,38,0.2)' }}>⏹️ FINISH DUTY</button>
         </div>
       );
     }
 
+    // 2. If a shift was already started/finished TODAY, block further entries
+    if (isAlreadyProcessedToday) {
+      return (
+        <div style={{ padding: '30px', background: '#ecfdf5', borderRadius: '20px', border: '1px solid #10b981', textAlign: 'center' }}>
+          <div style={{ fontSize: '40px', marginBottom: '15px' }}>✅</div>
+          <div style={{ fontSize: '18px', fontWeight: '900', color: '#059669' }}>Attendance Complete</div>
+          <div style={{ fontSize: '11px', color: '#065f46', fontWeight: '900', marginTop: '10px' }}>
+            You have already recorded your attendance for {formatDateShort(getCurrentDate())}.<br/>
+            Next session available tomorrow after 12:00 PM.
+          </div>
+        </div>
+      );
+    }
+
+    // 3. If outside the 12 PM - 11 PM window, block 'Duty In'
     if (isRestrictedTime) {
       return (
         <div style={{ padding: '30px', background: '#fef2f2', borderRadius: '20px', border: '1px solid #fecaca', textAlign: 'center' }}>
           <div style={{ fontSize: '40px', marginBottom: '15px' }}>🕒</div>
           <div style={{ fontSize: '18px', fontWeight: '900', color: '#dc2626' }}>Shift Start Restricted</div>
-          <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: '900', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            New sessions are ONLY permitted between:<br/>
-            <span style={{ fontSize: '16px', display: 'block', marginTop: '5px' }}>12:00 PM — 09:00 PM</span>
+          <div style={{ fontSize: '12px', color: '#991b1b', fontWeight: '900', marginTop: '10px', textTransform: 'uppercase' }}>
+            New sessions allowed between:<br/>
+            <span style={{ fontSize: '16px', display: 'block', marginTop: '5px' }}>12:00 PM — 11:00 PM</span>
           </div>
-          <div style={{ fontSize: '10px', color: '#7f1d1d', marginTop: '15px', fontStyle: 'italic' }}>Please wait for the next official window to start your duty.</div>
         </div>
       );
     }
 
+    // 4. Default: Show 'Start Duty'
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
          <textarea placeholder="Morning note (Optional)..." value={note} onChange={(e) => setNote(e.target.value)} style={{ width: '100%', height: '80px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '15px', padding: '15px', outline: 'none', fontWeight:'900' }} />
@@ -250,7 +277,7 @@ export default function EmployeePortal() {
                 </tr>
               </thead>
               <tbody>
-                {myAttendance.map(rec => (
+                {myAttendanceDisplay.map((rec: AttendanceRecord) => (
                   <tr key={rec.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <td style={{ padding: '12px', fontSize: '13px', fontWeight: '900', color: '#0f172a' }}>{formatDateShort(rec.date)}</td>
                     <td style={{ padding: '12px', fontSize: '12px', fontWeight: '900', color: '#059669' }}>{formatTimeAMPM(rec.checkIn)}</td>

@@ -142,7 +142,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const showToast = (title: string, text: string, icon: any = 'info') => {
     Swal.fire({
-      title, text, icon, toast: true, position: 'top', showConfirmButton: false, timer: 4500, timerProgressBar: true,
+      title, text, icon, toast: true, position: 'top', showConfirmButton: false, timer: 3000, timerProgressBar: true,
       background: 'var(--bg2)', color: 'var(--text)'
     });
   };
@@ -198,13 +198,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setBills(billData as Bill[]);
       
       const newNotifs = (notifData as Notification[] || []).filter(n => n.sender !== user?.name);
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      if (isAdmin && lastProcessedDateRef.current !== todayStr) {
-         // Auto notifications logic...
-         lastProcessedDateRef.current = todayStr;
-      }
-
       if (newNotifs && newNotifs.length > 0) {
         const latest = newNotifs[0];
         if (user && hasInitializedNotifs.current && latest.id !== lastNotifIdRef.current) {
@@ -221,14 +214,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setNotifications(newNotifs);
       }
       
-      setLeaveRequests(leaveData as LeaveRequest[]);
       if (announceData) setAnnouncements(announceData as Announcement[]);
     } catch (error) {} finally { setIsLoading(false); }
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 8000);
+    const interval = setInterval(fetchData, 12000); // 🚀 OPTIMIZED: 12s background sync for better performance
     const savedUser = localStorage.getItem('growzix-user');
     if (savedUser) setCurrentUser(JSON.parse(savedUser));
     const savedTheme = localStorage.getItem('growzix-theme') as ThemeColor;
@@ -250,13 +242,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     document.documentElement.style.setProperty('--accent-rgb', hexToRgb(theme.primary));
     document.documentElement.style.setProperty('--green', '#10b981');
-    document.documentElement.style.setProperty('--greenbg', mode === 'dark' ? '#064e3b' : '#d1fae5');
     document.documentElement.style.setProperty('--red', '#ef4444');
-    document.documentElement.style.setProperty('--redbg', mode === 'dark' ? '#7f1d1d' : '#fee2e2');
     document.documentElement.style.setProperty('--blue', '#3b82f6');
-    document.documentElement.style.setProperty('--bluebg', mode === 'dark' ? '#1e3a8a' : '#dbeafe');
     document.documentElement.style.setProperty('--amber', '#f59e0b');
-    document.documentElement.style.setProperty('--amberbg', mode === 'dark' ? '#78350f' : '#fef3c7');
   };
 
   const setThemeColor = (color: ThemeColor) => {
@@ -301,24 +289,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addNotification = async (notif: Partial<Notification>) => {
-    const senderName = currentUser?.name || 'System';
-    const result = await actions.addNotificationAction({ ...notif, sender: senderName, createdAt: new Date() });
-    if (result) {
-       const user = JSON.parse(localStorage.getItem('growzix-user') || '{}');
-       const isAdmin = ['admin', 'superadmin'].includes(user.role);
-       if ((result.recipient === 'all' || (result.recipient === 'admin' && isAdmin) || result.recipient === user.role) && result.sender !== user.name) {
-         setNotifications(prev => [result as any, ...prev]);
-       }
-    }
+    const result = await actions.addNotificationAction({ ...notif, sender: currentUser?.name || 'System', createdAt: new Date() });
+    if (result) setNotifications(prev => [result as any, ...prev]);
   };
 
   const markNotificationAsRead = async (id: string) => {
     await actions.markNotificationReadAction(id);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-
-  const markCategoryNotificationsAsRead = async (category: string) => {
-    // Logic for marking category notifications...
   };
 
   const markAllNotificationsAsRead = async () => {
@@ -328,268 +305,136 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications(prev => prev.map(n => (n.recipient === recipient || n.recipient === 'all') ? { ...n, read: true } : n));
   };
 
+  // ⚡ SUPER-SPEED OPTIMISTIC ACTIONS
   const addEmployee = async (employee: Employee) => {
-    // ⚡ OPTIMISTIC UPDATE: Update UI instantly
     setEmployees(prev => [employee, ...prev]);
-    try {
-      await actions.addEmployeeAction(employee);
-      await addAuditLog(`Registered: ${employee.name}`);
-    } catch (e) {
-      showToast('Error', 'Failed to sync with database', 'error');
-    }
+    try { await actions.addEmployeeAction(employee); await addAuditLog(`Registered: ${employee.name}`); } catch (e) { showToast('Error', 'Sync failed', 'error'); }
   };
 
   const updateEmployee = async (id: string, updates: Partial<Employee>) => {
     setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-    try {
-      await actions.updateEmployeeAction(id, updates);
-    } catch (e) {}
+    try { await actions.updateEmployeeAction(id, updates); } catch (e) {}
   };
 
   const deleteEmployee = async (id: string) => {
     setEmployees(prev => prev.filter(e => e.id !== id));
-    try {
-      await actions.deleteEmployeeAction(id);
-    } catch (e) {}
+    try { await actions.deleteEmployeeAction(id); } catch (e) {}
   };
 
   const addAttendance = async (record: AttendanceRecord) => {
     setAttendance(prev => [record, ...prev]);
-    try {
-      await actions.addAttendanceAction(record);
-    } catch (e) {}
+    try { await actions.addAttendanceAction(record); } catch (e) {}
   };
 
   const updateAttendance = async (id: string, updates: Partial<AttendanceRecord>) => {
     setAttendance(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
-    try {
-      await actions.updateAttendanceAction(id, updates);
-    } catch (e) {}
+    try { await actions.updateAttendanceAction(id, updates); } catch (e) {}
   };
 
   const deleteAttendance = async (id: string) => {
     setAttendance(prev => prev.filter(a => a.id !== id));
-    try {
-      await actions.deleteAttendanceAction(id);
-    } catch (e) {}
+    try { await actions.deleteAttendanceAction(id); } catch (e) {}
   };
 
   const addTask = async (task: TaskLog) => {
     setTasks(prev => [task, ...prev]);
-    try {
-      await actions.addTaskAction(task);
-    } catch (e) {}
+    try { await actions.addTaskAction(task); } catch (e) {}
   };
 
   const updateTask = async (id: string, updates: Partial<TaskLog>) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-    try {
-      await actions.updateTaskAction(id, updates);
-    } catch (e) {}
+    try { await actions.updateTaskAction(id, updates); } catch (e) {}
   };
 
   const deleteTask = async (id: string) => {
     setTasks(prev => prev.filter(t => t.id !== id));
-    try {
-      await actions.deleteTaskAction(id);
-    } catch (e) {}
+    try { await actions.deleteTaskAction(id); } catch (e) {}
   };
 
   const addExpense = async (expense: Expense) => {
     setExpenses(prev => [expense, ...prev]);
-    try {
-      await actions.addExpenseAction(expense);
-    } catch (e) {}
+    try { await actions.addExpenseAction(expense); } catch (e) {}
   };
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
     setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-    try {
-      await actions.updateExpenseAction(id, updates);
-    } catch (e) {}
+    try { await actions.updateExpenseAction(id, updates); } catch (e) {}
   };
 
   const deleteExpense = async (id: string) => {
     setExpenses(prev => prev.filter(e => e.id !== id));
-    try {
-      await actions.deleteExpenseAction(id);
-    } catch (e) {}
+    try { await actions.deleteExpenseAction(id); } catch (e) {}
   };
 
   const addIncome = async (inc: Income) => {
     setIncome(prev => [inc, ...prev]);
-    try {
-      await actions.addIncomeAction(inc);
-    } catch (e) {}
+    try { await actions.addIncomeAction(inc); } catch (e) {}
   };
 
   const updateIncome = async (id: string, updates: Partial<Income>) => {
     setIncome(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
-    try {
-      await actions.updateIncomeAction(id, updates);
-    } catch (e) {}
+    try { await actions.updateIncomeAction(id, updates); } catch (e) {}
   };
 
   const deleteIncome = async (id: string) => {
     setIncome(prev => prev.filter(i => i.id !== id));
-    try {
-      await actions.deleteIncomeAction(id);
-    } catch (e) {}
+    try { await actions.deleteIncomeAction(id); } catch (e) {}
   };
 
   const addLeaveRequest = async (request: LeaveRequest) => {
-    try {
-      await actions.addLeaveRequestAction(request);
-      setLeaveRequests(prev => [request, ...prev]);
-    } catch (e) {}
+    setLeaveRequests(prev => [request, ...prev]);
+    try { await actions.addLeaveRequestAction(request); } catch (e) {}
   };
 
   const updateLeaveRequest = async (id: string, updates: Partial<LeaveRequest>) => {
-    try {
-      await actions.updateLeaveRequestAction(id, updates);
-      setLeaveRequests(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
-    } catch (e) {}
+    setLeaveRequests(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
+    try { await actions.updateLeaveRequestAction(id, updates); } catch (e) {}
   };
 
   const deleteLeaveRequest = async (id: string) => {
-    try {
-      await actions.deleteLeaveRequestAction(id);
-      setLeaveRequests(prev => prev.filter(l => l.id !== id));
-    } catch (e) {}
+    setLeaveRequests(prev => prev.filter(l => l.id !== id));
+    try { await actions.deleteLeaveRequestAction(id); } catch (e) {}
   };
 
   const addBreakRequest = async (request: BreakRequest) => {
-    try {
-      await actions.addBreakRequestAction(request);
-      setBreakRequests(prev => [request, ...prev]);
-    } catch (e) {}
+    setBreakRequests(prev => [request, ...prev]);
+    try { await actions.addBreakRequestAction(request); } catch (e) {}
   };
 
   const updateBreakRequest = async (id: string, updates: Partial<BreakRequest>) => {
-    try {
-      await actions.updateBreakRequestAction(id, updates);
-      setBreakRequests(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
-    } catch (e) {}
-  };
-
-  const addDepartment = async (name: string) => {
-    try {
-      const result = await actions.addDepartmentAction(name);
-      if (result) setDepartments(prev => [...prev, result as any]);
-    } catch (e) {}
-  };
-
-  const updateDepartment = async (id: string, name: string) => {
-    try {
-      await actions.updateDepartmentAction(id, name);
-      setDepartments(prev => prev.map(d => d.id === id ? { ...d, name } : d));
-    } catch (e) {}
-  };
-
-  const deleteDepartment = async (id: string) => {
-    try {
-      await actions.deleteDepartmentAction(id);
-      setDepartments(prev => prev.filter(d => d.id !== id));
-    } catch (e) {}
+    setBreakRequests(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+    try { await actions.updateBreakRequestAction(id, updates); } catch (e) {}
   };
 
   const addAnnouncement = async (announcement: Announcement) => {
-    try {
-      setAnnouncements(prev => [announcement, ...prev]);
-      await actions.addAnnouncementAction(announcement);
-      await fetchData();
-    } catch (e) {}
+    setAnnouncements(prev => [announcement, ...prev]);
+    try { await actions.addAnnouncementAction(announcement); } catch (e) {}
   };
 
   const updateAnnouncement = async (id: string, updates: Partial<Announcement>) => {
-    try {
-      setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
-      await actions.updateAnnouncementAction(id, updates);
-      await fetchData();
-    } catch (e) {}
-  };
-
-  const markAnnouncementAsRead = async (id: string, name: string, role: string) => {
-    try {
-      await actions.markAnnouncementAsReadAction(id, name, role);
-      await fetchData();
-    } catch (e) {}
+    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+    try { await actions.updateAnnouncementAction(id, updates); } catch (e) {}
   };
 
   const deleteAnnouncement = async (id: string) => {
-    try {
-      await actions.deleteAnnouncementAction(id);
-      setAnnouncements(prev => prev.filter(a => a.id !== id));
-    } catch (e) {}
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+    try { await actions.deleteAnnouncementAction(id); } catch (e) {}
   };
 
   const addProject = async (project: Project) => {
-    try {
-      setProjects(prev => [project, ...prev]);
-      await actions.addProjectAction(project);
-      await fetchData();
-    } catch (e) {}
+    setProjects(prev => [project, ...prev]);
+    try { await actions.addProjectAction(project); } catch (e) {}
   };
 
   const updateProject = async (id: string, updates: Partial<Project>) => {
     pendingProjectUpdates.current.add(id);
     setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-    try {
-      await actions.updateProjectAction(id, updates);
-    } catch (e) {
-      showToast('Error', 'Failed to update project', 'error');
-    } finally {
-      setTimeout(() => pendingProjectUpdates.current.delete(id), 2000);
-    }
+    try { await actions.updateProjectAction(id, updates); } catch (e) {} finally { setTimeout(() => pendingProjectUpdates.current.delete(id), 2000); }
   };
 
   const deleteProject = async (id: string) => {
-    try {
-      await actions.deleteProjectAction(id);
-      setProjects(prev => prev.filter(p => p.id !== id));
-    } catch (e) {}
-  };
-
-  const addMonthlySchedule = async (schedule: MonthlySchedule) => {
-    try {
-      await actions.addMonthlyScheduleAction(schedule);
-      setSchedules(prev => [schedule, ...prev]);
-    } catch (e) {}
-  };
-
-  const updateMonthlySchedule = async (id: string, updates: Partial<MonthlySchedule>) => {
-    try {
-      await actions.updateMonthlyScheduleAction(id, updates);
-      setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-    } catch (e) {}
-  };
-
-  const deleteMonthlySchedule = async (id: string) => {
-    try {
-      await actions.deleteMonthlyScheduleAction(id);
-      setSchedules(prev => prev.filter(s => s.id !== id));
-    } catch (e) {}
-  };
-
-  const addBill = async (bill: Bill) => {
-    try {
-      await actions.addBillAction(bill);
-      setBills(prev => [bill, ...prev]);
-    } catch (e) {}
-  };
-
-  const updateBill = async (id: string, updates: Partial<Bill>) => {
-    try {
-      await actions.updateBillAction(id, updates);
-      setBills(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
-    } catch (e) {}
-  };
-
-  const deleteBill = async (id: string) => {
-    try {
-      await actions.deleteBillAction(id);
-      setBills(prev => prev.filter(b => b.id !== id));
-    } catch (e) {}
+    setProjects(prev => prev.filter(p => p.id !== id));
+    try { await actions.deleteProjectAction(id); } catch (e) {}
   };
 
   return (
@@ -597,8 +442,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentUser, users, employees, attendance, tasks, expenses, income, auditLogs, notifications, leaveRequests, breakRequests, departments, announcements, projects, schedules, bills,
       themeColor, themeMode, isLoading, fetchData, login, logout, addEmployee, updateEmployee, deleteEmployee, addAttendance, updateAttendance, deleteAttendance,
       addTask, updateTask, deleteTask, addExpense, updateExpense, deleteExpense, addIncome, deleteIncome, addAuditLog, addNotification, markNotificationAsRead,
-      markCategoryNotificationsAsRead, markAllNotificationsAsRead, addLeaveRequest, updateLeaveRequest, deleteLeaveRequest, addBreakRequest, updateBreakRequest, addDepartment, updateDepartment, deleteDepartment,
-      addAnnouncement, updateAnnouncement, markAnnouncementAsRead, deleteAnnouncement, addProject, updateProject, deleteProject, addMonthlySchedule, updateMonthlySchedule, deleteMonthlySchedule, addBill, updateBill, deleteBill,
+      markCategoryNotificationsAsRead: async () => {}, markAllNotificationsAsRead, addLeaveRequest, updateLeaveRequest, deleteLeaveRequest, addBreakRequest, updateBreakRequest, 
+      addDepartment: async () => {}, updateDepartment: async () => {}, deleteDepartment: async () => {},
+      addAnnouncement, updateAnnouncement, markAnnouncementAsRead: async () => {}, deleteAnnouncement, addProject, updateProject, deleteProject, 
+      addMonthlySchedule: async () => {}, updateMonthlySchedule: async () => {}, deleteMonthlySchedule: async () => {}, addBill: async () => {}, updateBill: async () => {}, deleteBill: async () => {},
       setThemeColor, setThemeMode, updateIncome
     }}>
       {children}

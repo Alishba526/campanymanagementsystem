@@ -1,7 +1,7 @@
 'use client';
 
 import { useApp } from '@/context/AppContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Swal from 'sweetalert2';
 import { formatTimeAMPM, formatDateShort } from '@/lib/dateUtils';
 
@@ -28,80 +28,80 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
   const userDept = currentUser.role;
 
-  // 🔒 SECURITY SOURCE FILTERING (Strict Isolation)
-  const filteredEmployees = employees.filter(e => isAdmin || e.department === userDept);
-  const filteredProjects = projects.filter(p => isAdmin || p.department === userDept);
-  const filteredAttendance = attendance.filter(a => isAdmin || filteredEmployees.some(e => e.id === a.employeeId));
-  const filteredIncome = income.filter(i => isAdmin || i.department === userDept || (i.project && filteredProjects.some(p => p.projectName === i.project)));
-  const filteredExpenses = expenses.filter(e => isAdmin || e.department === userDept || e.description.toLowerCase().includes(userDept));
-  
-  // Bills are sensitive overheads - Admin only
-  const filteredBills = isAdmin ? bills : [];
+  // 🚀 PERFORMANCE OPTIMIZATION: Memoize heavy filtering
+  const filteredData = useMemo(() => {
+    const fEmployees = employees.filter(e => isAdmin || e.department === userDept);
+    const fProjects = projects.filter(p => isAdmin || p.department === userDept);
+    const fAttendance = attendance.filter(a => isAdmin || fEmployees.some(e => e.id === a.employeeId));
+    const fIncome = income.filter(i => isAdmin || i.department === userDept || (i.project && fProjects.some(p => p.projectName === i.project)));
+    const fExpenses = expenses.filter(e => isAdmin || e.department === userDept || e.description.toLowerCase().includes(userDept));
+    const fAuditLogs = auditLogs.filter(log => {
+        if (isAdmin) return true;
+        const isMyAction = log.user === currentUser.name;
+        const isMyTeamAction = fEmployees.some(emp => log.action.includes(emp.name) || log.action.includes(emp.id));
+        return isMyAction || isMyTeamAction;
+    });
 
-  const filteredAuditLogs = auditLogs.filter(log => {
-    if (isAdmin) return true;
-    const isMyAction = log.user === currentUser.name;
-    const isMyTeamAction = filteredEmployees.some(emp => log.action.includes(emp.name) || log.action.includes(emp.id));
-    return isMyAction || isMyTeamAction;
-  });
+    return { fEmployees, fProjects, fAttendance, fIncome, fExpenses, fAuditLogs };
+  }, [employees, projects, attendance, income, expenses, auditLogs, isAdmin, userDept, currentUser.name]);
+
+  const { fEmployees, fProjects, fAttendance, fIncome, fExpenses, fAuditLogs } = filteredData;
 
   const today = new Date().toISOString().split('T')[0];
   const filterPrefix = `${filterYear}-${filterMonth}`;
 
-  const formatCurrency = (amount: number) => `Rs. ${(amount || 0).toLocaleString()}`;
-  const USD_TO_PKR = 280;
+  // 🚀 PERFORMANCE OPTIMIZATION: Memoize UI display sets
+  const uiDisplay = useMemo(() => {
+    const displayAttendance = isFiltered ? fAttendance.filter(a => a.date.startsWith(filterPrefix)) : fAttendance.filter(a => a.date === today);
+    const displayIncome = isFiltered ? fIncome.filter(i => i.date.startsWith(filterPrefix) && i.status === 'received') : fIncome.filter(i => i.status === 'received');
+    const displayExpenses = isFiltered ? fExpenses.filter(e => e.date.startsWith(filterPrefix)) : fExpenses;
+    const displayBills = isFiltered ? (isAdmin ? bills.filter(b => b.date.startsWith(filterPrefix)) : []) : (isAdmin ? bills : []);
+    const displayProjects = isFiltered ? fProjects.filter(p => p.startDate.startsWith(filterPrefix)) : fProjects;
 
-  // 📂 UI FILTERING (Derived from Secured Source)
-  const displayAttendance = isFiltered 
-    ? filteredAttendance.filter(a => a.date.startsWith(filterPrefix))
-    : filteredAttendance.filter(a => a.date === today);
+    return { displayAttendance, displayIncome, displayExpenses, displayBills, displayProjects };
+  }, [fAttendance, fIncome, fExpenses, fProjects, bills, isFiltered, filterPrefix, today, isAdmin]);
 
-  const displayIncome = isFiltered
-    ? filteredIncome.filter(i => i.date.startsWith(filterPrefix) && i.status === 'received')
-    : filteredIncome.filter(i => i.status === 'received');
+  const { displayAttendance, displayIncome, displayExpenses, displayBills, displayProjects } = uiDisplay;
 
-  const displayExpenses = isFiltered
-    ? filteredExpenses.filter(e => e.date.startsWith(filterPrefix))
-    : filteredExpenses;
+  // 🚀 PERFORMANCE OPTIMIZATION: Memoize KPI Calculations
+  const stats = useMemo(() => {
+    const USD_TO_PKR = 280;
+    const totalManualIncomePKR = displayIncome.reduce((sum, i) => sum + i.amount, 0);
+    const totalProjectIncomeUSD = displayProjects.reduce((sum, p) => sum + (p.amountReceived || 0), 0);
+    const totalProjectBudgetUSD = displayProjects.reduce((sum, p) => sum + (p.cost || 0), 0);
+    const totalProjectIncomePKR = totalProjectIncomeUSD * USD_TO_PKR;
+    
+    const totalIncomePKR = totalManualIncomePKR + totalProjectIncomePKR;
+    const totalExpensesPKR = displayExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalBillsPKR = displayBills.reduce((sum, b) => sum + b.amount, 0);
+    const totalSalariesPKR = fEmployees.reduce((sum, e) => sum + (e.salary || 0), 0);
+    
+    const totalCashOutPKR = totalExpensesPKR + totalSalariesPKR + totalBillsPKR;
+    const netProfitPKR = totalIncomePKR - totalCashOutPKR;
+    const profitMargin = totalIncomePKR > 0 ? Math.round((netProfitPKR / totalIncomePKR) * 100) : 0;
 
-  const displayBills = isFiltered 
-    ? filteredBills.filter(b => b.date.startsWith(filterPrefix))
-    : filteredBills;
+    const rankings = fEmployees.map(emp => {
+        const empTasks = tasks.filter(t => t.employeeId === emp.id);
+        const score = empTasks.length > 0 ? Math.round(empTasks.reduce((sum, t) => sum + t.score, 0) / empTasks.length) : 0;
+        return { name: emp.name, score };
+    }).sort((a, b) => b.score - a.score).slice(0, 5);
 
-  const displayProjects = isFiltered 
-    ? filteredProjects.filter(p => p.startDate.startsWith(filterPrefix))
-    : filteredProjects;
+    const onDutyStaff = fAttendance.filter(a => a.checkOut === '--');
 
-  const activeEmpsCount = filteredEmployees.filter(e => e.status === 'active').length;
+    return { totalManualIncomePKR, totalProjectIncomeUSD, totalProjectBudgetUSD, totalIncomePKR, totalExpensesPKR, totalBillsPKR, totalSalariesPKR, netProfitPKR, profitMargin, rankings, onDutyStaff, USD_TO_PKR };
+  }, [displayIncome, displayProjects, displayExpenses, displayBills, fEmployees, fAttendance, tasks]);
+
+  const { totalManualIncomePKR, totalProjectIncomeUSD, totalProjectBudgetUSD, totalIncomePKR, totalExpensesPKR, totalBillsPKR, totalSalariesPKR, netProfitPKR, profitMargin, rankings, onDutyStaff, USD_TO_PKR } = stats;
+
+  const activeEmpsCount = fEmployees.filter(e => e.status === 'active').length;
   const presentCount = displayAttendance.filter(a => a.status === 'present' || a.status === 'late').length;
   
   const formattedDateDay = currentTime.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const formattedTime = currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  // Stats Calculations (Secured)
-  const totalManualIncomePKR = displayIncome.reduce((sum, i) => sum + i.amount, 0);
-  const totalProjectIncomeUSD = displayProjects.reduce((sum, p) => sum + (p.amountReceived || 0), 0);
-  const totalProjectBudgetUSD = displayProjects.reduce((sum, p) => sum + (p.cost || 0), 0);
-  const totalProjectIncomePKR = totalProjectIncomeUSD * USD_TO_PKR;
-  
-  const totalIncomePKR = totalManualIncomePKR + totalProjectIncomePKR;
-  const totalExpensesPKR = displayExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalBillsPKR = displayBills.reduce((sum, b) => sum + b.amount, 0);
-  const totalSalariesPKR = filteredEmployees.reduce((sum, e) => sum + (e.salary || 0), 0);
-  
-  const totalCashOutPKR = totalExpensesPKR + totalSalariesPKR + totalBillsPKR;
-  const netProfitPKR = totalIncomePKR - totalCashOutPKR;
-  const profitMargin = totalIncomePKR > 0 ? Math.round((netProfitPKR / totalIncomePKR) * 100) : 0;
-  
-  const rankings = filteredEmployees.map(emp => {
-    const empTasks = tasks.filter(t => t.employeeId === emp.id);
-    const score = empTasks.length > 0 ? Math.round(empTasks.reduce((sum, t) => sum + t.score, 0) / empTasks.length) : 0;
-    return { name: emp.name, score };
-  }).sort((a, b) => b.score - a.score).slice(0, 5);
-
+  const formatCurrency = (amount: number) => `Rs. ${(amount || 0).toLocaleString()}`;
   const formatUSD = (val: number) => `$ ${val.toLocaleString()}`;
 
-  // Date helper variables
   const currentYearNum = new Date().getFullYear();
   const years = Array.from({ length: 21 }, (_, i) => (currentYearNum + 10 - i).toString());
   const months = [
@@ -110,16 +110,6 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
     { v: '07', l: 'July' }, { v: '08', l: 'August' }, { v: '09', l: 'September' },
     { v: '10', l: 'October' }, { v: '11', l: 'November' }, { v: '12', l: 'December' }
   ];
-
-  // On Duty Monitor Logic (Secured)
-  const onDutyStaff = filteredAttendance.filter(a => {
-    if (a.checkOut !== '--') return false;
-    const [year, mon, day] = a.date.split('-').map(Number);
-    const [h, m] = a.checkIn.split(':').map(Number);
-    const checkInDateTime = new Date(year, mon - 1, day, h, m);
-    const diff = (new Date().getTime() - checkInDateTime.getTime()) / (1000 * 60 * 60);
-    return diff <= 12;
-  });
 
   const depts = [
     { id: 'ecommerce', label: 'E-Commerce' },
@@ -131,7 +121,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
     const manualInc = displayIncome.filter(i => i.department === dept.id).reduce((sum, i) => sum + i.amount, 0);
     const projIncUSD = displayProjects.filter(p => p.department === dept.id).reduce((sum, p) => sum + (p.amountReceived || 0), 0);
     const totalRev = manualInc + (projIncUSD * USD_TO_PKR);
-    const totalSalaries = filteredEmployees.filter(e => e.department === dept.id).reduce((sum, e) => sum + (e.salary || 0), 0);
+    const totalSalaries = fEmployees.filter(e => e.department === dept.id).reduce((sum, e) => sum + (e.salary || 0), 0);
     const profit = totalRev - totalSalaries;
     return { ...dept, revenue: totalRev, salaries: totalSalaries, profit };
   });
@@ -300,25 +290,30 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
           <div style={{ fontSize: '24px' }}>⏰</div>
           <h3 style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Active Attendance Monitor</h3>
           <div style={{ marginLeft: 'auto', background: '#059669', color: '#fff', padding: '2px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: 'bold' }}>
-            {onDutyStaff.length} ON DUTY
+            {onDutyStaff.length} ACTIVE SESSIONS
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-          {onDutyStaff.map(a => (
-            <div key={a.id} onClick={() => onNavigate?.('attendance')} style={{ minWidth: '220px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '18px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#059669'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text3)' }}>{a.employeeId}</span>
-                <span style={{ fontSize: '9px', background: '#ecfdf5', color: '#059669', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>ON DUTY</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+          {onDutyStaff.map(a => {
+            const isOnBreak = a.breakIn && a.breakOut === '--';
+            return (
+              <div key={a.id} onClick={() => onNavigate?.('attendance')} style={{ minWidth: '200px', background: 'var(--bg3)', border: '1px solid var(--border)', borderRadius: '18px', padding: '15px', cursor: 'pointer', transition: '0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = isOnBreak ? '#f59e0b' : '#059669'; e.currentTarget.style.transform = 'translateY(-3px)'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text3)' }}>{a.employeeId}</span>
+                  <span style={{ fontSize: '9px', background: isOnBreak ? '#fef3c7' : '#ecfdf5', color: isOnBreak ? '#b45309' : '#059669', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>
+                    {isOnBreak ? 'ON BREAK ☕' : 'WORKING ⚡'}
+                  </span>
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', marginBottom: '4px' }}>{a.employeeName}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                   <span style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 'bold' }}>IN: {formatTimeAMPM(a.checkIn)}</span>
+                   {isOnBreak && <span style={{ fontSize: '10px', color: '#b45309', fontWeight: 'bold' }}>SINCE: {formatTimeAMPM(a.breakIn)}</span>}
+                </div>
               </div>
-              <div style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text)', marginBottom: '4px' }}>{a.employeeName}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
-                 <span style={{ fontSize: '10px', color: 'var(--text3)', fontWeight: 'bold' }}>IN:</span>
-                 <span style={{ fontSize: '13px', fontWeight: '900', color: '#059669' }}>{formatTimeAMPM(a.checkIn)}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {onDutyStaff.length === 0 && (
-            <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '13px', fontStyle: 'italic', textAlign: 'center', width: '100%' }}>No staff members currently on duty.</div>
+            <div style={{ padding: '20px', color: 'var(--text3)', fontSize: '13px', fontStyle: 'italic', textAlign: 'center', width: '100%' }}>No staff members currently active.</div>
           )}
         </div>
       </div>
@@ -328,7 +323,7 @@ export default function EnhancedDashboard({ onNavigate }: DashboardProps) {
          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: '24px', padding: '25px', boxShadow: 'var(--shadow)' }}>
             <h3 style={{ fontSize: '15px', fontWeight: '900', marginBottom: '20px', color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📜 Recent System Activity</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-               {filteredAuditLogs.slice(0, 6).map((log, i) => (
+               {fAuditLogs.slice(0, 6).map((log, i) => (
                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 15px', background: 'var(--bg3)', borderRadius: '15px', border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                        <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', border: '1px solid var(--border)' }}>👤</div>
