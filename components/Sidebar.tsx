@@ -116,7 +116,7 @@ export default function Sidebar({ onNavigate, currentPage }: SidebarProps) {
         { id: 'broadcast', icon: '📢', label: 'Announcements' }
       ]},
       { section: 'Work', items: [
-        { id: 'projects', icon: '📁', label: 'Active Projects' }
+        { id: 'projects', icon: '📁', label: 'Active Accounts' }
       ]},
       { section: 'Team Management', items: [
         { id: 'employees', icon: '👥', label: 'My Team' },

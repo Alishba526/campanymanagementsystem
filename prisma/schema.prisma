@@ -84,6 +84,13 @@ model TaskLog {
   leadsGenerated    Int      @default(0)
   emailsSent        Int      @default(0)
   conversionRatio   Float    @default(0)
+  ordersHandled     Int      @default(0)
+  netProfit         Int      @default(0)
+  sales             Int      @default(0)
+  listings          Int      @default(0)
+  accountName       String   @default("")
+  targetProfit      Int      @default(5000)
+  trackingSet       Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
@@ -198,6 +205,11 @@ model Project {
   managerName     String   @default("")
   managerEmail    String   @default("")
   department      String   @default("")
+  issue           String   @default("")
+  handlerId       String   @default("")
+  handlerName     String   @default("")
+  placerId        String   @default("")
+  placerName      String   @default("")
   status          String   // 'active', 'completed', 'on-hold', 'approved', 'pending', 'rejected'
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

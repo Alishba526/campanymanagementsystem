@@ -180,7 +180,12 @@ export interface Project {
   managerName: string;
   managerEmail: string;
   department: string;
-  status: 'active' | 'completed' | 'on-hold' | 'pending' | 'approved' | 'rejected' | 'Working on' | 'Submited' | 'Close' | 'on hold' | 'New Project';
+  issue?: string;
+  handlerId?: string;
+  handlerName?: string;
+  placerId?: string;
+  placerName?: string;
+  status: 'active' | 'completed' | 'on-hold' | 'pending' | 'approved' | 'rejected' | 'Working on' | 'Submited' | 'Close' | 'on hold' | 'New Project' | 'Active' | 'Inactive' | 'Waiting';
 }
 
 export interface MonthlySchedule {

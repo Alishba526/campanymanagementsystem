@@ -184,15 +184,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
-      if (projectData && (projectData as any).length > 0) {
-        setProjects(prev => {
-          const freshProjects = projectData as any;
-          return prev.map(p => {
-            if (pendingProjectUpdates.current.has(p.id)) return p;
-            const fresh = freshProjects.find((fp: any) => fp.id === p.id);
-            return fresh || p;
-          }).concat(freshProjects.filter((fp: any) => !prev.some(p => p.id === fp.id)));
-        });
+      if (projectData) {
+        setProjects(projectData as Project[]);
       }
       setSchedules(scheduleData as MonthlySchedule[]);
       setBills(billData as Bill[]);
